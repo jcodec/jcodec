@@ -7,6 +7,8 @@ import static org.jcodec.codecs.h264.H264Utils.Mv.mvY;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.codecs.h264.decode.DeblockerInput;
+import org.jcodec.codecs.h264.encode.EncodedMB;
+import org.jcodec.codecs.h264.encode.MBEncoderHelper;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
@@ -61,43 +63,17 @@ public class DeblockingFilter {
 
     public void deblockFrame(Picture result) {
         ColorSpace color = result.getColor();
-        // for (int i = 0; i < shs.length; i++)
-        // printMB(result.getPlaneData(2), result.getPlaneWidth(2), i, shs[i],
-        // "!--!--!--!--!--!--!--!--!--!--!--!");
-        // printMB(result.getPlaneData(0), result.getPlaneWidth(0), 0, shs[0],
-        // "!--!--!--!--!--!--!--!--!--!--!--!");
         int[][] bsV = new int[4][4], bsH = new int[4][4];
         for (int i = 0; i < di.shs.length; i++) {
             calcBsH(result, i, bsH);
             calcBsV(result, i, bsV);
+
             for (int c = 0; c < color.nComp; c++) {
                 fillVerticalEdge(result, c, i, bsV);
                 fillHorizontalEdge(result, c, i, bsH);
-                // printMB(result.getPlaneData(1), result.getPlaneWidth(1), i,
-                // shs[i],
-                // "!**!**!**!**!--!--!--!--!--!--!--!");
             }
         }
-        // printMB(result.getPlaneData(0), result.getPlaneWidth(0), 235,
-        // shs[235], "!**!**!**!**!--!--!--!--!--!--!--!");
     }
-
-    // private void printMB(int[] is, int stride, int mbAddr, SliceHeader sh,
-    // String delim) {
-    // int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
-    // int mbX = mbAddr % mbWidth;
-    // int mbY = mbAddr / mbWidth;
-    //
-    // System.out.println("MB: " + mbX + ", " + mbY);
-    // System.out.println(delim);
-    // for (int j = 0; j < 16; j++) {
-    // for (int i = 0; i < 16; i++)
-    // System.out.print(String.format("%3d,", is[((mbY << 4) + j) * stride +
-    // (mbX << 4) + i]));
-    // System.out.println();
-    // }
-    // System.out.println(delim);
-    // }
 
     static int[] inverse = new int[] { 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15 };
 
@@ -434,7 +410,7 @@ public class DeblockingFilter {
         int q0 = pelsQ[q0Idx];
         int p1 = pelsP[p1Idx];
         int q1 = pelsQ[q1Idx];
-
+        
         int alphaThresh = alphaTab[indexAlpha];
         int betaThresh = betaTab[indexBeta];
 

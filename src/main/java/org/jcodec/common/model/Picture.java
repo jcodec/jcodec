@@ -5,6 +5,9 @@ import static org.jcodec.common.model.ColorSpace.MAX_PLANES;
 
 import java.util.Arrays;
 
+import org.jcodec.common.Tuple;
+import org.jcodec.common.Tuple._2;
+import org.jcodec.common.Tuple._3;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -133,6 +136,10 @@ public class Picture {
 
     public ColorSpace getColor() {
         return color;
+    }
+    
+    public void setColor(ColorSpace color) {
+        this.color = color;
     }
 
     public byte[][] getData() {
@@ -344,6 +351,36 @@ public class Picture {
         }
         return true;
     }
+    
+    public _3<Integer, Integer, Integer> firstMismatch(Picture other) {
+        if (other.getCroppedWidth() != getCroppedWidth() || other.getCroppedHeight() != getCroppedHeight()
+                || other.getColor() != color)
+            throw new RuntimeException("w,h,c should be same");
+
+        for (int i = 0; i < getData().length; i++) {
+            _2<Integer, Integer> mm = firstMismatchPlane(other, i);
+            if (mm != null)
+                return new _3<Integer, Integer, Integer>(mm.v0, mm.v1, i);
+        }
+        return null;
+    }
+
+    private _2<Integer, Integer> firstMismatchPlane(Picture other, int plane) {
+        int cw = color.compWidth[plane];
+        int ch = color.compHeight[plane];
+        int offA = other.getCrop() == null ? 0 : ((other.getCrop().getX() >> cw) + (other.getCrop().getY() >> ch)
+                * (other.getWidth() >> cw));
+        int offB = crop == null ? 0 : ((crop.getX() >> cw) + (crop.getY() >> ch) * (width >> cw));
+
+        byte[] planeData = other.getPlaneData(plane);
+        for (int i = 0; i < getCroppedHeight() >> ch; i++, offA += (other.getWidth() >> cw), offB += (width >> cw)) {
+            for (int j = 0; j < getCroppedWidth() >> cw; j++) {
+                if (planeData[offA + j] != data[plane][offB + j])
+                    return new _2<Integer, Integer>(j, i);
+            }
+        }
+        return null;
+    }
 
     public int getStartX() {
         return crop == null ? 0 : crop.getX();
@@ -359,5 +396,13 @@ public class Picture {
 
     public Size getSize() {
         return new Size(width, height);
+    }
+    
+    public int pixAt(int x, int y, int pl) {
+        int cw = color.compWidth[pl];
+        int ch = color.compHeight[pl];
+        int stride = width >> cw;
+        
+        return data[pl][y * stride + x];
     }
 }

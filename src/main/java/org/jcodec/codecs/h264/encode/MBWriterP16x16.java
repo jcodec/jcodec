@@ -1,24 +1,20 @@
 package org.jcodec.codecs.h264.encode;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_LEFT;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_TOP;
 import static org.jcodec.codecs.h264.encode.H264EncoderUtils.median;
 import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
 
+import java.util.Arrays;
+
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.BlockInterpolator;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
-import org.jcodec.codecs.h264.io.CAVLC;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
-import org.jcodec.common.SaveRestore;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Picture;
-
-import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -28,91 +24,48 @@ import java.util.Arrays;
  * 
  * @author Stanislav Vitvitskyy
  */
-public class MBWriterP16x16 implements SaveRestore {
-
-    private CAVLC[] cavlc;
+public class MBWriterP16x16 {
     private SeqParameterSet sps;
     private Picture ref;
-    private int[] mvTopX;
-    private int[] mvTopY;
-    private int mvLeftX;
-    private int mvLeftY;
-    private int mvTopLeftX;
-    private int mvTopLeftY;
-
-    private int[] mvTopXSave;
-    private int[] mvTopYSave;
-    private int mvLeftXSave;
-    private int mvLeftYSave;
-    private int mvTopLeftXSave;
-    private int mvTopLeftYSave;
 
     private BlockInterpolator interpolator;
 
-    public MBWriterP16x16(SeqParameterSet sps, Picture ref, CAVLC[] cavlc) {
+    public MBWriterP16x16(SeqParameterSet sps, Picture ref) {
         this.sps = sps;
-        this.cavlc = cavlc;
         this.ref = ref;
-        mvTopX     = new int[sps.picWidthInMbsMinus1 + 1];
-        mvTopY     = new int[sps.picWidthInMbsMinus1 + 1];
-        
-        mvTopXSave = new int[sps.picWidthInMbsMinus1 + 1];
-        mvTopYSave = new int[sps.picWidthInMbsMinus1 + 1];
         interpolator = new BlockInterpolator();
     }
 
-    @Override
-    public void save() {
-        for (int i = 0; i < cavlc.length; i++)
-            cavlc[i].save();
-        System.arraycopy(mvTopX, 0, mvTopXSave, 0, mvTopX.length);
-        System.arraycopy(mvTopY, 0, mvTopYSave, 0, mvTopY.length);
-
-        mvLeftXSave    = mvLeftX;
-        mvLeftYSave    = mvLeftY;
-        mvTopLeftXSave = mvTopLeftX;
-        mvTopLeftYSave = mvTopLeftY;
-    }
-
-    @Override
-    public void restore() {
-        for (int i = 0; i < cavlc.length; i++)
-            cavlc[i].restore();
-        int[] tmp = mvTopX;
-        mvTopX = mvTopXSave;
-        mvTopXSave = tmp;
-        
-        tmp = mvTopY;
-        mvTopY = mvTopYSave;
-        mvTopYSave = tmp;
-
-        mvLeftX    = mvLeftXSave;
-        mvLeftY    = mvLeftYSave;
-        mvTopLeftX = mvTopLeftXSave;
-        mvTopLeftY = mvTopLeftYSave;
-    }
-
-    public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB, EncodedMB leftOutMB,
-            EncodedMB topOutMB, int qp, int qpDelta, int[] mv) {
+    public void encodeMacroblock(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
+            int qp, int qpDelta, int[] mv) {
         if (sps.numRefFrames > 1) {
             int refIdx = decideRef();
             CAVLCWriter.writeTE(out, refIdx, sps.numRefFrames - 1);
         }
+        int partBlkSize = 4; // 16x16
+        int refIdx = 1;
 
         boolean trAvb = mbY > 0 && mbX < sps.picWidthInMbsMinus1;
         boolean tlAvb = mbX > 0 && mbY > 0;
-        int mvpx = median(mvLeftX, mvTopX[mbX], trAvb ? mvTopX[mbX + 1] : 0, tlAvb ? mvTopLeftX : 0, mbX > 0, mbY > 0,
-                trAvb, tlAvb);
-        int mvpy = median(mvLeftY, mvTopY[mbX], trAvb ? mvTopY[mbX + 1] : 0, tlAvb ? mvTopLeftY : 0, mbX > 0, mbY > 0,
-                trAvb, tlAvb);
+        int ax = ctx.mvLeftX[0];
+        int ay = ctx.mvLeftY[0];
+        boolean ar = ctx.mvLeftR[0] == refIdx;
+
+        int bx = ctx.mvTopX[mbX << 2];
+        int by = ctx.mvTopY[mbX << 2];
+        boolean br = ctx.mvTopR[mbX << 2] == refIdx;
+
+        int cx = trAvb ? ctx.mvTopX[(mbX << 2) + partBlkSize] : 0;
+        int cy = trAvb ? ctx.mvTopY[(mbX << 2) + partBlkSize] : 0;
+        boolean cr = trAvb ? ctx.mvTopR[(mbX << 2) + partBlkSize] == refIdx : false;
+
+        int dx = tlAvb ? ctx.mvTopLeftX : 0;
+        int dy = tlAvb ? ctx.mvTopLeftY : 0;
+        boolean dr = tlAvb ? (ctx.mvTopLeftR == refIdx) : false;
+        int mvpx = median(ax, ar, bx, br, cx, cr, dx, dr, mbX > 0, mbY > 0, trAvb, tlAvb);
+        int mvpy = median(ay, ar, by, br, cy, cr, dy, dr, mbX > 0, mbY > 0, trAvb, tlAvb);
 
         // Motion estimation for the current macroblock
-        mvTopLeftX = mvTopX[mbX];
-        mvTopLeftY = mvTopY[mbX];
-        mvTopX[mbX] = mv[0];
-        mvTopY[mbX] = mv[1];
-        mvLeftX = mv[0];
-        mvLeftY = mv[1];
         CAVLCWriter.writeSE(out, mv[0] - mvpx); // mvdx
         CAVLCWriter.writeSE(out, mv[1] - mvpy); // mvdy
 
@@ -138,8 +91,8 @@ public class MBWriterP16x16 implements SaveRestore {
 
         CAVLCWriter.writeSE(out, qpDelta);
 
-        luma(pic, mb[0], mbX, mbY, out, qp, outMB.getNc());
-        chroma(pic, mb[1], mb[2], mbX, mbY, out, qp);
+        luma(ctx, pic, mb[0], mbX, mbY, out, qp, outMB.getNc());
+        chroma(ctx, pic, mb[1], mb[2], mbX, mbY, out, qp);
 
         MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(0), mb[0], mbRef.getPlaneData(0), 4, 0, 0, 16, 16);
         MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb[1], mbRef.getPlaneData(1), 3, 0, 0, 8, 8);
@@ -147,10 +100,9 @@ public class MBWriterP16x16 implements SaveRestore {
 
         Arrays.fill(outMB.getMx(), mv[0]);
         Arrays.fill(outMB.getMy(), mv[1]);
+        Arrays.fill(outMB.getMr(), refIdx);
         outMB.setType(MBType.P_16x16);
         outMB.setQp(qp);
-
-        new MBDeblocker().deblockMBP(outMB, leftOutMB, topOutMB);
     }
 
     private int getCodedBlockPattern() {
@@ -166,7 +118,7 @@ public class MBWriterP16x16 implements SaveRestore {
         return 0;
     }
 
-    private void luma(Picture pic, int[] pix, int mbX, int mbY, BitWriter out, int qp, int[] nc) {
+    private void luma(EncodingContext ctx, Picture pic, int[] pix, int mbX, int mbY, BitWriter out, int qp, int[] nc) {
         int[][] ac = new int[16][16];
         for (int i = 0; i < ac.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_4x4[i].length; j++) {
@@ -175,7 +127,7 @@ public class MBWriterP16x16 implements SaveRestore {
             CoeffTransformer.fdct4x4(ac[i]);
         }
 
-        writeAC(0, mbX, mbY, out, mbX << 2, mbY << 2, ac, qp);
+        writeAC(ctx, 0, mbX, mbY, out, mbX << 2, mbY << 2, ac, qp, nc);
 
         for (int i = 0; i < ac.length; i++) {
             CoeffTransformer.dequantizeAC(ac[i], qp, null);
@@ -185,7 +137,8 @@ public class MBWriterP16x16 implements SaveRestore {
         }
     }
 
-    private void chroma(Picture pic, int[] pix1, int[] pix2, int mbX, int mbY, BitWriter out, int qp) {
+    private void chroma(EncodingContext ctx, Picture pic, int[] pix1, int[] pix2, int mbX, int mbY, BitWriter out,
+            int qp) {
         int[][] ac1 = new int[4][16];
         int[][] ac2 = new int[4][16];
         for (int i = 0; i < ac1.length; i++) {
@@ -196,7 +149,7 @@ public class MBWriterP16x16 implements SaveRestore {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
                 ac2[i][j] = pix2[H264Const.PIX_MAP_SPLIT_2x2[i][j]];
         }
-        MBWriterI16x16.chromaResidual(mbX, mbY, out, qp, ac1, ac2, cavlc[1], cavlc[2], P_16x16, P_16x16);
+        MBWriterI16x16.chromaResidual(mbX, mbY, out, qp, ac1, ac2, ctx.cavlc[1], ctx.cavlc[2], P_16x16, P_16x16);
 
         for (int i = 0; i < ac1.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
@@ -208,12 +161,14 @@ public class MBWriterP16x16 implements SaveRestore {
         }
     }
 
-    private void writeAC(int comp, int mbX, int mbY, BitWriter out, int mbLeftBlk, int mbTopBlk, int[][] ac, int qp) {
+    private void writeAC(EncodingContext ctx, int comp, int mbX, int mbY, BitWriter out, int mbLeftBlk, int mbTopBlk,
+            int[][] ac, int qp, int[] nc) {
         for (int i = 0; i < ac.length; i++) {
             int blkI = H264Const.BLK_INV_MAP[i];
             CoeffTransformer.quantizeAC(ac[blkI], qp);
-            cavlc[comp].writeACBlock(out, mbLeftBlk + MB_BLK_OFF_LEFT[i], mbTopBlk + MB_BLK_OFF_TOP[i], P_16x16,
+            int coeffToken = ctx.cavlc[comp].writeACBlock(out, mbLeftBlk + MB_BLK_OFF_LEFT[i], mbTopBlk + MB_BLK_OFF_TOP[i], P_16x16,
                     P_16x16, ac[blkI], H264Const.totalZeros16, 0, 16, CoeffTransformer.zigzag4x4);
+            nc[blkI] = coeffToken >> 4; // total coeff
         }
     }
 }

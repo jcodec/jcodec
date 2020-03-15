@@ -19,48 +19,63 @@ public class MotionEstimator {
     private int maxSearchRange;
     private int[] mvTopX;
     private int[] mvTopY;
+    private int[] mvTopR;
     private int mvLeftX;
     private int mvLeftY;
+    private int mvLeftR;
     private int mvTopLeftX;
     private int mvTopLeftY;
+    private int mvTopLeftR;
     private SeqParameterSet sps;
     private Picture ref;
 
     public MotionEstimator(Picture ref, SeqParameterSet sps, int maxSearchRange) {
         this.sps = sps;
         this.ref = ref;
-        mvTopX     = new int[sps.picWidthInMbsMinus1 + 1];
-        mvTopY     = new int[sps.picWidthInMbsMinus1 + 1];
+        mvTopX = new int[sps.picWidthInMbsMinus1 + 1];
+        mvTopY = new int[sps.picWidthInMbsMinus1 + 1];
+        mvTopR = new int[sps.picWidthInMbsMinus1 + 1];
         this.maxSearchRange = maxSearchRange;
     }
-    
+
     public int[] mvEstimate(Picture pic, int mbX, int mbY) {
+        int refIdx = 1;
         byte[] patch = new byte[256];
         boolean trAvb = mbY > 0 && mbX < sps.picWidthInMbsMinus1;
         boolean tlAvb = mbX > 0 && mbY > 0;
-        int mvpx = median(mvLeftX, mvTopX[mbX], trAvb ? mvTopX[mbX + 1] : 0, tlAvb ? mvTopLeftX : 0, mbX > 0, mbY > 0,
-                trAvb, tlAvb);
-        int mvpy = median(mvLeftY, mvTopY[mbX], trAvb ? mvTopY[mbX + 1] : 0, tlAvb ? mvTopLeftY : 0, mbX > 0, mbY > 0,
-                trAvb, tlAvb);
+        
+        int cx = trAvb ? mvTopX[mbX + 1] : 0;
+        int cy = trAvb ? mvTopY[mbX + 1] : 0;
+        boolean cr = trAvb ? mvTopR[mbX + 1] == refIdx : false;
+        int dx = tlAvb ? mvTopLeftX : 0;
+        int dy = tlAvb ? mvTopLeftY : 0;
+        boolean dr = tlAvb ? mvTopLeftY == refIdx : false;
+        int mvpx = median(mvLeftX, mvLeftR == refIdx, mvTopX[mbX], mvTopR[mbX] == refIdx, cx, cr, dx, dr, mbX > 0,
+                mbY > 0, trAvb, tlAvb);
+        int mvpy = median(mvLeftY, mvLeftR == refIdx, mvTopY[mbX], mvTopR[mbX] == refIdx, cy, cr, dy, dr, mbX > 0,
+                mbY > 0, trAvb, tlAvb);
         MBEncoderHelper.take(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4, mbY << 4,
                 patch, 16, 16);
         return estimateFullPix(ref, patch, mbX, mbY, mvpx, mvpy);
     }
-    
+
     public void mvSave(int mbX, int mbY, int[] mv) {
         mvTopLeftX = mvTopX[mbX];
         mvTopLeftY = mvTopY[mbX];
+        mvTopLeftR = mvTopR[mbX];
         mvTopX[mbX] = mv[0];
         mvTopY[mbX] = mv[1];
+        mvTopR[mbX] = mv[2];
         mvLeftX = mv[0];
         mvLeftY = mv[1];
+        mvLeftR = mv[2];
     }
 
     private int[] estimateFullPix(Picture ref, byte[] patch, int mbX, int mbY, int mvpx, int mvpy) {
         byte[] searchPatch = new byte[(maxSearchRange * 2 + 16) * (maxSearchRange * 2 + 16)];
 
-        int startX = (mbX << 4) /* + (mvpx >> 2)*/;
-        int startY = (mbY << 4) /* + (mvpy >> 2)*/;
+        int startX = (mbX << 4) /* + (mvpx >> 2) */;
+        int startY = (mbY << 4) /* + (mvpy >> 2) */;
 
         int patchTlX = Math.max(startX - maxSearchRange, 0);
         int patchTlY = Math.max(startY - maxSearchRange, 0);
@@ -80,9 +95,11 @@ public class MotionEstimator {
         // Diagonal search
         for (int i = 0; i < maxSearchRange; i++) {
             int score1 = bestMvX > 0 ? sad(searchPatch, patchW, patch, bestMvX - 1, bestMvY) : Integer.MAX_VALUE;
-            int score2 = bestMvX < patchW - 1 ? sad(searchPatch, patchW, patch, bestMvX + 1, bestMvY) : Integer.MAX_VALUE;
+            int score2 = bestMvX < patchW - 1 ? sad(searchPatch, patchW, patch, bestMvX + 1, bestMvY)
+                    : Integer.MAX_VALUE;
             int score3 = bestMvY > 0 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY - 1) : Integer.MAX_VALUE;
-            int score4 = bestMvY < patchH - 1 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY + 1) : Integer.MAX_VALUE;
+            int score4 = bestMvY < patchH - 1 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY + 1)
+                    : Integer.MAX_VALUE;
             int min = min(min(min(score1, score2), score3), score4);
             if (min > bestScore)
                 break;
@@ -98,7 +115,7 @@ public class MotionEstimator {
             }
         }
 
-        return new int[] { ((bestMvX - centerX) << 2)/* + mvpx*/, ((bestMvY - centerY) << 2)/* + mvpy*/ };
+        return new int[] { ((bestMvX - centerX) << 2)/* + mvpx */, ((bestMvY - centerY) << 2)/* + mvpy */ };
     }
 
     private int sad(byte[] big, int bigStride, byte[] small, int offX, int offY) {

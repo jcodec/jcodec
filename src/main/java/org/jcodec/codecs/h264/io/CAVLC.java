@@ -8,7 +8,6 @@ import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
-import org.jcodec.common.SaveRestore;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.VLC;
@@ -24,7 +23,7 @@ import org.jcodec.common.tools.MathUtil;
  * @author Jay Codec
  * 
  */
-public class CAVLC implements SaveRestore {
+public class CAVLC {
 
     private ColorSpace color;
     private VLC chromaDCVLC;
@@ -32,43 +31,32 @@ public class CAVLC implements SaveRestore {
     private int[] tokensLeft;
     private int[] tokensTop;
     
-    private int[] tokensLeftSaved;
-    private int[] tokensTopSaved;
-    
     private int mbWidth;
     private int mbMask;
+    private int mbW;
+    private int mbH;
 
     public CAVLC(SeqParameterSet sps, PictureParameterSet pps, int mbW, int mbH) {
-        this.color = sps.chromaFormatIdc;
+        this(sps.chromaFormatIdc, sps.picWidthInMbsMinus1 + 1, mbW, mbH);
+    }
+    
+    private CAVLC(ColorSpace color, int mbWidth, int mbW, int mbH) {
+        this.color = color;
         this.chromaDCVLC = codeTableChromaDC();
-        this.mbWidth = sps.picWidthInMbsMinus1 + 1;
-
+        this.mbWidth = mbWidth;
         this.mbMask = (1 << mbH) - 1;
+        this.mbW = mbW;
+        this.mbH = mbH;
 
         tokensLeft      = new int[4];
         tokensTop       = new int[mbWidth << mbW];
-        tokensLeftSaved = new int[4];
-        tokensTopSaved  = new int[mbWidth << mbW];
     }
-    
-    @Override
-    public void save() {
-        System.arraycopy(tokensLeft, 0, tokensLeftSaved, 0, tokensLeft.length);
-        System.arraycopy(tokensTop, 0, tokensTopSaved, 0, tokensTop.length);
-    }
-    
-    @Override
-    public void restore() {
-        {
-            int[] tmp = tokensLeft;
-            tokensLeft = tokensLeftSaved;
-            tokensLeftSaved = tmp;
-        }
-        {
-            int[] tmp = tokensTop;
-            tokensTop = tokensTopSaved;
-            tokensTopSaved = tmp;
-        }
+
+    public CAVLC fork() {
+        CAVLC ret = new CAVLC(color, mbWidth, mbW, mbH);
+        System.arraycopy(tokensLeft, 0, ret.tokensLeft, 0, tokensLeft.length);
+        System.arraycopy(tokensTop, 0, ret.tokensTop, 0, tokensTop.length);
+        return ret;
     }
 
     public int writeACBlock(BitWriter out, int blkIndX, int blkIndY, MBType leftMBType, MBType topMBType, int[] coeff,

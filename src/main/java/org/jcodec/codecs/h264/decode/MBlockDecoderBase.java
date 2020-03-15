@@ -147,6 +147,7 @@ public class MBlockDecoderBase {
         if (mBlock.cbpChroma() != 0) {
             decodeChromaResidual(mBlock, leftAvailable, topAvailable, mbX, mbY, qp1, qp2);
         }
+        
         int addr = mbY * (sh.sps.picWidthInMbsMinus1 + 1) + mbX;
         di.mbQps[1][addr] = qp1;
         di.mbQps[2][addr] = qp2;
@@ -186,6 +187,7 @@ public class MBlockDecoderBase {
                 CoeffTransformer.dequantizeAC(ac, crQp, getScalingList((curMbType.intra ? 0 : 3) + comp));
             }
             ac[0] = dc[i];
+                
             CoeffTransformer.idct4x4(ac);
         }
     }

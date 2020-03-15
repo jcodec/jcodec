@@ -84,7 +84,6 @@ public class ChromaPredictionBuilder {
         } else {
             s0 = 0;
         }
-
         for (int off = (blkY << 5) + (blkX << 2), j = 0; j < 4; j++, off += 8) {
             pixOut[off] = (byte) clip(residual[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] + s0, -128, 127);
             pixOut[off + 1] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 1]][CHROMA_POS_LUT[off + 1]] + s0, -128, 127);
@@ -111,7 +110,6 @@ public class ChromaPredictionBuilder {
         } else {
             s1 = 0;
         }
-
         for (int off = (blkY << 5) + (blkX << 2), j = 0; j < 4; j++, off += 8) {
             pixOut[off] = (byte) clip(residual[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] + s1, -128, 127);
             pixOut[off + 1] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 1]][CHROMA_POS_LUT[off + 1]] + s1, -128, 127);
@@ -137,7 +135,6 @@ public class ChromaPredictionBuilder {
         } else {
             s2 = 0;
         }
-
         for (int off = (blkY << 5) + (blkX << 2), j = 0; j < 4; j++, off += 8) {
             pixOut[off] = (byte) clip(residual[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] + s2, -128, 127);
             pixOut[off + 1] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 1]][CHROMA_POS_LUT[off + 1]] + s2, -128, 127);

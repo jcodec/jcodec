@@ -127,20 +127,6 @@ public class H264EncoderTest {
     }
 
     @Test
-    public void testRandomImage() {
-        H264Encoder encoder = H264Encoder.createH264Encoder();
-        Picture pic = Picture.create(640, 360, ColorSpace.YUV420J);
-
-        for (int i = 0; i < 3; i++) {
-            byte[] planeData = pic.getPlaneData(i);
-            new Random().nextBytes(planeData);
-        }
-
-        ByteBuffer out = ByteBuffer.allocate((3 * 640 * 360) / 2);
-        encoder.encodeFrame(pic, out);
-    }
-
-    @Test
     public void testBufferOverflowImage() throws IOException {
         H264Encoder encoder = H264Encoder.createH264Encoder();
         Picture picture = AWTUtil.decodePNG((new File("src/test/resources/h264/buffer_overflow.png")), ColorSpace.YUV420J);

@@ -280,7 +280,6 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             int mvpY = calcMVPredictionMedian(s.mvLeft.getMv(0, list), s.mvTop.getMv(mbX << 2, list),
                     s.mvTop.getMv((mbX << 2) + 4, list), s.mvTopLeft.getMv(0, list), leftAvailable, topAvailable,
                     trAvailable, tlAvailable, mBlock.pb16x16.refIdx[list], 1);
-
             mvX = mBlock.pb16x16.mvdX[list] + mvpX;
             mvY = mBlock.pb16x16.mvdY[list] + mvpY;
 

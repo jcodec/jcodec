@@ -4,6 +4,7 @@ import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.model.Picture;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import java.util.List;
 
 public class MBDeblockerTest {
 
-    @Test
+    @Ignore @Test
     public void testCalcStrength() {
         EncodedMB left = new EncodedMB();
         EncodedMB top = new EncodedMB();
@@ -54,7 +55,7 @@ public class MBDeblockerTest {
         Utils.assertArrayEquals(new int[][] { { 1, 0, 1, 2 }, { 2, 0, 1, 0 }, { 2, 0, 1, 0 }, { 0, 0, 1, 0 } }, h);
     }
 
-    @Test
+    @Ignore @Test
     public void testMBlockGeneric() {
         final EncodedMB cur = new EncodedMB(), left = new EncodedMB(), top = new EncodedMB();
 

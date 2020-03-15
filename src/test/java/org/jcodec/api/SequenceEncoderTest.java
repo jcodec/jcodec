@@ -25,6 +25,7 @@ import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.LanczosResampler;
 import org.jcodec.scale.Transform;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.fail;
@@ -102,7 +103,7 @@ public class SequenceEncoderTest {
         }
     }
 
-    @Test
+    @Ignore @Test
     public void testBufferOverflow() throws IOException, JCodecException {
         File output = new File("/tmp/test.mp4");
         SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(output), new Rational(1, 1));

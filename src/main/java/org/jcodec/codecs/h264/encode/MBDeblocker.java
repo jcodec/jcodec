@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264.encode;
 
 import static java.lang.Math.abs;
+import static org.jcodec.codecs.h264.H264Const.QP_SCALE_CR;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.codecs.h264.decode.deblock.DeblockingFilter;
@@ -18,99 +19,97 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class MBDeblocker {
 
-    static int[][] LOOKUP_IDX_P_V = new int[][] { { 3, 7, 11, 15 }, { 0, 4, 8, 12 }, { 1, 5, 9, 13 }, { 2, 6, 10, 14 } };
-    static int[][] LOOKUP_IDX_Q_V = new int[][] { { 0, 4, 8, 12 }, { 1, 5, 9, 13 }, { 2, 6, 10, 14 }, { 3, 7, 11, 15 } };
-    static int[][] LOOKUP_IDX_P_H = new int[][] { { 12, 13, 14, 15 }, { 0, 1, 2, 3 }, { 4, 5, 6, 7 }, { 8, 9, 10, 11 } };
-    static int[][] LOOKUP_IDX_Q_H = new int[][] { { 0, 1, 2, 3 }, { 4, 5, 6, 7 }, { 8, 9, 10, 11 }, { 12, 13, 14, 15 } };
+    static int[][] LOOKUP_IDX_P_V = new int[][] { { 3, 7, 11, 15 }, { 0, 4, 8, 12 }, { 1, 5, 9, 13 },
+            { 2, 6, 10, 14 } };
+    static int[][] LOOKUP_IDX_Q_V = new int[][] { { 0, 4, 8, 12 }, { 1, 5, 9, 13 }, { 2, 6, 10, 14 },
+            { 3, 7, 11, 15 } };
+    static int[][] LOOKUP_IDX_P_H = new int[][] { { 12, 13, 14, 15 }, { 0, 1, 2, 3 }, { 4, 5, 6, 7 },
+            { 8, 9, 10, 11 } };
+    static int[][] LOOKUP_IDX_Q_H = new int[][] { { 0, 1, 2, 3 }, { 4, 5, 6, 7 }, { 8, 9, 10, 11 },
+            { 12, 13, 14, 15 } };
 
-    // Luma Chroma
-    // 4444 44
-    // 4333 43
-    // 4333
-    // 4333
-    private static int[][] BS_I = { { 4, 4, 4, 4 }, { 3, 3, 3, 3 }, { 3, 3, 3, 3 }, { 3, 3, 3, 3 } };
+    static int calcQpChroma(int qp, int crQpOffset) {
+        return QP_SCALE_CR[MathUtil.clip(qp + crQpOffset, 0, 51)];
+    }
 
     /**
-     * Deblocks bottom edge of topOutMB, right edge of leftOutMB and left/top
-     * and inner block edges of outMB
+     * Deblocks bottom edge of topOutMB, right edge of leftOutMB and left/top and
+     * inner block edges of outMB
      * 
-     * @param curPix
-     *            Pixels of the current MB
-     * @param leftPix
-     *            Pixels of the leftMB
-     * @param topPix
-     *            Pixels of the tipMB
+     * @param curPix        Pixels of the current MB
+     * @param leftPix       Pixels of the leftMB
+     * @param topPix        Pixels of the tipMB
      * 
-     * @param vertStrength
-     *            Border strengths for vertical edges (filtered first)
-     * @param horizStrength
-     *            Border strengths for the horizontal edges
+     * @param vertStrength  Border strengths for vertical edges (filtered first)
+     * @param horizStrength Border strengths for the horizontal edges
+     * @param lastH
+     * @param lastW
      * 
-     * @param curQp
-     *            Current MB's qp
-     * @param leftQp
-     *            Left MB's qp
-     * @param topQp
-     *            Top MB's qp
+     * @param curQp         Current MB's qp
+     * @param leftQp        Left MB's qp
+     * @param topQp         Top MB's qp
      */
     public void deblockMBGeneric(EncodedMB curMB, EncodedMB leftMB, EncodedMB topMB, int[][] vertStrength,
             int horizStrength[][]) {
         Picture curPix = curMB.getPixels();
+
+        int crQpOffset = 0;
+        int curChQp = calcQpChroma(curMB.getQp(), crQpOffset);
         if (leftMB != null) {
             Picture leftPix = leftMB.getPixels();
+
+            int leftChQp = calcQpChroma(leftMB.getQp(), crQpOffset);
             int avgQp = MathUtil.clip((leftMB.getQp() + curMB.getQp() + 1) >> 1, 0, 51);
+            int avgChQp = MathUtil.clip((leftChQp + curChQp + 1) >> 1, 0, 51);
+
             deblockBorder(vertStrength[0], avgQp, leftPix.getPlaneData(0), 3, curPix.getPlaneData(0), 0, P_POS_V,
                     Q_POS_V, false);
-            deblockBorderChroma(vertStrength[0], avgQp, leftPix.getPlaneData(1), 3, curPix.getPlaneData(1), 0,
+            deblockBorderChroma(vertStrength[0], avgChQp, leftPix.getPlaneData(1), 3, curPix.getPlaneData(1), 0,
                     P_POS_V_CHR, Q_POS_V_CHR, false);
-            deblockBorderChroma(vertStrength[0], avgQp, leftPix.getPlaneData(2), 3, curPix.getPlaneData(2), 0,
+            deblockBorderChroma(vertStrength[0], avgChQp, leftPix.getPlaneData(2), 3, curPix.getPlaneData(2), 0,
                     P_POS_V_CHR, Q_POS_V_CHR, false);
         }
-        for (int i = 0; i < 3; i++) {
-            deblockBorder(vertStrength[i + 1], curMB.getQp(), curPix.getPlaneData(0), i, curPix.getPlaneData(0), i + 1,
+        for (int i = 1; i < 4; i++) {
+            deblockBorder(vertStrength[i], curMB.getQp(), curPix.getPlaneData(0), i - 1, curPix.getPlaneData(0), i,
                     P_POS_V, Q_POS_V, false);
-            deblockBorderChroma(vertStrength[i + 1], curMB.getQp(), curPix.getPlaneData(1), i, curPix.getPlaneData(1),
-                    i + 1, P_POS_V_CHR, Q_POS_V_CHR, false);
-            deblockBorderChroma(vertStrength[i + 1], curMB.getQp(), curPix.getPlaneData(2), i, curPix.getPlaneData(2),
-                    i + 1, P_POS_V_CHR, Q_POS_V_CHR, false);
         }
+        deblockBorderChroma(vertStrength[2], curChQp, curPix.getPlaneData(1), 1, curPix.getPlaneData(1), 2, P_POS_V_CHR,
+                Q_POS_V_CHR, false);
+        deblockBorderChroma(vertStrength[2], curChQp, curPix.getPlaneData(2), 1, curPix.getPlaneData(2), 2, P_POS_V_CHR,
+                Q_POS_V_CHR, false);
 
         if (topMB != null) {
             Picture topPix = topMB.getPixels();
+
+            int topChQp = calcQpChroma(topMB.getQp(), crQpOffset);
             int avgQp = MathUtil.clip((topMB.getQp() + curMB.getQp() + 1) >> 1, 0, 51);
+            int avgChQp = MathUtil.clip((topChQp + curChQp + 1) >> 1, 0, 51);
+
             deblockBorder(horizStrength[0], avgQp, topPix.getPlaneData(0), 3, curPix.getPlaneData(0), 0, P_POS_H,
                     Q_POS_H, true);
-            deblockBorderChroma(horizStrength[0], avgQp, topPix.getPlaneData(1), 3, curPix.getPlaneData(1), 0,
+            deblockBorderChroma(horizStrength[0], avgChQp, topPix.getPlaneData(1), 3, curPix.getPlaneData(1), 0,
                     P_POS_H_CHR, Q_POS_H_CHR, true);
-            deblockBorderChroma(horizStrength[0], avgQp, topPix.getPlaneData(2), 3, curPix.getPlaneData(2), 0,
+            deblockBorderChroma(horizStrength[0], avgChQp, topPix.getPlaneData(2), 3, curPix.getPlaneData(2), 0,
                     P_POS_H_CHR, Q_POS_H_CHR, true);
         }
-        for (int i = 0; i < 3; i++) {
-            deblockBorder(horizStrength[i + 1], curMB.getQp(), curPix.getPlaneData(0), i, curPix.getPlaneData(0),
-                    i + 1, P_POS_H, Q_POS_H, true);
-            deblockBorderChroma(horizStrength[i + 1], curMB.getQp(), curPix.getPlaneData(1), i, curPix.getPlaneData(1),
-                    i + 1, P_POS_H_CHR, Q_POS_H_CHR, true);
-            deblockBorderChroma(horizStrength[i + 1], curMB.getQp(), curPix.getPlaneData(2), i, curPix.getPlaneData(2),
-                    i + 1, P_POS_H_CHR, Q_POS_H_CHR, true);
+        for (int i = 1; i < 4; i++) {
+            deblockBorder(horizStrength[i], curMB.getQp(), curPix.getPlaneData(0), i - 1, curPix.getPlaneData(0), i,
+                    P_POS_H, Q_POS_H, true);
         }
-    }
-
-    public void deblockMBI(EncodedMB outMB, EncodedMB leftOutMB, EncodedMB topOutMB) {
-        deblockMBGeneric(outMB, leftOutMB, topOutMB, BS_I, BS_I);
+        deblockBorderChroma(horizStrength[2], curChQp, curPix.getPlaneData(1), 1, curPix.getPlaneData(1), 2,
+                P_POS_H_CHR, Q_POS_H_CHR, true);
+        deblockBorderChroma(horizStrength[2], curChQp, curPix.getPlaneData(2), 1, curPix.getPlaneData(2), 2,
+                P_POS_H_CHR, Q_POS_H_CHR, true);
     }
 
     /**
-     * Deblocks P-macroblock
-     * 
-     * @param cur
-     *            Pixels and parameters of encoded and reconstructed current
-     *            macroblock
-     * @param left
-     *            Pixels and parameters of encoded and reconstructed left
-     *            macroblock
-     * @param top
-     *            Pixels and parameters of encoded and reconstructed top
-     *            macroblock
+     * @param cur  Pixels and parameters of encoded and reconstructed current
+     *             macroblock
+     * @param left Pixels and parameters of encoded and reconstructed left
+     *             macroblock
+     * @param top  Pixels and parameters of encoded and reconstructed top macroblock
+     * @param c
+     * @param b
      */
     public void deblockMBP(EncodedMB cur, EncodedMB left, EncodedMB top) {
         int[][] vertStrength = new int[4][4];
@@ -128,8 +127,8 @@ public class MBDeblocker {
         for (int b = 0; b < 4; b++) {
             if (boundary[b] == 4) {
                 for (int i = 0, ii = b << 2; i < 4; ++i, ++ii)
-                    filterBs4(qp, qp, p, q, pTab[pi][ii] - inc3, pTab[pi][ii] - inc2, pTab[pi][ii] - inc1,
-                            pTab[pi][ii], qTab[qi][ii], qTab[qi][ii] + inc1, qTab[qi][ii] + inc2, qTab[qi][ii] + inc3);
+                    filterBs4(qp, qp, p, q, pTab[pi][ii] - inc3, pTab[pi][ii] - inc2, pTab[pi][ii] - inc1, pTab[pi][ii],
+                            qTab[qi][ii], qTab[qi][ii] + inc1, qTab[qi][ii] + inc2, qTab[qi][ii] + inc3);
             } else if (boundary[b] > 0) {
                 for (int i = 0, ii = b << 2; i < 4; ++i, ++ii)
                     filterBs(boundary[b], qp, qp, p, q, pTab[pi][ii] - inc2, pTab[pi][ii] - inc1, pTab[pi][ii],
@@ -138,11 +137,10 @@ public class MBDeblocker {
             }
         }
     }
-    
+
     protected void filterBs4Chr(int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p1Idx, int p0Idx,
             int q0Idx, int q1Idx) {
-        _filterBs4(indexAlpha, indexBeta, pelsP, pelsQ, -1, -1, p1Idx, p0Idx, q0Idx, q1Idx, -1, -1,
-                true);
+        _filterBs4(indexAlpha, indexBeta, pelsP, pelsQ, -1, -1, p1Idx, p0Idx, q0Idx, q1Idx, -1, -1, true);
     }
 
     protected void filterBsChr(int bs, int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p1Idx, int p0Idx,
@@ -152,14 +150,12 @@ public class MBDeblocker {
 
     protected void filterBs4(int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p3Idx, int p2Idx, int p1Idx,
             int p0Idx, int q0Idx, int q1Idx, int q2Idx, int q3Idx) {
-        _filterBs4(indexAlpha, indexBeta, pelsP, pelsQ, p3Idx, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx,
-                q2Idx, q3Idx, false);
+        _filterBs4(indexAlpha, indexBeta, pelsP, pelsQ, p3Idx, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx, q3Idx, false);
     }
 
     protected void filterBs(int bs, int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p2Idx, int p1Idx,
             int p0Idx, int q0Idx, int q1Idx, int q2Idx) {
-        _filterBs(bs, indexAlpha, indexBeta, pelsP, pelsQ, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx,
-                false);
+        _filterBs(bs, indexAlpha, indexBeta, pelsP, pelsQ, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx, false);
     }
 
     protected void _filterBs4(int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p3Idx, int p2Idx,
@@ -378,23 +374,26 @@ public class MBDeblocker {
 
     static void calcStrengthForBlocks(EncodedMB cur, EncodedMB other, int[][] outStrength, int[][] LOOKUP_IDX_P,
             int[][] LOOKUP_IDX_Q) {
+        boolean thisIntra = cur.getType().isIntra();
         if (other != null) {
+            boolean otherIntra = other.getType().isIntra();
             for (int i = 0; i < 4; ++i) {
-                outStrength[0][i] = other.getType().isIntra() ? 4 : MathUtil.max3(
-                        strengthMv(other.getMx()[LOOKUP_IDX_P[0][i]], cur.getMx()[LOOKUP_IDX_Q[0][i]]),
-                        strengthMv(other.getMy()[LOOKUP_IDX_P[0][i]], cur.getMy()[LOOKUP_IDX_Q[0][i]]),
-                        strengthNc(other.getNc()[LOOKUP_IDX_P[0][i]], cur.getNc()[LOOKUP_IDX_Q[0][i]]));
+                int bsMvx = strengthMv(other.getMx()[LOOKUP_IDX_P[0][i]], cur.getMx()[LOOKUP_IDX_Q[0][i]]);
+                int bsMvy = strengthMv(other.getMy()[LOOKUP_IDX_P[0][i]], cur.getMy()[LOOKUP_IDX_Q[0][i]]);
+                int bsNc = strengthNc(other.getNc()[LOOKUP_IDX_P[0][i]], cur.getNc()[LOOKUP_IDX_Q[0][i]]);
+                int max3 = MathUtil.max3(bsMvx, bsMvy, bsNc);
+                outStrength[0][i] = (otherIntra || thisIntra) ? 4 : max3;
             }
         }
 
         for (int i = 1; i < 4; i++) {
             for (int j = 0; j < 4; ++j) {
-                outStrength[i][j] = MathUtil.max3(
-                        strengthMv(cur.getMx()[LOOKUP_IDX_P[i][j]], cur.getMx()[LOOKUP_IDX_Q[i][j]]),
-                        strengthMv(cur.getMy()[LOOKUP_IDX_P[i][j]], cur.getMy()[LOOKUP_IDX_Q[i][j]]),
-                        strengthNc(cur.getNc()[LOOKUP_IDX_P[i][j]], cur.getNc()[LOOKUP_IDX_Q[i][j]]));
+                int bsMvx = strengthMv(cur.getMx()[LOOKUP_IDX_P[i][j]], cur.getMx()[LOOKUP_IDX_Q[i][j]]);
+                int bsMvy = strengthMv(cur.getMy()[LOOKUP_IDX_P[i][j]], cur.getMy()[LOOKUP_IDX_Q[i][j]]);
+                int bsNc = strengthNc(cur.getNc()[LOOKUP_IDX_P[i][j]], cur.getNc()[LOOKUP_IDX_Q[i][j]]);
+                int max3 = MathUtil.max3(bsMvx, bsMvy, bsNc);
+                outStrength[i][j] = thisIntra ? 3 : max3;
             }
-
         }
     }
 
