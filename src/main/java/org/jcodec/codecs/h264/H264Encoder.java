@@ -384,11 +384,9 @@ public class H264Encoder extends VideoEncoder {
     private void rdMacroblock(EncodingContext ctx, EncodedMB outMB, SliceType sliceType, Picture pic, int mbX, int mbY,
             BitWriter candidate, int qp, int qpDelta, int[] mv) {
         List<RdVector> cands = new LinkedList<RdVector>();
-        // Dummy, only one candidate per frame type, no actual RD
+        cands.add(new RdVector(MBType.I_16x16));
         if (sliceType == SliceType.P) {
             cands.add(new RdVector(MBType.P_16x16));
-        } else {
-            cands.add(new RdVector(MBType.I_16x16));
         }
         long bestRd = Long.MAX_VALUE;
         RdVector bestVector = null;
@@ -420,11 +418,7 @@ public class H264Encoder extends VideoEncoder {
     }
 
     private long rdCost(long mse, int bits, int qp) {
-        return mse + lambda(qp) * bits;
-    }
-
-    private int lambda(int qp) {
-        return qp * qp;
+        return mse + ((H264Const.lambda[qp] * bits) >> 8);
     }
 
     private void encodeCand(EncodingContext ctx, EncodedMB outMB, SliceType sliceType, Picture pic, int mbX, int mbY,
