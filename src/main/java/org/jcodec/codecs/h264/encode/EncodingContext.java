@@ -19,6 +19,7 @@ public class EncodingContext {
     public int mvTopLeftR;
     private int mbHeight;
     private int mbWidth;
+    public int prevQp;
 
     public EncodingContext(int mbWidth, int mbHeight) {
         this.mbWidth = mbWidth;
@@ -80,6 +81,7 @@ public class EncodingContext {
         ret.mvTopLeftX = mvTopLeftX;
         ret.mvTopLeftY = mvTopLeftY;
         ret.mvTopLeftR = mvTopLeftR;
+        ret.prevQp = prevQp;
         return ret;
     }
 }

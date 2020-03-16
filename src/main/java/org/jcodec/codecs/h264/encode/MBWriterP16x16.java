@@ -37,7 +37,7 @@ public class MBWriterP16x16 {
     }
 
     public void encodeMacroblock(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
-            int qp, int qpDelta, int[] mv) {
+            int qp,  int[] mv) {
         if (sps.numRefFrames > 1) {
             int refIdx = decideRef();
             CAVLCWriter.writeTE(out, refIdx, sps.numRefFrames - 1);
@@ -89,7 +89,7 @@ public class MBWriterP16x16 {
         int codedBlockPattern = getCodedBlockPattern();
         CAVLCWriter.writeUE(out, H264Const.CODED_BLOCK_PATTERN_INTER_COLOR_INV[codedBlockPattern]);
 
-        CAVLCWriter.writeSE(out, qpDelta);
+        CAVLCWriter.writeSE(out, qp - ctx.prevQp);
 
         luma(ctx, pic, mb[0], mbX, mbY, out, qp, outMB.getNc());
         chroma(ctx, pic, mb[1], mb[2], mbX, mbY, out, qp);
@@ -103,6 +103,7 @@ public class MBWriterP16x16 {
         Arrays.fill(outMB.getMr(), refIdx);
         outMB.setType(MBType.P_16x16);
         outMB.setQp(qp);
+        ctx.prevQp = qp;
     }
 
     private int getCodedBlockPattern() {

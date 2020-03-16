@@ -29,15 +29,16 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class MBWriterI16x16 {
     public void encodeMacroblock(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
-            int qp, int qpDelta) {
+            int qp) {
         CAVLCWriter.writeUE(out, 0); // Chroma prediction mode -- DC
-        CAVLCWriter.writeSE(out, qpDelta); // MB QP delta
+        CAVLCWriter.writeSE(out, qp - ctx.prevQp); // MB QP delta
 
         outMB.setType(MBType.I_16x16);
         outMB.setQp(qp);
 
         luma(ctx, pic, mbX, mbY, out, qp, outMB.getPixels());
         chroma(ctx, pic, mbX, mbY, out, qp, outMB.getPixels());
+        ctx.prevQp = qp;
     }
 
     private static int DUMMY[] = new int[16];

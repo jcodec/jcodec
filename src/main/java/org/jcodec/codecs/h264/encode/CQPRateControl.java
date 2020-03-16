@@ -13,7 +13,7 @@ public class CQPRateControl implements RateControl {
 
     @Override
     public int startPicture(Size sz, int maxSize, SliceType sliceType) {
-        return Math.max(10, qp - (sliceType == SliceType.I ? 8 : 0));
+        return qp;
     }
 
     @Override

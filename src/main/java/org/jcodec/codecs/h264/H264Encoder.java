@@ -290,7 +290,7 @@ public class H264Encoder extends VideoEncoder {
     }
 
     private void encodeSlice(SeqParameterSet sps, PictureParameterSet pps, Picture pic, ByteBuffer dup, boolean idr,
-            int frameNum, SliceType sliceType, int qp) {
+            int frameNum, SliceType sliceType, int sliceQp) {
         if (idr && sliceType != SliceType.I) {
             idr = false;
             Logger.warn("Illegal value of idr = true when sliceType != I");
@@ -309,12 +309,13 @@ public class H264Encoder extends VideoEncoder {
         sh.sps = sps;
         sh.picOrderCntLsb = (frameNum << 1) % maxPOC;
         sh.frameNum = frameNum % maxFrameNumber;
-        sh.sliceQpDelta = qp - (pps.picInitQpMinus26 + 26);
+        sh.sliceQpDelta = sliceQp - (pps.picInitQpMinus26 + 26);
 
         ByteBuffer buf = ByteBuffer.allocate(pic.getWidth() * pic.getHeight());
         BitWriter sliceData = new BitWriter(buf);
         SliceHeaderWriter.write(sh, idr, 2, sliceData);
         MotionEstimator estimator = new MotionEstimator(ref, sps, motionSearchRange);
+        context.prevQp = sliceQp;
 
         int mbWidth = sps.picWidthInMbsMinus1 + 1;
         int mbHeight = sps.picHeightInMapUnitsMinus1 + 1;
@@ -338,14 +339,14 @@ public class H264Encoder extends VideoEncoder {
                     candidate = sliceData.fork();
                     fork = context.fork();
                     totalQpDelta += qpDelta;
-                    rdMacroblock(fork, outMB, sliceType, pic, mbX, mbY, candidate, qp, totalQpDelta, mv);
+                    rdMacroblock(fork, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, sliceQp + totalQpDelta, mv);
                     qpDelta = rc.accept(candidate.position() - sliceData.position());
                 } while (qpDelta != 0);
 
                 estimator.mvSave(mbX, mbY, new int[] { outMB.mx[0], outMB.my[0], outMB.mr[0] });
                 sliceData = candidate;
                 context = fork;
-                qp += totalQpDelta;
+                sliceQp += totalQpDelta;
 
                 context.update(outMB);
                 if (psnrEn)
@@ -380,24 +381,26 @@ public class H264Encoder extends VideoEncoder {
 
     private class RdVector {
         MBType mbType;
+        int    qp;
 
-        public RdVector(MBType mbType) {
+        public RdVector(MBType mbType, int qp) {
             this.mbType = mbType;
+            this.qp = qp;
         }
     }
 
     private void rdMacroblock(EncodingContext ctx, EncodedMB outMB, SliceType sliceType, Picture pic, int mbX, int mbY,
-            BitWriter candidate, int qp, int qpDelta, int[] mv) {
+            BitWriter candidate, int sliceQp, int mbQp, int[] mv) {
         if (!enableRdo) {
-            encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, qp, qpDelta, mv,
-                    sliceType == SliceType.P ? new RdVector(MBType.P_16x16) : new RdVector(MBType.I_16x16));
+            RdVector vector = sliceType == SliceType.P ? new RdVector(MBType.P_16x16, sliceQp) : new RdVector(MBType.I_16x16, Math.max(sliceQp - 8, 12));
+            encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, mv, vector);
             return;
         }
 
         List<RdVector> cands = new LinkedList<RdVector>();
-        cands.add(new RdVector(MBType.I_16x16));
+        cands.add(new RdVector(MBType.I_16x16, Math.max(sliceQp - 8, 12)));
         if (sliceType == SliceType.P) {
-            cands.add(new RdVector(MBType.P_16x16));
+            cands.add(new RdVector(MBType.P_16x16, sliceQp));
         }
         long bestRd = Long.MAX_VALUE;
         RdVector bestVector = null;
@@ -405,35 +408,35 @@ public class H264Encoder extends VideoEncoder {
         for (RdVector rdVector : cands) {
             EncodingContext candCtx = ctx.fork();
             BitWriter candBits = candidate.fork();
-            long rdCost = tryVector(candCtx, sliceType, pic, mbX, mbY, candBits, qp, qpDelta, mv, rdVector);
+            long rdCost = tryVector(candCtx, sliceType, pic, mbX, mbY, candBits, sliceQp, mv, rdVector);
             if (rdCost < bestRd) {
                 bestRd = rdCost;
                 bestVector = rdVector;
             }
         }
-        encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, qp, qpDelta, mv, bestVector);
+        encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, mv, bestVector);
     }
 
     private long tryVector(EncodingContext ctx, SliceType sliceType, Picture pic, int mbX, int mbY, BitWriter candidate,
-            int qp, int qpDelta, int[] mv, RdVector vector) {
+            int sliceQp, int[] mv, RdVector vector) {
         int start = candidate.position();
         EncodedMB outMB = new EncodedMB();
         outMB.setPos(mbX, mbY);
-        encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, qp, qpDelta, mv, vector);
+        encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, mv, vector);
 
         long[] se = new long[3];
         calcMse(pic, outMB, mbX, mbY, se);
         long mse = (se[0] + se[1] + se[2]) / 384;
         int bits = candidate.position() - start;
-        return rdCost(mse, bits, qp);
+        return rdCost(mse, bits, H264Const.lambda[sliceQp]);
     }
 
-    private long rdCost(long mse, int bits, int qp) {
-        return mse + ((H264Const.lambda[qp] * bits) >> 8);
+    private long rdCost(long mse, int bits, int lambda) {
+        return mse + ((lambda * bits) >> 8);
     }
 
     private void encodeCand(EncodingContext ctx, EncodedMB outMB, SliceType sliceType, Picture pic, int mbX, int mbY,
-            BitWriter candidate, int qp, int qpDelta, int[] mv, RdVector vector) {
+            BitWriter candidate, int sliceQp, int[] mv, RdVector vector) {
         if (vector.mbType == MBType.I_16x16) {
             // I16x16 carries part of layout information in the
             // macroblock type
@@ -453,9 +456,9 @@ public class H264Encoder extends VideoEncoder {
         }
 
         if (vector.mbType == MBType.I_16x16) {
-            mbEncoderI16x16.encodeMacroblock(ctx, pic, mbX, mbY, candidate, outMB, qp + qpDelta, qpDelta);
+            mbEncoderI16x16.encodeMacroblock(ctx, pic, mbX, mbY, candidate, outMB, vector.qp);
         } else if (vector.mbType == MBType.P_16x16) {
-            mbEncoderP16x16.encodeMacroblock(ctx, pic, mbX, mbY, candidate, outMB, qp + qpDelta, qpDelta, mv);
+            mbEncoderP16x16.encodeMacroblock(ctx, pic, mbX, mbY, candidate, outMB, vector.qp, mv);
         } else
             throw new RuntimeException("Macroblock of type " + vector.mbType + " is not supported.");
     }
