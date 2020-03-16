@@ -84,6 +84,7 @@ public class H264Encoder extends VideoEncoder {
     private long totalSize;
     private EncodingContext context;
     private H264Decoder decoder;
+    private boolean enableRdo;
 
     public H264Encoder(RateControl rc) {
         this.rc = rc;
@@ -117,6 +118,10 @@ public class H264Encoder extends VideoEncoder {
 
     public void setEncDecMismatch(boolean test) {
         this.decoder = new H264Decoder();
+    }
+    
+    public void setEnableRdo(boolean enableRdo) {
+        this.enableRdo = enableRdo;
     }
 
     /**
@@ -383,6 +388,12 @@ public class H264Encoder extends VideoEncoder {
 
     private void rdMacroblock(EncodingContext ctx, EncodedMB outMB, SliceType sliceType, Picture pic, int mbX, int mbY,
             BitWriter candidate, int qp, int qpDelta, int[] mv) {
+        if (!enableRdo) {
+            encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, qp, qpDelta, mv,
+                    sliceType == SliceType.P ? new RdVector(MBType.P_16x16) : new RdVector(MBType.I_16x16));
+            return;
+        }
+
         List<RdVector> cands = new LinkedList<RdVector>();
         cands.add(new RdVector(MBType.I_16x16));
         if (sliceType == SliceType.P) {
