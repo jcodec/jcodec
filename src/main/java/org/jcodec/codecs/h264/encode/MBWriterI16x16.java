@@ -10,7 +10,9 @@ import static org.jcodec.codecs.h264.decode.CoeffTransformer.reorderDC4x4;
 import static org.jcodec.codecs.h264.io.model.MBType.I_16x16;
 
 import org.jcodec.codecs.h264.H264Const;
+import org.jcodec.codecs.h264.H264Encoder.NonRdVector;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
+import org.jcodec.codecs.h264.decode.Intra16x16PredictionBuilder;
 import org.jcodec.codecs.h264.io.CAVLC;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
@@ -29,15 +31,15 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class MBWriterI16x16 {
     public void encodeMacroblock(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
-            int qp) {
-        CAVLCWriter.writeUE(out, 0); // Chroma prediction mode -- DC
+            int qp, NonRdVector params) {
+        CAVLCWriter.writeUE(out, params.chrPred);
         CAVLCWriter.writeSE(out, qp - ctx.prevQp); // MB QP delta
 
         outMB.setType(MBType.I_16x16);
         outMB.setQp(qp);
 
-        luma(ctx, pic, mbX, mbY, out, qp, outMB.getPixels());
-        chroma(ctx, pic, mbX, mbY, out, qp, outMB.getPixels());
+        luma(ctx, pic, mbX, mbY, out, qp, outMB.getPixels(), params.lumaPred);
+        chroma(ctx, pic, mbX, mbY, out, qp, outMB.getPixels(), params.chrPred);
         ctx.prevQp = qp;
     }
 
@@ -47,7 +49,7 @@ public class MBWriterI16x16 {
         return QP_SCALE_CR[MathUtil.clip(qp + crQpOffset, 0, 51)];
     }
 
-    private void chroma(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB) {
+    private void chroma(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB, int chrPred) {
         int x = mbX << 3;
         int y = mbY << 3;
         int[][] ac1 = new int[4][16];
@@ -85,13 +87,14 @@ public class MBWriterI16x16 {
         restorePlane(dc2, ac2, chrQp);
     }
 
-    private void luma(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB) {
+    private void luma(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB, int predType) {
         int x = mbX << 4;
         int y = mbY << 4;
         int[][] ac = new int[16][16];
         byte[][] pred = new byte[16][16];
 
-        lumaDCPred(ctx, x, y, pred);
+        Intra16x16PredictionBuilder.lumaPred(predType, x != 0, y != 0, ctx.leftRow[0], ctx.topLine[0], ctx.topLeft[0], x, pred);
+        
         transform(pic, 0, ac, pred, x, y);
         int[] dc = extractDC(ac);
         writeDC(ctx.cavlc[0], mbX, mbY, out, qp, mbX << 2, mbY << 2, dc, I_16x16, I_16x16);
@@ -258,21 +261,6 @@ public class MBWriterI16x16 {
             pred[i] += dc;
     }
 
-    private void lumaDCPred(EncodingContext ctx, int x, int y, byte[][] pred) {
-        int dc;
-        if (x == 0 && y == 0)
-            dc = 0;
-        else if (y == 0)
-            dc = (ArrayUtil.sumByte(ctx.leftRow[0]) + 8) >> 4;
-        else if (x == 0)
-            dc = (ArrayUtil.sumByte3(ctx.topLine[0], x, 16) + 8) >> 4;
-        else
-            dc = (ArrayUtil.sumByte(ctx.leftRow[0]) + ArrayUtil.sumByte3(ctx.topLine[0], x, 16) + 16) >> 5;
-
-        for (int i = 0; i < pred.length; i++)
-            for (int j = 0; j < pred[i].length; j++)
-                pred[i][j] += dc;
-    }
 
     private void transform(Picture pic, int comp, int[][] ac, byte[][] pred, int x, int y) {
         for (int i = 0; i < ac.length; i++) {
@@ -281,10 +269,6 @@ public class MBWriterI16x16 {
                     x + BLK_X[i], y + BLK_Y[i], coeff, pred[i], 4, 4);
             CoeffTransformer.fdct4x4(coeff);
         }
-    }
-
-    public int getPredMode(Picture pic, int mbX, int mbY) {
-        return 2;
     }
 
     public int getCbpChroma(Picture pic, int mbX, int mbY) {

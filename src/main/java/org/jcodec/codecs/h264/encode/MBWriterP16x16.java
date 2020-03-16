@@ -8,6 +8,7 @@ import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
 import java.util.Arrays;
 
 import org.jcodec.codecs.h264.H264Const;
+import org.jcodec.codecs.h264.H264Encoder.NonRdVector;
 import org.jcodec.codecs.h264.decode.BlockInterpolator;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.codecs.h264.io.model.MBType;
@@ -37,7 +38,7 @@ public class MBWriterP16x16 {
     }
 
     public void encodeMacroblock(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
-            int qp,  int[] mv) {
+            int qp,  NonRdVector params) {
         if (sps.numRefFrames > 1) {
             int refIdx = decideRef();
             CAVLCWriter.writeTE(out, refIdx, sps.numRefFrames - 1);
@@ -66,18 +67,18 @@ public class MBWriterP16x16 {
         int mvpy = median(ay, ar, by, br, cy, cr, dy, dr, mbX > 0, mbY > 0, trAvb, tlAvb);
 
         // Motion estimation for the current macroblock
-        CAVLCWriter.writeSE(out, mv[0] - mvpx); // mvdx
-        CAVLCWriter.writeSE(out, mv[1] - mvpy); // mvdy
+        CAVLCWriter.writeSE(out, params.mv[0] - mvpx); // mvdx
+        CAVLCWriter.writeSE(out, params.mv[1] - mvpy); // mvdy
 
         Picture mbRef = Picture.create(16, 16, sps.chromaFormatIdc);
         int[][] mb = new int[][] { new int[256], new int[64], new int[64] };
 
-        interpolator.getBlockLuma(ref, mbRef, 0, (mbX << 6) + mv[0], (mbY << 6) + mv[1], 16, 16);
+        interpolator.getBlockLuma(ref, mbRef, 0, (mbX << 6) + params.mv[0], (mbY << 6) + params.mv[1], 16, 16);
 
         BlockInterpolator.getBlockChroma(ref.getPlaneData(1), ref.getPlaneWidth(1), ref.getPlaneHeight(1),
-                mbRef.getPlaneData(1), 0, mbRef.getPlaneWidth(1), (mbX << 6) + mv[0], (mbY << 6) + mv[1], 8, 8);
+                mbRef.getPlaneData(1), 0, mbRef.getPlaneWidth(1), (mbX << 6) + params.mv[0], (mbY << 6) + params.mv[1], 8, 8);
         BlockInterpolator.getBlockChroma(ref.getPlaneData(2), ref.getPlaneWidth(2), ref.getPlaneHeight(2),
-                mbRef.getPlaneData(2), 0, mbRef.getPlaneWidth(2), (mbX << 6) + mv[0], (mbY << 6) + mv[1], 8, 8);
+                mbRef.getPlaneData(2), 0, mbRef.getPlaneWidth(2), (mbX << 6) + params.mv[0], (mbY << 6) + params.mv[1], 8, 8);
 
         MBEncoderHelper.takeSubtract(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4,
                 mbY << 4, mb[0], mbRef.getPlaneData(0), 16, 16);
@@ -98,8 +99,8 @@ public class MBWriterP16x16 {
         MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb[1], mbRef.getPlaneData(1), 3, 0, 0, 8, 8);
         MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(2), mb[2], mbRef.getPlaneData(2), 3, 0, 0, 8, 8);
 
-        Arrays.fill(outMB.getMx(), mv[0]);
-        Arrays.fill(outMB.getMy(), mv[1]);
+        Arrays.fill(outMB.getMx(), params.mv[0]);
+        Arrays.fill(outMB.getMy(), params.mv[1]);
         Arrays.fill(outMB.getMr(), refIdx);
         outMB.setType(MBType.P_16x16);
         outMB.setQp(qp);

@@ -8,6 +8,7 @@ public class EncodingContext {
     public CAVLC[] cavlc;
     public byte[][] leftRow;
     public byte[][] topLine;
+    public byte[] topLeft;
     public int[] mvTopX;
     public int[] mvTopY;
     public int[] mvTopR;
@@ -26,6 +27,7 @@ public class EncodingContext {
         this.mbHeight = mbHeight;
         leftRow = new byte[][] { new byte[16], new byte[8], new byte[8] };
         topLine = new byte[][] { new byte[mbWidth << 4], new byte[mbWidth << 3], new byte[mbWidth << 3] };
+        topLeft = new byte[3];
 
         mvTopX = new int[mbWidth << 2];
         mvTopY = new int[mbWidth << 2];
@@ -36,6 +38,9 @@ public class EncodingContext {
     }
 
     public void update(EncodedMB mb) {
+        topLeft[0] = topLine[0][(mb.mbX << 4) + 15];
+        topLeft[1] = topLine[1][(mb.mbX << 3) + 7];
+        topLeft[2] = topLine[2][(mb.mbX << 3) + 7];
         arraycopy(mb.pixels.getPlaneData(0), 240, topLine[0], mb.mbX << 4, 16);
         arraycopy(mb.pixels.getPlaneData(1), 56, topLine[1], mb.mbX << 3, 8);
         arraycopy(mb.pixels.getPlaneData(2), 56, topLine[2], mb.mbX << 3, 8);
@@ -70,6 +75,7 @@ public class EncodingContext {
         for (int i = 0; i < 3; i++) {
             System.arraycopy(leftRow[i], 0, ret.leftRow[i], 0, leftRow[i].length);
             System.arraycopy(topLine[i], 0, ret.topLine[i], 0, topLine[i].length);
+            ret.topLeft[i] = topLeft[i];
             ret.cavlc[i] = cavlc[i].fork();
         }
         System.arraycopy(mvTopX, 0, ret.mvTopX, 0, ret.mvTopX.length);
