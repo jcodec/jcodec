@@ -144,7 +144,9 @@ public class M4AFix {
         while (buf.hasRemaining()) {
             int sz = parseFrame(buf);
 
-            if (sz > 0)
+            if (sz == 0)
+                break;
+            else if (sz > 0)
                 audio.addFrame(sz, offset, newChunk);
             else if (sz == -18 || sz == -19)
                 tags.addFrame(-sz, offset, true);
@@ -158,7 +160,6 @@ public class M4AFix {
                 offset += -sz;
                 newChunk = true;
             }
-
         }
         TrakBox audioTrack = moov.getAudioTracks().get(0);
         List<TrakBox> metaTracks = moov.getMetaTracks();
@@ -227,7 +228,7 @@ public class M4AFix {
             conf.setSampleFrequency(SampleFrequency.SAMPLE_FREQUENCY_48000);
             int type;
             Element prev = null;
-            while ((type = _in.readNBit(3)) != ELEMENT_END) {
+            while ((type = _in.readNBit(3)) != ELEMENT_END && _in.moreData()) {
                 switch (type) {
                 case ELEMENT_SCE:
                 case ELEMENT_LFE:
