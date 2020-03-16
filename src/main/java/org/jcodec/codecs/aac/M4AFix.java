@@ -133,7 +133,7 @@ public class M4AFix {
         ch.setPosition(atom.getOffset() + atom.getHeader().headerSize());
         long offset = ch.position();
 
-        buf = NIOUtils.fetchFromChannel(ch, (int) atom.getHeader().getBodySize());
+        buf = NIOUtils.fetchFromChannel(ch, (int) (ch.size() - offset));
         int size = buf.remaining();
         long start = System.currentTimeMillis();
         Track audio = new Track();
