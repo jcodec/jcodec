@@ -213,7 +213,7 @@ public class Intra16x16PredictionBuilder {
         int c = (5 * V + 32) >> 6;
         int b = (5 * H + 32) >> 6;
         int a = 16 * (leftRow[15] + topLine[x + 15]);
-
+        
         int off = 0;
         for (int j = 0; j < 16; j++) {
             for (int i = 0; i < 16; i++, off++) {

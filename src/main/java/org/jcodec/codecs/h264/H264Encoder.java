@@ -1,18 +1,27 @@
 package org.jcodec.codecs.h264;
 
+import static org.jcodec.codecs.h264.H264Const.BLK_DISP_MAP;
 import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
+import static org.jcodec.common.tools.MathUtil.clip;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.codecs.h264.decode.Intra16x16PredictionBuilder;
+import org.jcodec.codecs.h264.decode.Intra4x4PredictionBuilder;
 import org.jcodec.codecs.h264.encode.CQPRateControl;
 import org.jcodec.codecs.h264.encode.EncodedMB;
 import org.jcodec.codecs.h264.encode.EncodingContext;
 import org.jcodec.codecs.h264.encode.MBDeblocker;
 import org.jcodec.codecs.h264.encode.MBEncoderHelper;
 import org.jcodec.codecs.h264.encode.MBWriterI16x16;
+import org.jcodec.codecs.h264.encode.MBWriterINxN;
 import org.jcodec.codecs.h264.encode.MBWriterP16x16;
 import org.jcodec.codecs.h264.encode.MotionEstimator;
 import org.jcodec.codecs.h264.encode.RateControl;
@@ -28,14 +37,20 @@ import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
+import org.jcodec.codecs.png.PNGEncoder;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.Tuple._3;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MathUtil;
+import org.jcodec.scale.ColorUtil;
+import org.jcodec.scale.Transform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -72,6 +87,7 @@ public class H264Encoder extends VideoEncoder {
     private PictureParameterSet pps;
 
     private MBWriterI16x16 mbEncoderI16x16;
+    private MBWriterINxN mbEncoderINxN;
     private MBWriterP16x16 mbEncoderP16x16;
 
     private Picture ref;
@@ -86,6 +102,8 @@ public class H264Encoder extends VideoEncoder {
     private EncodingContext context;
     private H264Decoder decoder;
     private boolean enableRdo;
+    private String decodedDump;
+    private FileChannelWrapper dumpOut;
 
     public H264Encoder(RateControl rc) {
         this.rc = rc;
@@ -120,9 +138,13 @@ public class H264Encoder extends VideoEncoder {
     public void setEncDecMismatch(boolean test) {
         this.decoder = new H264Decoder();
     }
-    
+
     public void setEnableRdo(boolean enableRdo) {
         this.enableRdo = enableRdo;
+    }
+
+    public void setDecodedDump(String decodedDump) {
+        this.decodedDump = decodedDump;
     }
 
     /**
@@ -143,11 +165,41 @@ public class H264Encoder extends VideoEncoder {
         if (psnrEn) {
             savePsnrStats(data.remaining());
         }
-        if (decoder != null)
-            checkEncDecMatch(data);
+        if (decoder != null) {
+            checkEncDecMatch(NIOUtils.cloneBuffer(data));
+        }
+        if (decodedDump != null)
+            dumpDecoded();
 
         frameCount++;
         return new EncodedFrame(data, idr);
+    }
+
+    private void dumpDecoded() {
+        try {
+            if (decodedDump.endsWith(".png")) {
+                PNGEncoder pngEncoder = new PNGEncoder();
+                Transform transform = ColorUtil.getTransform(picOut.getColor(), ColorSpace.RGB);
+                Picture rgb = Picture.create(picOut.getWidth(), picOut.getHeight(), ColorSpace.RGB);
+                transform.transform(picOut, rgb);
+                EncodedFrame frame = pngEncoder.encodeFrame(rgb,
+                        ByteBuffer.allocate(picOut.getWidth() * picOut.getHeight() * 4));
+                NIOUtils.writeTo(frame.getData(), new File(String.format(decodedDump, frameCount)));
+            } else {
+                if (dumpOut == null) {
+                    dumpOut = NIOUtils.writableFileChannel(decodedDump);
+                    if (decodedDump.endsWith(".y4m")) {
+                        dumpOut.write(ByteBuffer.wrap(String
+                                .format("YUV4MPEG2 W%d H%d\n", picOut.getWidth(), picOut.getHeight()).getBytes()));
+                    }
+                }
+                dumpOut.write(ByteBuffer.wrap(picOut.getPlaneData(0)));
+                dumpOut.write(ByteBuffer.wrap(picOut.getPlaneData(1)));
+                dumpOut.write(ByteBuffer.wrap(picOut.getPlaneData(2)));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void checkEncDecMatch(ByteBuffer data) {
@@ -177,7 +229,7 @@ public class H264Encoder extends VideoEncoder {
         int luma = p == 0 ? 1 : 0;
         int pixCnt = (sps.picHeightInMapUnitsMinus1 + 1) * (sps.picWidthInMbsMinus1 + 1) << (6 + (luma * 2));
         double mse = (double) sum / pixCnt;
-        return 10 * Math.log10((255*255) / mse);
+        return 10 * Math.log10((255 * 255) / mse);
     }
 
     /**
@@ -298,6 +350,7 @@ public class H264Encoder extends VideoEncoder {
         }
         context.cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
         mbEncoderI16x16 = new MBWriterI16x16();
+        mbEncoderINxN = new MBWriterINxN();
         mbEncoderP16x16 = new MBWriterP16x16(sps, ref);
 
         dup.putInt(0x1);
@@ -329,7 +382,8 @@ public class H264Encoder extends VideoEncoder {
                 int[] mv = null;
                 if (ref != null)
                     mv = estimator.mvEstimate(pic, mbX, mbY);
-                NonRdVector params = new NonRdVector(mv, getLumaMode(pic, context, mbX, mbY), 0);
+                NonRdVector params = new NonRdVector(mv, getLumaMode(pic, context, mbX, mbY),
+                        getLumaPred4x4(pic, context, mbX, mbY, Math.max(sliceQp - 8, 12)), 0);
 
                 EncodedMB outMB = new EncodedMB();
                 outMB.setPos(mbX, mbY);
@@ -341,7 +395,8 @@ public class H264Encoder extends VideoEncoder {
                     candidate = sliceData.fork();
                     fork = context.fork();
                     totalQpDelta += qpDelta;
-                    rdMacroblock(fork, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, sliceQp + totalQpDelta, params);
+                    rdMacroblock(fork, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, sliceQp + totalQpDelta,
+                            params);
                     qpDelta = rc.accept(candidate.position() - sliceData.position());
                 } while (qpDelta != 0);
 
@@ -365,6 +420,64 @@ public class H264Encoder extends VideoEncoder {
         buf.flip();
 
         escapeNAL(buf, dup);
+    }
+
+    private int[] getLumaPred4x4(Picture pic, EncodingContext ctx, int mbX, int mbY, int qp) {
+        byte[] patch = new byte[256];
+        MBEncoderHelper.take(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4, mbY << 4,
+                patch, 16, 16);
+        int[] predModes = new int[16];
+        byte[] predLeft = Arrays.copyOf(ctx.leftRow[0], 16);
+        byte[] predTop = Arrays.copyOfRange(ctx.topLine[0], mbX << 4,
+                (mbX << 4) + 16 + (mbX < ctx.mbWidth - 1 ? 4 : 0));
+        byte[] predTopLeft = new byte[] { ctx.topLeft[0], ctx.leftRow[0][3], ctx.leftRow[0][7], ctx.leftRow[0][11] };
+        int[] resi = new int[16];
+        byte[] pred = new byte[16];
+
+        for (int bInd = 0; bInd < 16; bInd++) {
+            int minSad = Integer.MAX_VALUE;
+
+            int dInd = BLK_DISP_MAP[bInd];
+            boolean hasLeft = (dInd & 0x3) != 0 || mbX != 0;
+            boolean hasTop = dInd >= 4 || mbY != 0;
+            boolean hasTr = ((bInd == 0 || bInd == 1 || bInd == 4) && mbY != 0) || (bInd == 5 && mbX < ctx.mbWidth - 1)
+                    || bInd == 2 || bInd == 6 || bInd == 8 || bInd == 9 || bInd == 10 || bInd == 12 || bInd == 14;
+            predModes[bInd] = 2;
+            int blkX = (dInd & 0x3) << 2;
+            int blkY = (dInd >> 2) << 2;
+
+            for (int predType = 0; predType < 9; predType++) {
+                boolean available = Intra4x4PredictionBuilder.lumaPred(predType, hasLeft, hasTop, hasTr, predLeft,
+                        predTop, predTopLeft[dInd >> 2], blkX, blkY, pred);
+                if (available) {
+                    int sad = 0;
+                    for (int i = 0; i < 16; i++) {
+                        int x = blkX + (i & 0x3);
+                        int y = blkY + (i >> 2);
+                        resi[i] = patch[(y << 4) + x] - pred[i];
+                        sad += MathUtil.abs(resi[i]);
+                    }
+
+                    if (sad < minSad) {
+                        minSad = sad;
+                        predModes[bInd] = predType;
+
+                        // Distort coeffs
+                        CoeffTransformer.fdct4x4(resi);
+                        CoeffTransformer.quantizeAC(resi, qp);
+                        CoeffTransformer.dequantizeAC(resi, qp, null);
+                        CoeffTransformer.idct4x4(resi);
+
+                        predTopLeft[dInd >> 2] = predTop[blkX + 3];
+                        for (int p = 0; p < 4; p++) {
+                            predLeft[blkY + p] = (byte) clip(resi[3 + (p << 2)] + pred[3 + (p << 2)], -128, 127);
+                            predTop[blkX + p] = (byte) clip(resi[12 + p] + pred[12 + p], -128, 127);
+                        }
+                    }
+                }
+            }
+        }
+        return predModes;
     }
 
     private int getLumaMode(Picture pic, EncodingContext ctx, int mbX, int mbY) {
@@ -400,22 +513,24 @@ public class H264Encoder extends VideoEncoder {
 
     public static class RdVector {
         public MBType mbType;
-        public int    qp;
+        public int qp;
 
         public RdVector(MBType mbType, int qp) {
             this.mbType = mbType;
             this.qp = qp;
         }
     }
-    
+
     public static class NonRdVector {
         public int[] mv;
-        public int lumaPred;
+        public int lumaPred16x16;
+        public int[] lumaPred4x4;
         public int chrPred;
-        
-        public NonRdVector(int[] mv, int lumaPred, int chrPred) {
+
+        public NonRdVector(int[] mv, int lumaPred16x16, int[] lumaPred4x4, int chrPred) {
             this.mv = mv;
-            this.lumaPred = lumaPred;
+            this.lumaPred16x16 = lumaPred16x16;
+            this.lumaPred4x4 = lumaPred4x4;
             this.chrPred = chrPred;
         }
     }
@@ -423,13 +538,15 @@ public class H264Encoder extends VideoEncoder {
     private void rdMacroblock(EncodingContext ctx, EncodedMB outMB, SliceType sliceType, Picture pic, int mbX, int mbY,
             BitWriter candidate, int sliceQp, int mbQp, NonRdVector params) {
         if (!enableRdo) {
-            RdVector vector = sliceType == SliceType.P ? new RdVector(MBType.P_16x16, sliceQp) : new RdVector(MBType.I_16x16, Math.max(sliceQp - 8, 12));
+            RdVector vector = sliceType == SliceType.P ? new RdVector(MBType.P_16x16, sliceQp)
+                    : new RdVector(MBType.I_16x16, Math.max(sliceQp - 8, 12));
             encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, params, vector);
             return;
         }
 
         List<RdVector> cands = new LinkedList<RdVector>();
         cands.add(new RdVector(MBType.I_16x16, Math.max(sliceQp - 8, 12)));
+        cands.add(new RdVector(MBType.I_NxN, Math.max(sliceQp - 8, 12)));
         if (sliceType == SliceType.P) {
             cands.add(new RdVector(MBType.P_16x16, sliceQp));
         }
@@ -472,10 +589,12 @@ public class H264Encoder extends VideoEncoder {
             int cbpChroma = mbEncoderI16x16.getCbpChroma(pic, mbX, mbY);
             int cbpLuma = mbEncoderI16x16.getCbpLuma(pic, mbX, mbY);
 
-            int i16x16TypeOffset = (cbpLuma / 15) * 12 + cbpChroma * 4 + params.lumaPred;
+            int i16x16TypeOffset = (cbpLuma / 15) * 12 + cbpChroma * 4 + params.lumaPred16x16;
             int mbTypeOffset = sliceType == SliceType.P ? 5 : 0;
 
             CAVLCWriter.writeUE(candidate, mbTypeOffset + vector.mbType.code() + i16x16TypeOffset);
+        } else if (vector.mbType == MBType.I_NxN) {
+            CAVLCWriter.writeUE(candidate, sliceType == SliceType.P ? 5 : 0);
         } else {
             CAVLCWriter.writeUE(candidate, vector.mbType.code());
         }
@@ -484,6 +603,8 @@ public class H264Encoder extends VideoEncoder {
             mbEncoderI16x16.encodeMacroblock(ctx, pic, mbX, mbY, candidate, outMB, vector.qp, params);
         } else if (vector.mbType == MBType.P_16x16) {
             mbEncoderP16x16.encodeMacroblock(ctx, pic, mbX, mbY, candidate, outMB, vector.qp, params);
+        } else if (vector.mbType == MBType.I_NxN) {
+            mbEncoderINxN.encodeMacroblock(ctx, pic, mbX, mbY, candidate, outMB, vector.qp, params);
         } else
             throw new RuntimeException("Macroblock of type " + vector.mbType + " is not supported.");
     }
@@ -523,5 +644,7 @@ public class H264Encoder extends VideoEncoder {
             Logger.info(String.format("PSNR AVG:%.3f Y:%.3f U:%.3f V:%.3f kbps:%.3f", avgPsnr, yPsnr, uPsnr, vPsnr,
                     (double) (8 * 25 * (totalSize / fc)) / 1000));
         }
+        if (dumpOut != null)
+            NIOUtils.closeQuietly(dumpOut);
     }
 }

@@ -3,6 +3,7 @@ package org.jcodec.codecs.h264.encode;
 import static java.lang.System.arraycopy;
 
 import org.jcodec.codecs.h264.io.CAVLC;
+import org.jcodec.codecs.h264.io.model.MBType;
 
 public class EncodingContext {
     public CAVLC[] cavlc;
@@ -18,16 +19,21 @@ public class EncodingContext {
     public int mvTopLeftX;
     public int mvTopLeftY;
     public int mvTopLeftR;
-    private int mbHeight;
-    private int mbWidth;
+    public int mbHeight;
+    public int mbWidth;
     public int prevQp;
+    
+    public int[] i4x4PredTop;
+    public int[] i4x4PredLeft;
+    public MBType leftMBType;
+    public MBType[] topMBType;
 
     public EncodingContext(int mbWidth, int mbHeight) {
         this.mbWidth = mbWidth;
         this.mbHeight = mbHeight;
         leftRow = new byte[][] { new byte[16], new byte[8], new byte[8] };
         topLine = new byte[][] { new byte[mbWidth << 4], new byte[mbWidth << 3], new byte[mbWidth << 3] };
-        topLeft = new byte[3];
+        topLeft = new byte[4];
 
         mvTopX = new int[mbWidth << 2];
         mvTopY = new int[mbWidth << 2];
@@ -35,17 +41,22 @@ public class EncodingContext {
         mvLeftX = new int[4];
         mvLeftY = new int[4];
         mvLeftR = new int[4];
+        i4x4PredTop = new int[mbWidth << 2];
+        i4x4PredLeft = new int[4];
+        topMBType = new MBType[mbWidth];
     }
 
     public void update(EncodedMB mb) {
-        topLeft[0] = topLine[0][(mb.mbX << 4) + 15];
+        if (mb.getType() != MBType.I_NxN) {
+            topLeft[0] = topLine[0][(mb.mbX << 4) + 15];
+            arraycopy(mb.pixels.getPlaneData(0), 240, topLine[0], mb.mbX << 4, 16);
+            copyCol(mb.pixels.getPlaneData(0), 15, 16, leftRow[0]);
+        }
         topLeft[1] = topLine[1][(mb.mbX << 3) + 7];
         topLeft[2] = topLine[2][(mb.mbX << 3) + 7];
-        arraycopy(mb.pixels.getPlaneData(0), 240, topLine[0], mb.mbX << 4, 16);
         arraycopy(mb.pixels.getPlaneData(1), 56, topLine[1], mb.mbX << 3, 8);
         arraycopy(mb.pixels.getPlaneData(2), 56, topLine[2], mb.mbX << 3, 8);
 
-        copyCol(mb.pixels.getPlaneData(0), 15, 16, leftRow[0]);
         copyCol(mb.pixels.getPlaneData(1), 7, 8, leftRow[1]);
         copyCol(mb.pixels.getPlaneData(2), 7, 8, leftRow[2]);
 
@@ -60,6 +71,7 @@ public class EncodingContext {
             mvLeftY[i] = mb.my[(i << 2)];
             mvLeftR[i] = mb.mr[(i << 2)];
         }
+        topMBType[mb.mbX] = leftMBType = mb.getType();
     }
 
     private void copyCol(byte[] planeData, int off, int stride, byte[] out) {
@@ -88,6 +100,13 @@ public class EncodingContext {
         ret.mvTopLeftY = mvTopLeftY;
         ret.mvTopLeftR = mvTopLeftR;
         ret.prevQp = prevQp;
+        
+        for (int i = 0; i < mbWidth; i++)
+            ret.topMBType[i] = topMBType[i];
+        ret.leftMBType = leftMBType;
+        
+        System.arraycopy(i4x4PredTop, 0, ret.i4x4PredTop, 0, mbWidth << 2);
+        System.arraycopy(i4x4PredLeft, 0, ret.i4x4PredLeft, 0, 4);
         return ret;
     }
 }

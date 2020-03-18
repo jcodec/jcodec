@@ -1,7 +1,7 @@
 package org.jcodec.codecs.h264.encode;
 
-import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_LEFT;
-import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_TOP;
+import static org.jcodec.codecs.h264.H264Const.MB_DISP_OFF_LEFT;
+import static org.jcodec.codecs.h264.H264Const.MB_DISP_OFF_TOP;
 import static org.jcodec.codecs.h264.encode.H264EncoderUtils.median;
 import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
 
@@ -38,7 +38,7 @@ public class MBWriterP16x16 {
     }
 
     public void encodeMacroblock(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
-            int qp,  NonRdVector params) {
+            int qp, NonRdVector params) {
         if (sps.numRefFrames > 1) {
             int refIdx = decideRef();
             CAVLCWriter.writeTE(out, refIdx, sps.numRefFrames - 1);
@@ -76,9 +76,11 @@ public class MBWriterP16x16 {
         interpolator.getBlockLuma(ref, mbRef, 0, (mbX << 6) + params.mv[0], (mbY << 6) + params.mv[1], 16, 16);
 
         BlockInterpolator.getBlockChroma(ref.getPlaneData(1), ref.getPlaneWidth(1), ref.getPlaneHeight(1),
-                mbRef.getPlaneData(1), 0, mbRef.getPlaneWidth(1), (mbX << 6) + params.mv[0], (mbY << 6) + params.mv[1], 8, 8);
+                mbRef.getPlaneData(1), 0, mbRef.getPlaneWidth(1), (mbX << 6) + params.mv[0], (mbY << 6) + params.mv[1],
+                8, 8);
         BlockInterpolator.getBlockChroma(ref.getPlaneData(2), ref.getPlaneWidth(2), ref.getPlaneHeight(2),
-                mbRef.getPlaneData(2), 0, mbRef.getPlaneWidth(2), (mbX << 6) + params.mv[0], (mbY << 6) + params.mv[1], 8, 8);
+                mbRef.getPlaneData(2), 0, mbRef.getPlaneWidth(2), (mbX << 6) + params.mv[0], (mbY << 6) + params.mv[1],
+                8, 8);
 
         MBEncoderHelper.takeSubtract(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4,
                 mbY << 4, mb[0], mbRef.getPlaneData(0), 16, 16);
@@ -151,7 +153,7 @@ public class MBWriterP16x16 {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
                 ac2[i][j] = pix2[H264Const.PIX_MAP_SPLIT_2x2[i][j]];
         }
-        MBWriterI16x16.chromaResidual(mbX, mbY, out, qp, ac1, ac2, ctx.cavlc[1], ctx.cavlc[2], P_16x16, P_16x16);
+        MBWriterI16x16.chromaResidual(mbX, mbY, out, qp, ac1, ac2, ctx.cavlc[1], ctx.cavlc[2], ctx.leftMBType, ctx.topMBType[mbX], P_16x16);
 
         for (int i = 0; i < ac1.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
@@ -163,14 +165,17 @@ public class MBWriterP16x16 {
         }
     }
 
-    private void writeAC(EncodingContext ctx, int comp, int mbX, int mbY, BitWriter out, int mbLeftBlk, int mbTopBlk,
-            int[][] ac, int qp, int[] nc) {
-        for (int i = 0; i < ac.length; i++) {
-            int blkI = H264Const.BLK_INV_MAP[i];
-            CoeffTransformer.quantizeAC(ac[blkI], qp);
-            int coeffToken = ctx.cavlc[comp].writeACBlock(out, mbLeftBlk + MB_BLK_OFF_LEFT[i], mbTopBlk + MB_BLK_OFF_TOP[i], P_16x16,
-                    P_16x16, ac[blkI], H264Const.totalZeros16, 0, 16, CoeffTransformer.zigzag4x4);
-            nc[blkI] = coeffToken >> 4; // total coeff
+    private void writeAC(EncodingContext ctx, int comp, int mbX, int mbY,
+            BitWriter out, int mbLeftBlk, int mbTopBlk, int[][] ac, int qp, int[] nc) {
+        for (int bIndx = 0; bIndx < ac.length; bIndx++) {
+            int dIdx = H264Const.BLK_DISP_MAP[bIndx];
+            CoeffTransformer.quantizeAC(ac[dIdx], qp);
+            int blkOffLeft = MB_DISP_OFF_LEFT[bIndx];
+            int blkOffTop = MB_DISP_OFF_TOP[bIndx];
+            int coeffToken = ctx.cavlc[comp].writeACBlock(out, mbLeftBlk + blkOffLeft, mbTopBlk + blkOffTop,
+                    blkOffLeft == 0 ? ctx.leftMBType : P_16x16, blkOffTop == 0 ? ctx.topMBType[mbX] : P_16x16, ac[dIdx],
+                    H264Const.totalZeros16, 0, 16, CoeffTransformer.zigzag4x4);
+            nc[dIdx] = coeffToken >> 4; // total coeff
         }
     }
 }

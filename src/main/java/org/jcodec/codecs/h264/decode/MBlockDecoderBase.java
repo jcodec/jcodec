@@ -1,7 +1,7 @@
 package org.jcodec.codecs.h264.decode;
 import static org.jcodec.codecs.h264.H264Const.BLK8x8_BLOCKS;
 import static org.jcodec.codecs.h264.H264Const.BLK_8x8_MB_OFF_CHROMA;
-import static org.jcodec.codecs.h264.H264Const.BLK_INV_MAP;
+import static org.jcodec.codecs.h264.H264Const.BLK_DISP_MAP;
 import static org.jcodec.codecs.h264.H264Const.QP_SCALE_CR;
 import static org.jcodec.codecs.h264.H264Utils.Mv.mvRef;
 import static org.jcodec.codecs.h264.H264Utils.Mv.mvX;
@@ -204,7 +204,7 @@ public class MBlockDecoderBase {
                 if (!H264Const.usesList(predType[blk8x8], list))
                     continue;
                 for (int blk4x4 = 0; blk4x4 < 4; blk4x4++) {
-                    int i = BLK_INV_MAP[(blk8x8 << 2) + blk4x4];
+                    int i = BLK_DISP_MAP[(blk8x8 << 2) + blk4x4];
                     int mv = vectors.getMv(i, list);
                     Picture ref = refs[list][mvRef(mv)];
 

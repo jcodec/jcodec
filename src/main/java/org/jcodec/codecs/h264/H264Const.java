@@ -473,10 +473,10 @@ public class H264Const {
     public final static int[] BLK_8x8_X = new int[] { 0, 8, 0, 8 };
     public final static int[] BLK_8x8_Y = new int[] { 0, 0, 8, 8 };
 
-    public final static int[] BLK_INV_MAP = { 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15 };
+    public final static int[] BLK_DISP_MAP = { 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15 };
 
-    public final static int[] MB_BLK_OFF_LEFT = new int[] { 0, 1, 0, 1, 2, 3, 2, 3, 0, 1, 0, 1, 2, 3, 2, 3 };
-    public final static int[] MB_BLK_OFF_TOP = new int[] { 0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3 };
+    public final static int[] MB_DISP_OFF_LEFT = new int[] { 0, 1, 0, 1, 2, 3, 2, 3, 0, 1, 0, 1, 2, 3, 2, 3 };
+    public final static int[] MB_DISP_OFF_TOP = new int[] { 0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3 };
 
     public final static int[] QP_SCALE_CR = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
             21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 34, 35, 35, 36, 36, 37, 37, 37, 38, 38, 38,
@@ -495,7 +495,12 @@ public class H264Const {
     public static final int[] CODED_BLOCK_PATTERN_INTRA_COLOR = new int[] { 47, 31, 15, 0, 23, 27, 29, 30, 7, 11, 13,
             14, 39, 43, 45, 46, 16, 3, 5, 10, 12, 19, 21, 26, 28, 35, 37, 42, 44, 1, 2, 4, 8, 17, 18, 20, 24, 6, 9, 22,
             25, 32, 33, 34, 36, 40, 38, 41 };
-
+    
+    public static final int[] CODED_BLOCK_PATTERN_INTRA_COLOR_INV = new int[] { 3, 29, 30, 17, 31, 18, 37, 8, 32, 38,
+            19, 9, 20, 10, 11, 2, 16, 33, 34, 21, 35, 22, 39, 4, 36, 40, 23, 5, 24, 6, 7, 1, 41, 42, 43, 25, 44, 26, 46,
+            12, 45, 47, 27, 13, 28, 14, 15, 0
+    };
+    
     public static final int[] coded_block_pattern_intra_monochrome = new int[] { 15, 0, 7, 11, 13, 14, 3, 5, 10, 12, 1,
             2, 4, 8, 6, 9 };
 

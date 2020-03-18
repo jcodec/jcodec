@@ -14,11 +14,11 @@ import org.jcodec.common.model.ColorSpace;
  * 
  */
 public class DecoderState {
-    int[] chromaQpOffset;
-    int qp;
-    byte[][] leftRow;
-    byte[][] topLine;
-    byte[][] topLeft;
+    public int[] chromaQpOffset;
+    public int qp;
+    public byte[][] leftRow;
+    public byte[][] topLine;
+    public byte[][] topLeft;
 
     ColorSpace chromaFormat;
 

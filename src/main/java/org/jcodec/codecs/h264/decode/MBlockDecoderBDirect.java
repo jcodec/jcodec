@@ -4,7 +4,7 @@ import static org.jcodec.codecs.h264.H264Const.BLK8x8_BLOCKS;
 import static org.jcodec.codecs.h264.H264Const.BLK_4x4_MB_OFF_LUMA;
 import static org.jcodec.codecs.h264.H264Const.BLK_8x8_IND;
 import static org.jcodec.codecs.h264.H264Const.BLK_8x8_MB_OFF_LUMA;
-import static org.jcodec.codecs.h264.H264Const.BLK_INV_MAP;
+import static org.jcodec.codecs.h264.H264Const.BLK_DISP_MAP;
 import static org.jcodec.codecs.h264.H264Const.COMP_BLOCK_4x4_LUT;
 import static org.jcodec.codecs.h264.H264Const.COMP_BLOCK_8x8_LUT;
 import static org.jcodec.codecs.h264.H264Const.COMP_POS_4x4_LUT;
@@ -128,7 +128,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                             + x.mv1X(blk4x4), blkPredY + x.mv1Y(blk4x4), 4, 4);
                 }
             } else {
-                int blk4x4Pred = BLK_INV_MAP[blk8x8 * 5];
+                int blk4x4Pred = BLK_DISP_MAP[blk8x8 * 5];
                 predTemp4x4(refs, mbX, mbY, x, blk4x4Pred);
                 propagatePred(x, blk8x8, blk4x4Pred);
 
@@ -267,7 +267,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                                 + x.mv1X(blk4x4), blkPredY + x.mv1Y(blk4x4), 4, 4);
                 }
             } else {
-                int blk4x4Pred = BLK_INV_MAP[blk8x8 * 5];
+                int blk4x4Pred = BLK_DISP_MAP[blk8x8 * 5];
                 pred4x4(mbX, mbY, x, pp, refIdxL0, refIdxL1, mvX0, mvY0, mvX1, mvY1, col, partPred, blk4x4Pred);
                 propagatePred(x, blk8x8, blk4x4Pred);
 

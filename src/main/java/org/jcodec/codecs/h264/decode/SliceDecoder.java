@@ -97,10 +97,10 @@ public class SliceDecoder {
 
         MBlock mBlock = new MBlock(activeSps.chromaFormatIdc);
         while (parser.readMacroblock(mBlock)) {
-            decode(mBlock, parser.getSliceHeader().sliceType, mb, refList);
             int mbAddr = mapper.getAddress(mBlock.mbIdx);
             int mbX = mbAddr % mbWidth;
             int mbY = mbAddr / mbWidth;
+            decode(mBlock, parser.getSliceHeader().sliceType, mb, refList);
             putMacroblock(frameOut, mb, mbX, mbY);
             di.shs[mbAddr] = parser.getSliceHeader();
             di.refsUsed[mbAddr] = refList;
@@ -112,8 +112,8 @@ public class SliceDecoder {
 
     private void fillCoeff(MBlock mBlock, int mbX, int mbY) {
         for (int i = 0; i < 16; i++) {
-            int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
-            int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
+            int blkOffLeft = H264Const.MB_DISP_OFF_LEFT[i];
+            int blkOffTop = H264Const.MB_DISP_OFF_TOP[i];
             int blkX = (mbX << 2) + blkOffLeft;
             int blkY = (mbY << 2) + blkOffTop;
 

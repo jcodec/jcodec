@@ -447,8 +447,8 @@ public class SliceReader {
         mBlock.mbQPDelta = readMBQpDelta(mBlock.prevMbType);
         read16x16DC(leftAvailable, topAvailable, mbX, mBlock.dc);
         for (int i = 0; i < 16; i++) {
-            int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
-            int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
+            int blkOffLeft = H264Const.MB_DISP_OFF_LEFT[i];
+            int blkOffTop = H264Const.MB_DISP_OFF_TOP[i];
             int blkX = (mbX << 2) + blkOffLeft;
             int blkY = (mbY << 2) + blkOffTop;
 
@@ -835,10 +835,10 @@ public class SliceReader {
         }
 
         if (!mBlock.transform8x8Used) {
-            for (int i = 0; i < 16; i++) {
-                int blkX = H264Const.MB_BLK_OFF_LEFT[i];
-                int blkY = H264Const.MB_BLK_OFF_TOP[i];
-                mBlock.lumaModes[i] = readPredictionI4x4Block(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+            for (int bInd = 0; bInd < 16; bInd++) {
+                int blkX = H264Const.MB_DISP_OFF_LEFT[bInd];
+                int blkY = H264Const.MB_DISP_OFF_TOP[bInd];
+                mBlock.lumaModes[bInd] = readPredictionI4x4Block(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                         blkX, blkY, mbX);
             }
         } else {
@@ -877,8 +877,8 @@ public class SliceReader {
 
     private void readLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         for (int i = 0; i < 16; i++) {
-            int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
-            int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
+            int blkOffLeft = H264Const.MB_DISP_OFF_LEFT[i];
+            int blkOffTop = H264Const.MB_DISP_OFF_TOP[i];
             int blkX = (mbX << 2) + blkOffLeft;
             int blkY = (mbY << 2) + blkOffTop;
 
@@ -965,8 +965,8 @@ public class SliceReader {
             MBType curMbType, boolean codedAC, int[][] residualOut) {
         for (int i = 0; i < dc.length; i++) {
             int[] ac = residualOut[i];
-            int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
-            int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
+            int blkOffLeft = H264Const.MB_DISP_OFF_LEFT[i];
+            int blkOffTop = H264Const.MB_DISP_OFF_TOP[i];
 
             int blkX = (mbX << 1) + blkOffLeft;
 
@@ -1012,7 +1012,6 @@ public class SliceReader {
 
         mBlock.mbType = decodeMBTypeI(mBlock.mbIdx, mapper.leftAvailable(mBlock.mbIdx),
                 mapper.topAvailable(mBlock.mbIdx), leftMBType, topMBType[mapper.getMbX(mBlock.mbIdx)]);
-
         readMBlockIInt(mBlock, mBlock.mbType);
     }
 

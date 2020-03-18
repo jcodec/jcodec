@@ -25,6 +25,7 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
 
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
+        
         int mbAddr = mapper.getAddress(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
@@ -39,16 +40,16 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
         residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY);
 
         if (!mBlock.transform8x8Used) {
-            for (int i = 0; i < 16; i++) {
-                int blkX = (i & 3) << 2;
-                int blkY = i & ~3;
+            for (int bInd = 0; bInd < 16; bInd++) {
+                int dInd = H264Const.BLK_DISP_MAP[bInd];
+                int blkX = (dInd & 3) << 2;
+                int blkY = dInd & ~3;
 
-                int bi = H264Const.BLK_INV_MAP[i];
-                boolean trAvailable = ((bi == 0 || bi == 1 || bi == 4) && topAvailable)
-                        || (bi == 5 && topRightAvailable) || bi == 2 || bi == 6 || bi == 8 || bi == 9 || bi == 10
-                        || bi == 12 || bi == 14;
+                boolean trAvailable = ((bInd == 0 || bInd == 1 || bInd == 4) && topAvailable)
+                        || (bInd == 5 && topRightAvailable) || bInd == 2 || bInd == 6 || bInd == 8 || bInd == 9 || bInd == 10
+                        || bInd == 12 || bInd == 14;
 
-                Intra4x4PredictionBuilder.predictWithMode(mBlock.lumaModes[bi], mBlock.ac[0][bi],
+                Intra4x4PredictionBuilder.predictWithMode(mBlock.lumaModes[bInd], mBlock.ac[0][bInd],
                         blkX == 0 ? leftAvailable : true, blkY == 0 ? topAvailable : true, trAvailable, s.leftRow[0],
                         s.topLine[0], s.topLeft[0], (mbX << 4), blkX, blkY, mb.getPlaneData(0));
             }

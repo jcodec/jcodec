@@ -66,6 +66,66 @@ public class Intra4x4PredictionBuilder {
         topLine[oo1 + 3] = pixOut[off2 + 3];
     }
 
+    public static boolean lumaPred(int predType, boolean hasLeft, boolean hasTop, boolean hasTr, byte[] predLeft,
+            byte[] predTop, byte predTopLeft, int blkX, int blkY, byte[] pred) {
+        switch (predType) {
+        case 0:
+            return lumaPredVertical(hasLeft, hasTop, predLeft, predTop, predTopLeft, blkX, blkY, pred);
+        case 1:
+            return lumaPredHorizontal(hasLeft, hasTop, predLeft, predTop, predTopLeft, blkX, blkY, pred);
+        default:
+        case 2:
+            return lumaPredDC(hasLeft, hasTop, predLeft, predTop, predTopLeft, blkX, blkY, pred);
+        case 3:
+            return lumaPredDiagonalDownLeft(hasLeft, hasTop, hasTr, predLeft, predTop, predTopLeft, blkX, blkY, pred);
+        case 4:
+            return lumaPredDiagonalDownRight(hasLeft, hasTop, predLeft, predTop, predTopLeft, blkX, blkY, pred);
+        case 5:
+            return lumaPredVerticalRight(hasLeft, hasTop, predLeft, predTop, predTopLeft, blkX, blkY, pred);
+        case 6:
+            return lumaPredHorizontalDown(hasLeft, hasTop, predLeft, predTop, predTopLeft, blkX, blkY, pred);
+        case 7:
+            return lumaPredVerticalLeft(hasLeft, hasTop, hasTr, predLeft, predTop, predTopLeft, blkX, blkY, pred);
+        case 8:
+            return lumaPredHorizontalUp(hasLeft, hasTop, predLeft, predTop, predTopLeft, blkX, blkY, pred);
+        }
+    }
+    
+    public static boolean available(int predType, boolean hasLeft, boolean hasTop) {
+        switch (predType) {
+        case 0:
+            return hasTop;
+        case 1:
+            return hasLeft;
+        default:
+        case 2:
+            return true;
+        case 3:
+            return hasTop;
+        case 4:
+            return hasLeft && hasTop;
+        case 5:
+            return hasLeft && hasTop;
+        case 6:
+            return hasLeft && hasTop;
+        case 7:
+            return hasTop;
+        case 8:
+            return hasLeft;
+        }
+    }
+
+    private static boolean lumaPredVertical(boolean leftAvailable, boolean topAvailable, byte[] predLeft, byte[] predTop,
+            byte predTopLeft, int blkX, int blkY, byte[] resi) {
+        for (int j = 0, rOff = 0; j < 4; ++j, rOff += 4) {
+            resi[rOff + 0] = predTop[blkX + 0];
+            resi[rOff + 1] = predTop[blkX + 1];
+            resi[rOff + 2] = predTop[blkX + 2];
+            resi[rOff + 3] = predTop[blkX + 3];
+        }
+        return topAvailable;
+    }
+
     public static void predictVertical(int[] residual, boolean topAvailable, byte[] topLine, int mbOffX, int blkX,
             int blkY, byte[] pixOut) {
 
@@ -89,7 +149,7 @@ public class Intra4x4PredictionBuilder {
         int rOff = 0;
         for (int j = 0; j < 4; j++) {
             int l = leftRow[blkY + j];
-            pixOut[pixOff] = (byte) clip(residual[rOff] + l, -128, 127);
+            pixOut[pixOff + 0] = (byte) clip(residual[rOff + 0] + l, -128, 127);
             pixOut[pixOff + 1] = (byte) clip(residual[rOff + 1] + l, -128, 127);
             pixOut[pixOff + 2] = (byte) clip(residual[rOff + 2] + l, -128, 127);
             pixOut[pixOff + 3] = (byte) clip(residual[rOff + 3] + l, -128, 127);
@@ -98,21 +158,21 @@ public class Intra4x4PredictionBuilder {
         }
     }
 
+    private static boolean lumaPredHorizontal(boolean hasLeft, boolean hasTop, byte[] predLeft, byte[] predTop,
+            byte predTopLeft, int blkX, int blkY, byte[] resi) {
+        for (int j = 0, rOff = 0; j < 4; ++j, rOff += 4) {
+            resi[rOff + 0] = predLeft[blkY + j];
+            resi[rOff + 1] = predLeft[blkY + j];
+            resi[rOff + 2] = predLeft[blkY + j];
+            resi[rOff + 3] = predLeft[blkY + j];
+        }
+        return hasLeft;
+    }
+
     public static void predictDC(int[] residual, boolean leftAvailable, boolean topAvailable, byte[] leftRow,
             byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
 
-        int val;
-        if (leftAvailable && topAvailable) {
-            val = (leftRow[blkY] + leftRow[blkY + 1] + leftRow[blkY + 2] + leftRow[blkY + 3] + topLine[mbOffX + blkX]
-                    + topLine[mbOffX + blkX + 1] + topLine[mbOffX + blkX + 2] + topLine[mbOffX + blkX + 3] + 4) >> 3;
-        } else if (leftAvailable) {
-            val = (leftRow[blkY] + leftRow[blkY + 1] + leftRow[blkY + 2] + leftRow[blkY + 3] + 2) >> 2;
-        } else if (topAvailable) {
-            val = (topLine[mbOffX + blkX] + topLine[mbOffX + blkX + 1] + topLine[mbOffX + blkX + 2]
-                    + topLine[mbOffX + blkX + 3] + 2) >> 2;
-        } else {
-            val = 0;
-        }
+        int val = calcDC(leftAvailable, topAvailable, leftRow, topLine, mbOffX, blkX, blkY);
 
         int pixOff = (blkY << 4) + blkX;
         int rOff = 0;
@@ -126,9 +186,39 @@ public class Intra4x4PredictionBuilder {
         }
     }
 
+    private static int calcDC(boolean leftAvailable, boolean topAvailable, byte[] leftRow, byte[] topLine, int mbOffX,
+            int blkX, int blkY) {
+        int val;
+        if (leftAvailable && topAvailable) {
+            val = (leftRow[blkY] + leftRow[blkY + 1] + leftRow[blkY + 2] + leftRow[blkY + 3] + topLine[mbOffX + blkX]
+                    + topLine[mbOffX + blkX + 1] + topLine[mbOffX + blkX + 2] + topLine[mbOffX + blkX + 3] + 4) >> 3;
+        } else if (leftAvailable) {
+            val = (leftRow[blkY] + leftRow[blkY + 1] + leftRow[blkY + 2] + leftRow[blkY + 3] + 2) >> 2;
+        } else if (topAvailable) {
+            val = (topLine[mbOffX + blkX] + topLine[mbOffX + blkX + 1] + topLine[mbOffX + blkX + 2]
+                    + topLine[mbOffX + blkX + 3] + 2) >> 2;
+        } else {
+            val = 0;
+        }
+        return val;
+    }
+
+    private static boolean lumaPredDC(boolean hasLeft, boolean hasTop, byte[] predLeft, byte[] predTop, byte predTopLeft,
+            int blkX, int blkY, byte[] resi) {
+        int val = calcDC(hasLeft, hasTop, predLeft, predTop, 0, blkX, blkY);
+
+        for (int j = 0, rOff = 0; j < 4; ++j, rOff += 4) {
+            resi[rOff + 0] = (byte)val;
+            resi[rOff + 1] = (byte)val;
+            resi[rOff + 2] = (byte)val;
+            resi[rOff + 3] = (byte)val;
+        }
+        
+        return true;
+    }
+
     public static void predictDiagonalDownLeft(int[] residual, boolean topAvailable, boolean topRightAvailable,
             byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
-
         int to = mbOffX + blkX;
         int tr0 = topLine[to + 3], tr1 = topLine[to + 3], tr2 = topLine[to + 3], tr3 = topLine[to + 3];
         if (topRightAvailable) {
@@ -168,6 +258,46 @@ public class Intra4x4PredictionBuilder {
         pixOut[off + 51] = (byte) clip(residual[15] + c6, -128, 127);
     }
 
+    private static boolean lumaPredDiagonalDownLeft(boolean hasLeft, boolean hasTop, boolean hasTr, byte[] leftRow,
+            byte[] topLine, byte predTopLeft, int blkX, int blkY, byte[] resi) {
+        int to = blkX;
+        int tr0 = topLine[to + 3], tr1 = topLine[to + 3], tr2 = topLine[to + 3], tr3 = topLine[to + 3];
+        if (hasTr) {
+            tr0 = topLine[to + 4];
+            tr1 = topLine[to + 5];
+            tr2 = topLine[to + 6];
+            tr3 = topLine[to + 7];
+        }
+
+        int c0 = ((topLine[to] + topLine[to + 2] + (topLine[to + 1] << 1) + 2) >> 2);
+        int c1 = ((topLine[to + 1] + topLine[to + 3] + (topLine[to + 2] << 1) + 2) >> 2);
+        int c2 = ((topLine[to + 2] + tr0 + (topLine[to + 3] << 1) + 2) >> 2);
+        int c3 = ((topLine[to + 3] + tr1 + (tr0 << 1) + 2) >> 2);
+        int c4 = ((tr0 + tr2 + (tr1 << 1) + 2) >> 2);
+        int c5 = ((tr1 + tr3 + (tr2 << 1) + 2) >> 2);
+        int c6 = ((tr2 + 3 * (tr3) + 2) >> 2);
+
+        int off = (blkY << 4) + blkX;
+        resi[0] = (byte)c0;
+        resi[1] = (byte)c1;
+        resi[2] = (byte)c2;
+        resi[3] = (byte)c3;
+        resi[4] = (byte)c1;
+        resi[5] = (byte)c2;
+        resi[6] = (byte)c3;
+        resi[7] = (byte)c4;
+        resi[8] = (byte)c2;
+        resi[9] = (byte)c3;
+        resi[10] = (byte)c4;
+        resi[11] = (byte)c5;
+        resi[12] = (byte)c3;
+        resi[13] = (byte)c4;
+        resi[14] = (byte)c5;
+        resi[15] = (byte)c6;
+        
+        return hasTop;
+    }
+
     public static void predictDiagonalDownRight(int[] residual, boolean leftAvailable, boolean topAvailable,
             byte[] leftRow, byte[] topLine, byte[] topLeft, int mbOffX, int blkX, int blkY, byte[] pixOut) {
 
@@ -176,7 +306,8 @@ public class Intra4x4PredictionBuilder {
 
         int c1 = ((topLeft[blkY >> 2] + (topLine[mbOffX + blkX + 0] << 1) + topLine[mbOffX + blkX + 1] + 2) >> 2);
         int c2 = ((topLine[mbOffX + blkX] + (topLine[mbOffX + blkX + 1] << 1) + topLine[mbOffX + blkX + 2] + 2) >> 2);
-        int c3 = ((topLine[mbOffX + blkX + 1] + (topLine[mbOffX + blkX + 2] << 1) + topLine[mbOffX + blkX + 3] + 2) >> 2);
+        int c3 = ((topLine[mbOffX + blkX + 1] + (topLine[mbOffX + blkX + 2] << 1) + topLine[mbOffX + blkX + 3]
+                + 2) >> 2);
 
         pixOut[off] = (byte) clip(residual[0] + c0, -128, 127);
         pixOut[off + 1] = (byte) clip(residual[1] + c1, -128, 127);
@@ -211,8 +342,46 @@ public class Intra4x4PredictionBuilder {
         pixOut[off + 51] = (byte) clip(residual[15] + c0, -128, 127);
     }
 
-    public static void predictVerticalRight(int[] residual, boolean leftAvailable, boolean topAvailable,
-            byte[] leftRow, byte[] topLine, byte[] topLeft, int mbOffX, int blkX, int blkY, byte[] pixOut) {
+    private static boolean lumaPredDiagonalDownRight(boolean hasLeft, boolean hasTop, byte[] leftRow, byte[] topLine,
+            byte topLeft, int blkX, int blkY, byte[] resi) {
+        int off = (blkY << 4) + blkX;
+        int c0 = ((topLine[blkX] + 2 * topLeft + leftRow[blkY] + 2) >> 2);
+
+        int c1 = ((topLeft + (topLine[blkX + 0] << 1) + topLine[blkX + 1] + 2) >> 2);
+        int c2 = ((topLine[blkX] + (topLine[blkX + 1] << 1) + topLine[blkX + 2] + 2) >> 2);
+        int c3 = ((topLine[blkX + 1] + (topLine[blkX + 2] << 1) + topLine[blkX + 3] + 2) >> 2);
+        int c4 = ((topLeft + (leftRow[blkY] << 1) + leftRow[blkY + 1] + 2) >> 2);
+        int c6 = ((topLeft + (topLine[blkX] << 1) + topLine[blkX + 1] + 2) >> 2);
+        int c7 = ((topLine[blkX] + (topLine[blkX + 1] << 1) + topLine[blkX + 2] + 2) >> 2);
+        int c8 = ((leftRow[blkY + 0] + (leftRow[blkY + 1] << 1) + leftRow[blkY + 2] + 2) >> 2);
+        int c9 = ((topLeft + (leftRow[blkY] << 1) + leftRow[blkY + 1] + 2) >> 2);
+        int c11 = ((topLeft + (topLine[blkX] << 1) + topLine[blkX + 1] + 2) >> 2);
+        int c12 = ((leftRow[blkY + 1] + (leftRow[blkY + 2] << 1) + leftRow[blkY + 3] + 2) >> 2);
+        int c13 = ((leftRow[blkY] + (leftRow[blkY + 1] << 1) + leftRow[blkY + 2] + 2) >> 2);
+        int c14 = ((topLeft + (leftRow[blkY] << 1) + leftRow[blkY + 1] + 2) >> 2);
+
+        resi[0] = (byte)c0;
+        resi[1] = (byte)c1;
+        resi[2] = (byte)c2;
+        resi[3] = (byte)c3;
+        resi[4] = (byte)c4;
+        resi[5] = (byte)c0;
+        resi[6] = (byte)c6;
+        resi[7] = (byte)c7;
+        resi[8] = (byte)c8;
+        resi[9] = (byte)c9;
+        resi[10] = (byte)c0;
+        resi[11] = (byte)c11;
+        resi[12] = (byte)c12;
+        resi[13] = (byte)c13;
+        resi[14] = (byte)c14;
+        resi[15] = (byte)c0;
+        
+        return hasLeft && hasTop;
+    }
+
+    public static void predictVerticalRight(int[] residual, boolean leftAvailable, boolean topAvailable, byte[] leftRow,
+            byte[] topLine, byte[] topLeft, int mbOffX, int blkX, int blkY, byte[] pixOut) {
 
         int v1 = (topLeft[blkY >> 2] + topLine[mbOffX + blkX + 0] + 1) >> 1;
         int v2 = (topLine[mbOffX + blkX + 0] + topLine[mbOffX + blkX + 1] + 1) >> 1;
@@ -226,7 +395,7 @@ public class Intra4x4PredictionBuilder {
         int v10 = (leftRow[blkY] + 2 * leftRow[blkY + 1] + leftRow[blkY + 2] + 2) >> 2;
 
         int off = (blkY << 4) + blkX;
-        pixOut[off] = (byte) clip(residual[0] + v1, -128, 127);
+        pixOut[off + 0] = (byte) clip(residual[0] + v1, -128, 127);
         pixOut[off + 1] = (byte) clip(residual[1] + v2, -128, 127);
         pixOut[off + 2] = (byte) clip(residual[2] + v3, -128, 127);
         pixOut[off + 3] = (byte) clip(residual[3] + v4, -128, 127);
@@ -242,6 +411,39 @@ public class Intra4x4PredictionBuilder {
         pixOut[off + 49] = (byte) clip(residual[13] + v5, -128, 127);
         pixOut[off + 50] = (byte) clip(residual[14] + v6, -128, 127);
         pixOut[off + 51] = (byte) clip(residual[15] + v7, -128, 127);
+    }
+
+    private static boolean lumaPredVerticalRight(boolean hasLeft, boolean hasTop, byte[] predLeft, byte[] predTop,
+            byte predTopLeft, int blkX, int blkY, byte[] resi) {
+        int v1 = (predTopLeft + predTop[blkX + 0] + 1) >> 1;
+        int v2 = (predTop[blkX + 0] + predTop[blkX + 1] + 1) >> 1;
+        int v3 = (predTop[blkX + 1] + predTop[blkX + 2] + 1) >> 1;
+        int v4 = (predTop[blkX + 2] + predTop[blkX + 3] + 1) >> 1;
+        int v5 = (predLeft[blkY] + 2 * predTopLeft + predTop[blkX + 0] + 2) >> 2;
+        int v6 = (predTopLeft + 2 * predTop[blkX + 0] + predTop[blkX + 1] + 2) >> 2;
+        int v7 = (predTop[blkX + 0] + 2 * predTop[blkX + 1] + predTop[blkX + 2] + 2) >> 2;
+        int v8 = (predTop[blkX + 1] + 2 * predTop[blkX + 2] + predTop[blkX + 3] + 2) >> 2;
+        int v9 = (predTopLeft + 2 * predLeft[blkY] + predLeft[blkY + 1] + 2) >> 2;
+        int v10 = (predLeft[blkY] + 2 * predLeft[blkY + 1] + predLeft[blkY + 2] + 2) >> 2;
+
+        resi[0] = (byte)v1;
+        resi[1] = (byte)v2;
+        resi[2] = (byte)v3;
+        resi[3] = (byte)v4;
+        resi[4] = (byte)v5;
+        resi[5] = (byte)v6;
+        resi[6] = (byte)v7;
+        resi[7] = (byte)v8;
+        resi[8] = (byte)v9;
+        resi[9] = (byte)v1;
+        resi[10] = (byte)v2;
+        resi[11] = (byte)v3;
+        resi[12] = (byte)v10;
+        resi[13] = (byte)v5;
+        resi[14] = (byte)v6;
+        resi[15] = (byte)v7;
+        
+        return hasLeft && hasTop;
     }
 
     public static void predictHorizontalDown(int[] residual, boolean leftAvailable, boolean topAvailable,
@@ -275,6 +477,39 @@ public class Intra4x4PredictionBuilder {
         pixOut[off + 49] = (byte) clip(residual[13] + c9, -128, 127);
         pixOut[off + 50] = (byte) clip(residual[14] + c6, -128, 127);
         pixOut[off + 51] = (byte) clip(residual[15] + c7, -128, 127);
+    }
+
+    private static boolean lumaPredHorizontalDown(boolean hasLeft, boolean hasTop, byte[] predLeft, byte[] predTop,
+            byte predTopLeft, int blkX, int blkY, byte[] resi) {
+        int c0 = (predTopLeft + predLeft[blkY] + 1) >> 1;
+        int c1 = (predLeft[blkY] + 2 * predTopLeft + predTop[blkX + 0] + 2) >> 2;
+        int c2 = (predTopLeft + 2 * predTop[blkX + 0] + predTop[blkX + 1] + 2) >> 2;
+        int c3 = (predTop[blkX + 0] + 2 * predTop[blkX + 1] + predTop[blkX + 2] + 2) >> 2;
+        int c4 = (predLeft[blkY] + predLeft[blkY + 1] + 1) >> 1;
+        int c5 = (predTopLeft + 2 * predLeft[blkY] + predLeft[blkY + 1] + 2) >> 2;
+        int c6 = (predLeft[blkY + 1] + predLeft[blkY + 2] + 1) >> 1;
+        int c7 = (predLeft[blkY] + 2 * predLeft[blkY + 1] + predLeft[blkY + 2] + 2) >> 2;
+        int c8 = (predLeft[blkY + 2] + predLeft[blkY + 3] + 1) >> 1;
+        int c9 = (predLeft[blkY + 1] + 2 * predLeft[blkY + 2] + predLeft[blkY + 3] + 2) >> 2;
+
+        resi[0] = (byte)c0;
+        resi[1] = (byte)c1;
+        resi[2] = (byte)c2;
+        resi[3] = (byte)c3;
+        resi[4] = (byte)c4;
+        resi[5] = (byte)c5;
+        resi[6] = (byte)c0;
+        resi[7] = (byte)c1;
+        resi[8] = (byte)c6;
+        resi[9] = (byte)c7;
+        resi[10] = (byte)c4;
+        resi[11] = (byte)c5;
+        resi[12] = (byte)c8;
+        resi[13] = (byte)c9;
+        resi[14] = (byte)c6;
+        resi[15] = (byte)c7;
+        
+        return hasTop && hasLeft;
     }
 
     public static void predictVerticalLeft(int[] residual, boolean topAvailable, boolean topRightAvailable,
@@ -321,6 +556,47 @@ public class Intra4x4PredictionBuilder {
         pixOut[off + 51] = (byte) clip(residual[15] + c9, -128, 127);
     }
 
+    private static boolean lumaPredVerticalLeft(boolean hasLeft, boolean hasTop, boolean hasTr, byte[] predLeft,
+            byte[] predTop, byte predTopLeft, int blkX, int blkY, byte[] resi) {
+        int to = blkX;
+        int tr0 = predTop[to + 3], tr1 = predTop[to + 3], tr2 = predTop[to + 3];
+        if (hasTr) {
+            tr0 = predTop[to + 4];
+            tr1 = predTop[to + 5];
+            tr2 = predTop[to + 6];
+        }
+
+        int c0 = ((predTop[to] + predTop[to + 1] + 1) >> 1);
+        int c1 = ((predTop[to + 1] + predTop[to + 2] + 1) >> 1);
+        int c2 = ((predTop[to + 2] + predTop[to + 3] + 1) >> 1);
+        int c3 = ((predTop[to + 3] + tr0 + 1) >> 1);
+        int c4 = ((tr0 + tr1 + 1) >> 1);
+        int c5 = ((predTop[to] + 2 * predTop[to + 1] + predTop[to + 2] + 2) >> 2);
+        int c6 = ((predTop[to + 1] + 2 * predTop[to + 2] + predTop[to + 3] + 2) >> 2);
+        int c7 = ((predTop[to + 2] + 2 * predTop[to + 3] + tr0 + 2) >> 2);
+        int c8 = ((predTop[to + 3] + 2 * tr0 + tr1 + 2) >> 2);
+        int c9 = ((tr0 + 2 * tr1 + tr2 + 2) >> 2);
+
+        resi[0] = (byte)c0;
+        resi[1] = (byte)c1;
+        resi[2] = (byte)c2;
+        resi[3] = (byte)c3;
+        resi[4] = (byte)c5;
+        resi[5] = (byte)c6;
+        resi[6] = (byte)c7;
+        resi[7] = (byte)c8;
+        resi[8] = (byte)c1;
+        resi[9] = (byte)c2;
+        resi[10] = (byte)c3;
+        resi[11] = (byte)c4;
+        resi[12] = (byte)c6;
+        resi[13] = (byte)c7;
+        resi[14] = (byte)c8;
+        resi[15] = (byte)c9;
+        
+        return hasTop;
+    }
+
     public static void predictHorizontalUp(int[] residual, boolean leftAvailable, byte[] leftRow, int mbOffX, int blkX,
             int blkY, byte[] pixOut) {
 
@@ -352,5 +628,35 @@ public class Intra4x4PredictionBuilder {
         pixOut[off + 49] = (byte) clip(residual[13] + c6, -128, 127);
         pixOut[off + 50] = (byte) clip(residual[14] + c6, -128, 127);
         pixOut[off + 51] = (byte) clip(residual[15] + c6, -128, 127);
+    }
+
+    private static boolean lumaPredHorizontalUp(boolean hasLeft, boolean hasTop, byte[] predLeft, byte[] predTop,
+            byte predTopLeft, int blkX, int blkY, byte[] resi) {
+        int c0 = ((predLeft[blkY] + predLeft[blkY + 1] + 1) >> 1);
+        int c1 = ((predLeft[blkY] + (predLeft[blkY + 1] << 1) + predLeft[blkY + 2] + 2) >> 2);
+        int c2 = ((predLeft[blkY + 1] + predLeft[blkY + 2] + 1) >> 1);
+        int c3 = ((predLeft[blkY + 1] + (predLeft[blkY + 2] << 1) + predLeft[blkY + 3] + 2) >> 2);
+        int c4 = ((predLeft[blkY + 2] + predLeft[blkY + 3] + 1) >> 1);
+        int c5 = ((predLeft[blkY + 2] + (predLeft[blkY + 3] << 1) + predLeft[blkY + 3] + 2) >> 2);
+        int c6 = predLeft[blkY + 3];
+
+        resi[0] = (byte)c0;
+        resi[1] = (byte)c1;
+        resi[2] = (byte)c2;
+        resi[3] = (byte)c3;
+        resi[4] = (byte)c2;
+        resi[5] = (byte)c3;
+        resi[6] = (byte)c4;
+        resi[7] = (byte)c5;
+        resi[8] = (byte)c4;
+        resi[9] = (byte)c5;
+        resi[10] = (byte)c6;
+        resi[11] = (byte)c6;
+        resi[12] = (byte)c6;
+        resi[13] = (byte)c6;
+        resi[14] = (byte)c6;
+        resi[15] = (byte)c6;
+        
+        return hasLeft;
     }
 }

@@ -107,7 +107,7 @@ public class CAVLC {
             ;
 
         int coeffToken = H264Const.coeffToken(totalCoeff, trailingOnes);
-
+        
         coeffTokenTab.writeVLC(out, coeffToken);
 
         if (totalCoeff > 0) {
@@ -123,8 +123,9 @@ public class CAVLC {
     }
 
     private void writeTrailingOnes(BitWriter out, int[] levels, int totalCoeff, int trailingOne) {
-        for (int i = totalCoeff - 1; i >= totalCoeff - trailingOne; i--)
+        for (int i = totalCoeff - 1; i >= totalCoeff - trailingOne; i--) {
             out.write1Bit(levels[i] >>> 31);
+        }
     }
 
     private void writeLevels(BitWriter out, int[] levels, int totalCoeff, int trailingOnes) {
@@ -150,6 +151,7 @@ public class CAVLC {
                     ;
                 out.writeNBit(1, len + 4);
                 out.writeNBit(code, len);
+                int mask = (1 << len) - 1;
             }
             if (suffixLen == 0)
                 suffixLen = 1;
@@ -222,8 +224,10 @@ public class CAVLC {
 
             int[] level = new int[totalCoeff];
             int i;
-            for (i = 0; i < trailingOnes; i++)
-                level[i] = 1 - 2 * _in.read1Bit();
+            for (i = 0; i < trailingOnes; i++) {
+                int read1Bit = _in.read1Bit();
+                level[i] = 1 - 2 * read1Bit;
+            }
 
             for (; i < totalCoeff; i++) {
                 int level_prefix = readZeroBitCount(_in, "");
@@ -282,11 +286,6 @@ public class CAVLC {
                 coeffLevel[zigzag[cn + firstCoeff]] = level[j];
             }
         }
-
-        // System.out.print("[");
-        // for (int i = 0; i < nCoeff; i++)
-        // System.out.print(coeffLevel[i + firstCoeff] + ", ");
-        // System.out.println("]");
 
         return coeffToken;
     }
