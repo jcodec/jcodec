@@ -1,4 +1,13 @@
-package org.jcodec.codecs.aac;
+package org.jcodec.samples.aac;
+
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.ELEMENT_CCE;
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.ELEMENT_CPE;
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.ELEMENT_DSE;
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.ELEMENT_END;
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.ELEMENT_FIL;
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.ELEMENT_LFE;
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.ELEMENT_PCE;
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.ELEMENT_SCE;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,9 +24,11 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.TextMetaDataSampleEntry;
@@ -31,14 +42,16 @@ import net.sourceforge.jaad.aac.ChannelConfiguration;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.syntax.CCE;
 import net.sourceforge.jaad.aac.syntax.CPE;
-import net.sourceforge.jaad.aac.syntax.DSE;
 import net.sourceforge.jaad.aac.syntax.Element;
 import net.sourceforge.jaad.aac.syntax.FIL;
 import net.sourceforge.jaad.aac.syntax.PCE;
 import net.sourceforge.jaad.aac.syntax.SCE_LFE;
 import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 
-import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.*;
+import org.jcodec.samples.mp4.Test1Proto.Words;
+import org.jcodec.samples.mp4.Test2Proto.Tag;
+
+import com.google.protobuf.UnknownFieldSet;
 
 /**
  * This will attempt to parse individual AAC frames out of a corrupt M4A file
@@ -83,7 +96,7 @@ public class M4AFix {
         List<SampleToChunkBox.SampleToChunkEntry> chunkSizes = new ArrayList<SampleToChunkBox.SampleToChunkEntry>();
         long newChunkOff;
         int chunkSize = 0, prevChunkSize = 0, chunkNo = 0, firstChunk = 0;
-        int frameCount = 0;
+        long frameCount = 0;
 
         void addFrame(int sz, long offset, boolean newChunk) {
             if (newChunk) {
@@ -112,7 +125,7 @@ public class M4AFix {
             SampleSizesBox stsz = SampleSizesBox.createSampleSizesBox2(sizes.toArray());
             SampleToChunkBox stsc = SampleToChunkBox
                     .createSampleToChunkBox(chunkSizes.toArray(new SampleToChunkBox.SampleToChunkEntry[0]));
-            TimeToSampleEntry[] tts = new TimeToSampleEntry[] { new TimeToSampleEntry(frameCount, 1024) };
+            TimeToSampleEntry[] tts = new TimeToSampleEntry[] { new TimeToSampleEntry((int)frameCount, 1024) };
             TimeToSampleBox stts = TimeToSampleBox.createTimeToSampleBox(tts);
             NodeBox stbl = trak.getStbl();
             stbl.replaceBox(co64);
@@ -120,38 +133,67 @@ public class M4AFix {
             stbl.replaceBox(stts);
             stbl.replaceBox(stsc);
             stbl.removeChildren(new String[] { "stco" });
-            int duration = (moov.getTimescale() * frameCount * 1024) / 48000;
-            int mediaDuration = (trak.getTimescale() * frameCount * 1024) / 48000;
-            trak.setDuration(duration);
-            trak.setMediaDuration(mediaDuration);
             return trak;
+        }
+
+        public long getFrameCount() {
+            return frameCount;
+        }
+    }
+
+    private static class ChannelReader {
+        private static final int LOW_SIZE = 1 << 18;
+        private static final int READ_SIZE = 1 << 20;
+        private SeekableByteChannel ch;
+        private ByteBuffer buf;
+
+        public ChannelReader(SeekableByteChannel ch) {
+            this.ch = ch;
+            buf = ByteBuffer.allocate(READ_SIZE);
+            buf.position(buf.limit());
+        }
+
+        public ByteBuffer getBuffer() throws IOException {
+            if (buf.remaining() < LOW_SIZE && ch.position() < ch.size()) {
+                NIOUtils.relocateLeftover(buf);
+                NIOUtils.readL(ch, buf, buf.remaining());
+                buf.flip();
+            }
+            return buf;
         }
     }
 
     private static int processMdat(SeekableByteChannel ch, Atom atom, MovieBox moov) throws IOException {
-        ByteBuffer buf = null;
         ch.setPosition(atom.getOffset() + atom.getHeader().headerSize());
         long offset = ch.position();
+        long init = offset;
 
-        buf = NIOUtils.fetchFromChannel(ch, (int) (ch.size() - offset));
-        int size = buf.remaining();
+        ChannelReader reader = new ChannelReader(ch);
         long start = System.currentTimeMillis();
         Track audio = new Track();
         Track tags = new Track();
         Track words = new Track();
 
         boolean newChunk = true;
-        while (buf.hasRemaining()) {
-            int sz = parseFrame(buf);
+        ByteBuffer protoBuf = ByteBuffer.allocate(1 << 16);
+        while (true) {
+            ByteBuffer buf = reader.getBuffer();
+            if (!buf.hasRemaining())
+                break;
+            int sz = parseFrame(buf, protoBuf);
 
             if (sz == 0)
                 break;
-            else if (sz > 0)
+            else if (sz > 0) {
                 audio.addFrame(sz, offset, newChunk);
-            else if (sz == -18 || sz == -19)
-                tags.addFrame(-sz, offset, true);
-            else
-                words.addFrame(-sz, offset, true);
+            } else {
+                protoBuf.getInt();
+                Words p = Words.parseFrom(protoBuf);
+                if (!p.getUnknownFields().asMap().isEmpty())
+                    tags.addFrame(-sz, offset, true);
+                else
+                    words.addFrame(-sz, offset, true);
+            }
 
             if (sz > 0) {
                 offset += sz;
@@ -162,6 +204,8 @@ public class M4AFix {
             }
         }
         TrakBox audioTrack = moov.getAudioTracks().get(0);
+        AudioSampleEntry sampleEntry = (AudioSampleEntry)audioTrack.getSampleEntries()[0];
+        int sampleRate = (int)sampleEntry.getSampleRate();
         List<TrakBox> metaTracks = moov.getMetaTracks();
         TrakBox tagsTrack = null;
         TrakBox wordsTrack = null;
@@ -173,14 +217,21 @@ public class M4AFix {
                 tagsTrack = trakBox;
         }
         moov.removeChildren(new String[] { "trak" });
-        moov.add(audio.finish(audioTrack, moov));
+        TrakBox newAudio = audio.finish(audioTrack, moov);
+        moov.add(newAudio);
+        
+        long duration = (moov.getTimescale() * audio.getFrameCount() * 1024) / sampleRate;
+        long mediaDuration = (newAudio.getTimescale() * audio.getFrameCount() * 1024) / sampleRate;
+        newAudio.setDuration(duration);
+        newAudio.setMediaDuration(mediaDuration);
+        
         moov.add(tags.finish(tagsTrack, moov));
         moov.add(words.finish(wordsTrack, moov));
 
         moov.setDuration(MathUtil.max3L(audioTrack.getDuration(), tagsTrack.getDuration(), wordsTrack.getDuration()));
 
         Logger.info("Time: " + (System.currentTimeMillis() - start));
-        return size;
+        return (int)(offset - init);
     }
 
     private static Element decodeSCE_LFE(BitReader _in, AACDecoderConfig conf) throws AACException {
@@ -216,11 +267,13 @@ public class M4AFix {
         return el;
     }
 
-    static int parseFrame(ByteBuffer buf) throws AACException {
+    static int parseFrame(ByteBuffer buf, ByteBuffer proto) throws AACException {
         // Do I look like a proto?
         int len = buf.duplicate().getInt();
         if ((len >> 16) == 0) {
-            NIOUtils.skip(buf, len + 4);
+            proto.clear();
+            proto.put(NIOUtils.read(buf, len + 4));
+            proto.flip();
             return -(len + 4);
         } else {
             BitReader _in = BitReader.createBitReader(buf.duplicate());
