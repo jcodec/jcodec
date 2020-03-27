@@ -69,7 +69,6 @@ public class Trim {
 
         try {
             input = readableChannel(new File(cmd.getArg(0)));
-            long firstTagTs = getFirstTagTs(input);
             File file = new File(cmd.getArg(1));
             out = writableChannel(file);
             Movie movie = MP4Util.createRefFullMovie(input, "file://" + new File(cmd.getArg(0)).getAbsolutePath());
@@ -85,7 +84,7 @@ public class Trim {
                 if (trak.getTrackHeader().getNo() == 1) {
                     flatten.setSampleProcessor(trak, new WordProcessor(inS, durS));
                 } else if (trak.getTrackHeader().getNo() == 2) {
-                    flatten.setSampleProcessor(trak, new TagProcessor(inS, durS, firstTagTs));
+                    flatten.setSampleProcessor(trak, new TagProcessor(inS, durS));
                 }
             }
             long finishTime = System.currentTimeMillis();
@@ -121,12 +120,12 @@ public class Trim {
         }
 
         @Override
-        public ByteBuffer processSample(ByteBuffer src, double pts, double mediaPts) throws IOException {
+        public ByteBuffer processSample(ByteBuffer src) throws IOException {
             int size = src.getInt();
             if (size != src.remaining())
                 throw new IOException("Error");
-            long masterOnset = (long)(inS * 1000);
-            long masterOffset = masterOnset + (long)(durS * 1000);
+            long masterOnset = (long) (inS * 1000);
+            long masterOffset = masterOnset + (long) (durS * 1000);
             Words words = Words.parseFrom(src);
 
             Words.Builder builder = words.toBuilder();
@@ -144,7 +143,7 @@ public class Trim {
                 }
             }
             words = builder.build();
-            //System.out.println(words);
+            // System.out.println(words);
             return withLen(words.toByteArray());
         }
     }
@@ -160,24 +159,23 @@ public class Trim {
     private static class TagProcessor implements Flatten.SampleProcessor {
         private double inS;
         private double durS;
-        private long startTs;
 
-        public TagProcessor(double inS, double durS, long startTs) {
+        public TagProcessor(double inS, double durS) {
             this.inS = inS;
             this.durS = durS;
-            this.startTs = startTs;
         }
 
         @Override
-        public ByteBuffer processSample(ByteBuffer src, double pts, double mediaPts) throws IOException {
+        public ByteBuffer processSample(ByteBuffer src) throws IOException {
             int size = src.getInt();
             if (size != src.remaining())
                 throw new IOException("Error");
             long masterOnset = (long) (inS * 1000);
             Tag audioTag = Tag.parseFrom(src);
-            long ptsMilli = (long) (pts * 1000);
-            audioTag = audioTag.toBuilder()
-                    .setOnsetMilli(masterOnset > startTs ? ptsMilli : audioTag.getOnsetMilli() - masterOnset).build();
+            long newOnset = audioTag.getOnsetMilli() - masterOnset;
+            if (newOnset < 0)
+                newOnset = 0;
+            audioTag = audioTag.toBuilder().setOnsetMilli(newOnset).build();
 //            System.out.println(audioTag);
             return withLen(audioTag.toByteArray());
         }

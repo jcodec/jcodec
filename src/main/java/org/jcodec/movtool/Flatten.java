@@ -19,7 +19,6 @@ import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.ChunkWriter;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Movie;
-import org.jcodec.containers.mp4.QTTimeUtil;
 import org.jcodec.containers.mp4.boxes.AliasBox;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
@@ -43,7 +42,7 @@ import org.jcodec.platform.Platform;
  */
 public class Flatten {
     public static interface SampleProcessor {
-        ByteBuffer processSample(ByteBuffer src, double pts, double mediaPts) throws IOException;
+        ByteBuffer processSample(ByteBuffer src) throws IOException;
     }
 
     public static void main1(String[] args) throws Exception {
@@ -176,17 +175,11 @@ public class Flatten {
         int[] sampleSizes = orig.getSampleSizes();
         List<ByteBuffer> modSamples = new LinkedList<ByteBuffer>();
         int totalSize = 0;
-        long mediaPts = orig.getStartTv();
         for (int ss = 0; ss < sampleSizes.length; ss++) {
             ByteBuffer sample = NIOUtils.read(src, sampleSizes[ss]);
-            long dur = orig.getSampleDur() == Chunk.UNEQUAL_DUR ? orig.getSampleDurs()[ss] : orig.getSampleDur() * ss;
-            long pts = QTTimeUtil.mediaToEdited(track, mediaPts, moov.getTimescale());
-            ByteBuffer modSample = processor.processSample(sample, ((double) pts) / track.getTimescale(),
-                    ((double) mediaPts) / track.getTimescale());
+            ByteBuffer modSample = processor.processSample(sample);
             modSamples.add(modSample);
             totalSize += modSample.remaining();
-            
-            mediaPts += dur;
         }
         byte[] result = new byte[totalSize];
         System.out.println("total size: " + totalSize);
