@@ -33,7 +33,7 @@ open class MP4Demuxer internal constructor(protected var input: SeekableByteChan
         val sampleEntries = findAllPath(trak, arrayOf("mdia", "minf", "stbl", "stsd", null)).map { asSampleEntry(it) }
         val isPCM = (sampleEntries[0] is AudioSampleEntry
                 && isPCMCodec(Codec.codecByFourcc(sampleEntries[0]!!.fourcc)))
-        return if (stsz!!.defaultSize != 0 && isPCM) PCMMP4DemuxerTrack(movie, trak, input) else newTrack(trak)
+        return if (stsz!!.defaultSize != 0 && isPCM) PCMMP4DemuxerTrack(movie!!, trak, input) else newTrack(trak)
     }
 
     private fun isPCMCodec(codec: Codec?): Boolean {
@@ -68,7 +68,7 @@ open class MP4Demuxer internal constructor(protected var input: SeekableByteChan
         }
         if (tt != null) {
             val video = videoTrack
-            if (video != null) timecodeTrack = TimecodeMP4DemuxerTrack(movie, tt, input)
+            if (video != null) timecodeTrack = TimecodeMP4DemuxerTrack(movie!!, tt, input)
         }
     }
 

@@ -194,7 +194,7 @@ abstract class AbstractMP4DemuxerTrack(trak: TrakBox) : SeekableDemuxerTrack {
         return _in
     }
 
-    override fun getMeta(): DemuxerTrackMeta {
+    override fun getMeta(): DemuxerTrackMeta? {
         return MP4DemuxerTrackMeta.fromTrack(this)
     }
 
