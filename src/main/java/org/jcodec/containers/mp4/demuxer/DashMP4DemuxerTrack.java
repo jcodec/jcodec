@@ -252,7 +252,7 @@ public class DashMP4DemuxerTrack implements SeekableDemuxerTrack, Closeable {
         VideoCodecMeta videoCodecMeta = getVideoCodecMeta();
         AudioCodecMeta audioCodecMeta = getAudioCodecMeta();
         Codec codec = Codec.codecByFourcc(sampleEntries[0].getFourcc());
-        ByteBuffer opaque = MP4DemuxerTrackMeta.getCodecPrivateOpaque(codec,
+        ByteBuffer opaque = MP4DemuxerTrackMeta.Companion.getCodecPrivateOpaque(codec,
                 sampleEntries[0]);
         return new MP4DemuxerTrackMeta(t, codec, totalDuration, seekFrames,
                 frameCount, codecPrivate, videoCodecMeta, audioCodecMeta, sampleEntries, opaque);
