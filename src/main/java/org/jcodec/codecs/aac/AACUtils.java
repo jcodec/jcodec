@@ -88,9 +88,9 @@ public class AACUtils {
     }
 
     public static ByteBuffer getCodecPrivate(SampleEntry mp4a) {
-        LeafBox b = NodeBox.findFirst(mp4a, LeafBox.class, "esds");
+        LeafBox b = (LeafBox) NodeBox.findFirst(mp4a, "esds");
         if (b == null) {
-            b = NodeBox.findFirstPath(mp4a, LeafBox.class, new String[] { null, "esds" });
+            b = (LeafBox) NodeBox.findFirstPath(mp4a, new String[] { null, "esds" });
         }
         if (b == null)
             return null;

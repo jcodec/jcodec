@@ -55,7 +55,7 @@ public class ChunkWriter {
     }
 
     public void apply() {
-        NodeBox stbl = NodeBox.findFirstPath(trak, NodeBox.class, Box.path("mdia.minf.stbl"));
+        NodeBox stbl = (NodeBox) NodeBox.findFirstPath(trak, Box.path("mdia.minf.stbl"));
         stbl.removeChildren(new String[]{"stco", "co64"});
 
         stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(offsets));

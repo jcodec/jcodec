@@ -47,6 +47,7 @@ import org.jcodec.containers.mp3.MPEGAudioDemuxer;
 import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer.Builder;
 import org.jcodec.containers.mp4.demuxer.DashStreamDemuxer;
+import org.jcodec.containers.mp4.demuxer.DemuxerProbe;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
@@ -59,14 +60,13 @@ import org.jcodec.scale.Transform;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
- * 
+ *
  * @author The JCodec project
- * 
  */
 public class JCodecUtil {
 
     private static final Map<Codec, Class<?>> decoders = new HashMap<Codec, Class<?>>();
-    private static final Map<Format, Class<?>> demuxers = new HashMap<Format, Class<?>>();
+    private static final Map<Format, DemuxerProbe> demuxerProbes = new HashMap<>();
 
     static {
         decoders.put(VP8, VP8Decoder.class);
@@ -75,13 +75,15 @@ public class JCodecUtil {
         decoders.put(Codec.H264, H264Decoder.class);
         decoders.put(AAC, AACDecoder.class);
         decoders.put(Codec.MPEG4, MPEG4Decoder.class);
-        
-        demuxers.put(Format.MPEG_TS, MTSDemuxer.class);
-        demuxers.put(MPEG_PS, MPSDemuxer.class);
-        demuxers.put(MOV, MP4Demuxer.class);
-        demuxers.put(WEBP, WebpDemuxer.class);
-        demuxers.put(MPEG_AUDIO, MPEGAudioDemuxer.class);
-    };
+
+        demuxerProbes.put(Format.MPEG_TS, MTSDemuxer.PROBE);
+        demuxerProbes.put(MPEG_PS, MPSDemuxer.PROBE);
+        demuxerProbes.put(MOV, MP4Demuxer.Companion.getPROBE());
+        demuxerProbes.put(WEBP, WebpDemuxer.PROBE);
+        demuxerProbes.put(MPEG_AUDIO, MPEGAudioDemuxer.PROBE);
+    }
+
+    ;
 
     public static Format detectFormat(File f) throws IOException {
         return detectFormatBuffer(NIOUtils.fetchFromFileL(f, 200 * 1024));
@@ -94,8 +96,12 @@ public class JCodecUtil {
     public static Format detectFormatBuffer(ByteBuffer b) {
         int maxScore = 0;
         Format selected = null;
-        for (Map.Entry<Format, Class<?>> vd : demuxers.entrySet()) {
-            int score = probe(b.duplicate(), vd.getValue());
+        for (Map.Entry<Format, DemuxerProbe> vd : demuxerProbes.entrySet()) {
+            int score = 0;
+            try {
+                score = vd.getValue().probe(b.duplicate());
+            } catch (Exception e) {
+            }
             if (score > maxScore) {
                 selected = vd.getKey();
                 maxScore = score;

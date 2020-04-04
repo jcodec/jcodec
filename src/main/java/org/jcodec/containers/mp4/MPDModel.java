@@ -158,6 +158,8 @@ public class MPDModel {
             throw new JCodecException(e);
         } catch (XMLStreamException e) {
             throw new JCodecException(e);
+        } catch (Exception e) {
+            throw new JCodecException(e);
         }
     }
 }

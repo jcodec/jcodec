@@ -52,7 +52,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
         this.movie = movie;
         this.input = input;
-        SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        SampleSizesBox stsz = (SampleSizesBox) NodeBox.findFirstPath(trak, Box.path("mdia.minf.stbl.stsz"));
         defaultSampleSize = stsz.getDefaultSize();
 
         int chunks = 0;
@@ -89,7 +89,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         int doneFrames = pktSize / frameSize;
         shiftPts(doneFrames);
 
-        MP4Packet pkt = new MP4Packet(result, QTTimeUtil.mediaToEdited(box, ptsRem, movie.getTimescale()), timescale,
+        MP4Packet pkt = new MP4Packet(result, QTTimeUtil.mediaToEdited(getBox(), ptsRem, movie.getTimescale()), timescale,
                 (int) (pts - ptsRem), curFrame, FrameType.KEY, null, 0, ptsRem, se - 1, pktOff, pktSize, true);
 
         curFrame += doneFrames;
@@ -109,7 +109,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     }
 
     public int getFrameSize() {
-        SampleEntry entry = sampleEntries[sampleToChunks[stscInd].getEntry() - 1];
+        SampleEntry entry = getSampleEntries()[sampleToChunks[stscInd].getEntry() - 1];
         if (entry instanceof AudioSampleEntry && defaultSampleSize == 0) {
             return ((AudioSampleEntry) entry).calcFrameSize();
         } else {

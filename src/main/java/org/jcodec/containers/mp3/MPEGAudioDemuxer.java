@@ -18,14 +18,15 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
+import org.jcodec.containers.mp4.demuxer.DemuxerProbe;
 
 /**
  * Demuxer for MPEG 1/2 audio layer 1,2,3 (MP3).
- * 
+ * <p>
  * Extracts raw MPEG audio frames from the ES.
- * 
+ * <p>
  * See http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm for more detail.
- * 
+ *
  * @author Stanislav Vitvitskiy
  */
 public class MPEGAudioDemuxer implements Demuxer, DemuxerTrack {
@@ -48,14 +49,14 @@ public class MPEGAudioDemuxer implements Demuxer, DemuxerTrack {
     private static final int MPEG25 = 0x0;
 
     private static int bitrateTable[][][] = {
-            { { 0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448 },
-                    { 0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384 },
-                    { 0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320 } },
-            { { 0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256 },
-                    { 0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160 },
-                    { 0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160 } } };
-    private static int freqTab[] = { 44100, 48000, 32000 };
-    private static int rateReductTab[] = { 2, 0, 1, 0 };
+            {{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448},
+                    {0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384},
+                    {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320}},
+            {{0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256},
+                    {0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160},
+                    {0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160}}};
+    private static int freqTab[] = {44100, 48000, 32000};
+    private static int rateReductTab[] = {2, 0, 1, 0};
 
     private static int getField(int header, int field) {
         return (header >> (field & 0xffff)) & (field >> 16);
@@ -169,13 +170,13 @@ public class MPEGAudioDemuxer implements Demuxer, DemuxerTrack {
         int padding = getField(header, PADDING);
         int lsf = version == MPEG25 || version == MPEG2 ? 1 : 0;
         switch (layer) {
-        case 0:
-            return ((bitRate * 12) / sampleRate + padding) * 4;
-        case 1:
-            return (bitRate * 144) / sampleRate + padding;
-        default:
-        case 2:
-            return (bitRate * 144) / (sampleRate << lsf) + padding;
+            case 0:
+                return ((bitRate * 12) / sampleRate + padding) * 4;
+            case 1:
+                return (bitRate * 144) / sampleRate + padding;
+            default:
+            case 2:
+                return (bitRate * 144) / (sampleRate << lsf) + padding;
         }
     }
 
@@ -219,13 +220,12 @@ public class MPEGAudioDemuxer implements Demuxer, DemuxerTrack {
 
     /**
      * Used to auto-detect MPEG Audio (MP3) files
-     * 
+     *
      * @param b
-     *            Buffer containing a snippet of data
+     * Buffer containing a snippet of data
      * @return Score from 0 to 100
      */
-    @UsedViaReflection
-    public static int probe(final ByteBuffer b) {
+    public final static DemuxerProbe PROBE = b -> {
         ByteBuffer fork = b.duplicate();
 
         int valid = 0, total = 0;
@@ -249,7 +249,7 @@ public class MPEGAudioDemuxer implements Demuxer, DemuxerTrack {
         } while (fork.remaining() >= 4);
 
         return (100 * valid) / total;
-    }
+    };
 
     private static int skipJunkBB(int header, ByteBuffer fork) {
         while (!validHeader(header) && fork.hasRemaining()) {

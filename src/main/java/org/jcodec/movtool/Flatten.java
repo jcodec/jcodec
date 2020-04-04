@@ -218,7 +218,7 @@ public class Flatten {
         TrakBox[] tracks = movie.getTracks();
         SeekableByteChannel[][] result = new SeekableByteChannel[tracks.length][];
         for (int i = 0; i < tracks.length; i++) {
-            DataRefBox drefs = NodeBox.findFirstPath(tracks[i], DataRefBox.class, Box.path("mdia.minf.dinf.dref"));
+            DataRefBox drefs = (DataRefBox) NodeBox.findFirstPath(tracks[i], Box.path("mdia.minf.dinf.dref"));
             if (drefs == null) {
                 throw new RuntimeException("No data references");
             }

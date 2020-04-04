@@ -52,7 +52,7 @@ public class QTTimeUtil {
      * @return
      */
     public static long frameToTimevalue(TrakBox trak, int frameNumber) {
-        TimeToSampleBox stts = NodeBox.findFirstPath(trak, TimeToSampleBox.class, Box.path("mdia.minf.stbl.stts"));
+        TimeToSampleBox stts = (TimeToSampleBox) NodeBox.findFirstPath(trak, Box.path("mdia.minf.stbl.stts"));
         TimeToSampleEntry[] timeToSamples = stts.getEntries();
         long pts = 0;
         int sttsInd = 0, sttsSubInd = frameNumber;
@@ -72,7 +72,7 @@ public class QTTimeUtil {
      * @return
      */
     public static int timevalueToFrame(TrakBox trak, long tv) {
-        TimeToSampleEntry[] tts = NodeBox.findFirstPath(trak, TimeToSampleBox.class, Box.path("mdia.minf.stbl.stts")).getEntries();
+        TimeToSampleEntry[] tts = ((TimeToSampleBox)NodeBox.findFirstPath(trak, Box.path("mdia.minf.stbl.stts"))).getEntries();
         int frame = 0;
         for (int i = 0; tv > 0 && i < tts.length; i++) {
             long rem = tv / tts[i].getSampleDuration();
@@ -114,7 +114,6 @@ public class QTTimeUtil {
      * Converts edited timevalue to media timevalue
      * 
      * @param trak
-     * @param mediaTv
      * @param movieTimescale
      * @return
      */
@@ -182,8 +181,6 @@ public class QTTimeUtil {
      * Calculates and formats tape timecode as in Quicktime player
      * 
      * @param timecodeTrack
-     * @param tv
-     * @param startCounter
      * @return
      * @throws IOException
      */
@@ -208,7 +205,6 @@ public class QTTimeUtil {
      * 
      * @param timecodeTrack
      * @param tv
-     * @param startCounter
      * @return
      * @throws IOException
      */
@@ -245,7 +241,7 @@ public class QTTimeUtil {
      * @return
      */
     public static String formatTimecode(TrakBox timecodeTrack, int counter) {
-        TimecodeSampleEntry tmcd = NodeBox.findFirstPath(timecodeTrack, TimecodeSampleEntry.class, Box.path("mdia.minf.stbl.stsd.tmcd"));
+        TimecodeSampleEntry tmcd = (TimecodeSampleEntry) NodeBox.findFirstPath(timecodeTrack, Box.path("mdia.minf.stbl.stsd.tmcd"));
         byte nf = tmcd.getNumFrames();
 
         String tc = String.format("%02d", counter % nf);

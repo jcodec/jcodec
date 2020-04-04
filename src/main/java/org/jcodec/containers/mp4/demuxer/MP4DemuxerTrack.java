@@ -51,10 +51,10 @@ public class MP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         super(trak);
         this.input = input;
         this.movie = mov;
-        SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
-        SyncSamplesBox stss = NodeBox.findFirstPath(trak, SyncSamplesBox.class, Box.path("mdia.minf.stbl.stss"));
-        SyncSamplesBox stps = NodeBox.findFirstPath(trak, SyncSamplesBox.class, Box.path("mdia.minf.stbl.stps"));
-        CompositionOffsetsBox ctts = NodeBox.findFirstPath(trak, CompositionOffsetsBox.class, Box.path("mdia.minf.stbl.ctts"));
+        SampleSizesBox stsz = (SampleSizesBox) NodeBox.findFirstPath(trak, Box.path("mdia.minf.stbl.stsz"));
+        SyncSamplesBox stss = (SyncSamplesBox) NodeBox.findFirstPath(trak, Box.path("mdia.minf.stbl.stss"));
+        SyncSamplesBox stps = (SyncSamplesBox) NodeBox.findFirstPath(trak, Box.path("mdia.minf.stbl.stps"));
+        CompositionOffsetsBox ctts = (CompositionOffsetsBox) NodeBox.findFirstPath(trak, Box.path("mdia.minf.stbl.ctts"));
         compOffsets = ctts == null ? null : ctts.getEntries();
         if (stss != null) {
             syncSamples = stss.getSyncSamples();
@@ -123,7 +123,7 @@ public class MP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
 
         ByteBuffer data = result == null ? null : convertPacket(result);
-        long _pts = mediaToEdited(box, realPts, movie.getTimescale());
+        long _pts = mediaToEdited(getBox(), realPts, movie.getTimescale());
         FrameType ftype = sync ? FrameType.KEY : FrameType.INTER;
         int entryNo = sampleToChunks[stscInd].getEntry() - 1;
         MP4Packet pkt = new MP4Packet(data, _pts, timescale, duration, curFrame, ftype, null, 0, realPts, entryNo,

@@ -21,8 +21,8 @@ public class SampleOffsetUtilsTest {
     public void testGetFirstSampleAtChunk() throws Exception {
         MovieBox moov = MP4Util.parseMovie(f);
         MediaInfoBox minf = moov.getAudioTracks().get(0).getMdia().getMinf();
-        ChunkOffsetsBox stco = NodeBox.findFirstPath(minf, ChunkOffsetsBox.class, Box.path("stbl.stco"));
-        SampleToChunkBox stsc = NodeBox.findFirstPath(minf, SampleToChunkBox.class, Box.path("stbl.stsc"));
+        ChunkOffsetsBox stco = (ChunkOffsetsBox) NodeBox.findFirstPath(minf, Box.path("stbl.stco"));
+        SampleToChunkBox stsc = (SampleToChunkBox) NodeBox.findFirstPath(minf, Box.path("stbl.stsc"));
         assertEquals(0, getFirstSampleAtChunk(1, stsc, stco));
         assertEquals(2, getFirstSampleAtChunk(2, stsc, stco));
         assertEquals(4, getFirstSampleAtChunk(3, stsc, stco));
@@ -31,8 +31,8 @@ public class SampleOffsetUtilsTest {
     public void testGetChunkBySample() throws Exception {
         MovieBox moov = MP4Util.parseMovie(f);
         MediaInfoBox minf = moov.getAudioTracks().get(0).getMdia().getMinf();
-        ChunkOffsetsBox stco = NodeBox.findFirstPath(minf, ChunkOffsetsBox.class, Box.path("stbl.stco"));
-        SampleToChunkBox stsc = NodeBox.findFirstPath(minf, SampleToChunkBox.class, Box.path("stbl.stsc"));
+        ChunkOffsetsBox stco = (ChunkOffsetsBox) NodeBox.findFirstPath(minf, Box.path("stbl.stco"));
+        SampleToChunkBox stsc = (SampleToChunkBox) NodeBox.findFirstPath(minf, Box.path("stbl.stsc"));
         assertEquals(1, getChunkBySample(0, stco, stsc));
         assertEquals(1, getChunkBySample(1, stco, stsc));
         assertEquals(2, getChunkBySample(2, stco, stsc));
@@ -43,7 +43,7 @@ public class SampleOffsetUtilsTest {
     public void testGetSamplesInChunk() throws Exception {
         MovieBox moov = MP4Util.parseMovie(f);
         MediaInfoBox minf = moov.getAudioTracks().get(0).getMdia().getMinf();
-        SampleToChunkBox stsc = NodeBox.findFirstPath(minf, SampleToChunkBox.class, Box.path("stbl.stsc"));
+        SampleToChunkBox stsc = (SampleToChunkBox) NodeBox.findFirstPath(minf, Box.path("stbl.stsc"));
         assertEquals(2, getSamplesInChunk(1, stsc));
         assertEquals(2, getSamplesInChunk(2, stsc));
         assertEquals(1, getSamplesInChunk(4, stsc));

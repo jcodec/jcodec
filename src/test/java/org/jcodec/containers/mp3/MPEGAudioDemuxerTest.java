@@ -70,14 +70,14 @@ public class MPEGAudioDemuxerTest {
     @Test
     public void testProbe1() throws IOException {
         File mp3 = new File("src/test/resources/drip.mp3");
-        int probe = MPEGAudioDemuxer.probe(NIOUtils.fetchFromFileL(mp3, 200 * 1024));
+        int probe = MPEGAudioDemuxer.PROBE.probe(NIOUtils.fetchFromFileL(mp3, 200 * 1024));
         Assert.assertEquals(100, probe);
     }
     
     @Test
     public void testProbe2() throws IOException {
         File mp3 = new File("src/test/resources/ascii.mp3");
-        int probe = MPEGAudioDemuxer.probe(NIOUtils.fetchFromFileL(mp3, 200 * 1024));
+        int probe = MPEGAudioDemuxer.PROBE.probe(NIOUtils.fetchFromFileL(mp3, 200 * 1024));
         Assert.assertEquals(99, probe);
     }
 }

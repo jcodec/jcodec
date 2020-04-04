@@ -22,11 +22,9 @@ public class XMLMapper {
     /**
      * Parses XML snippet into the object tree
      * 
-     * @throws XMLStreamException
-     * @throws ReflectiveOperationException
      */
     public static <T> T map(InputStream is, Class<T> clz, TypeHandler th)
-            throws ReflectiveOperationException, XMLStreamException {
+            throws Exception {
         XMLInputFactory xmlInFact = XMLInputFactory.newInstance();
         XMLStreamReader reader = xmlInFact.createXMLStreamReader(is);
         while (!reader.isStartElement())
@@ -35,7 +33,7 @@ public class XMLMapper {
     }
 
     public static <T> T parseInternal(XMLStreamReader reader, Class<T> clz, TypeHandler th)
-            throws ReflectiveOperationException, XMLStreamException {
+            throws Exception {
         Constructor<T> constructor = (Constructor<T>)clz.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
         T instance = constructor.newInstance();

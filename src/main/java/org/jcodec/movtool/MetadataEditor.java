@@ -41,10 +41,10 @@ public class MetadataEditor {
         }
 
         public static MovieEditor createFromMovie(MovieBox moov) {
-            MetaBox keyedMeta = NodeBox.findFirst(moov, MetaBox.class, MetaBox.fourcc());
-            MetaBox itunesMeta = NodeBox.findFirstPath(moov, MetaBox.class, new String[] { "udta", MetaBox.fourcc() });
+            MetaBox keyedMeta = (MetaBox) NodeBox.findFirst(moov, MetaBox.fourcc());
+            MetaBox itunesMeta = (MetaBox) NodeBox.findFirstPath(moov, new String[] { "udta", MetaBox.fourcc() });
 
-            UdtaBox udtaBox = NodeBox.findFirst(moov, UdtaBox.class, "udta");
+            UdtaBox udtaBox = (UdtaBox) NodeBox.findFirst(moov, "udta");
 
             return new MovieEditor(keyedMeta == null ? new HashMap<String, MetaValue>() : keyedMeta.getKeyedMeta(),
                     itunesMeta == null ? new HashMap<Integer, MetaValue>() : itunesMeta.getItunesMeta(),
@@ -52,8 +52,8 @@ public class MetadataEditor {
         }
 
         public void apply(MovieBox movie) {
-            MetaBox meta1 = NodeBox.findFirst(movie, MetaBox.class, MetaBox.fourcc());
-            MetaBox meta2 = NodeBox.findFirstPath(movie, MetaBox.class, new String[] { "udta", MetaBox.fourcc() });
+            MetaBox meta1 = (MetaBox) NodeBox.findFirst(movie, MetaBox.fourcc());
+            MetaBox meta2 = (MetaBox) NodeBox.findFirstPath(movie, new String[] { "udta", MetaBox.fourcc() });
             if (keyedMeta != null && keyedMeta.size() > 0) {
                 if (meta1 == null) {
                     meta1 = MetaBox.createMetaBox();
@@ -63,7 +63,7 @@ public class MetadataEditor {
             }
 
             if (itunesMeta != null && itunesMeta.size() > 0) {
-                UdtaBox udta = NodeBox.findFirst(movie, UdtaBox.class, "udta");
+                UdtaBox udta = (UdtaBox) NodeBox.findFirst(movie, "udta");
                 if (meta2 == null) {
                     meta2 = UdtaMetaBox.createUdtaMetaBox();
                     if (udta == null) {

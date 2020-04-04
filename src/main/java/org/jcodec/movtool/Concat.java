@@ -112,7 +112,7 @@ public class Concat {
 
     private void offsetTrack(MovieBox result, MovieBox[] movies, long[] offsets, int index) {
         TrakBox[] rtracks = result.getTracks();
-        NodeBox rstbl = NodeBox.findFirstPath(rtracks[index], NodeBox.class, Box.path("mdia.minf.stbl"));
+        NodeBox rstbl = (NodeBox) NodeBox.findFirstPath(rtracks[index], Box.path("mdia.minf.stbl"));
         int totalChunks = 0;
         int totalTts = 0;
         int totalSizes = 0;

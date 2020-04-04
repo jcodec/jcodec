@@ -104,7 +104,7 @@ public class DashMP4DemuxerTrack implements SeekableDemuxerTrack, Closeable {
         sampleDurations = new int[fragments.length][];
         this.trak = trak;
         inputs = new SeekableByteChannel[fragments.length];
-        sampleEntries = NodeBox.findAllPath(trak, SampleEntry.class,
+        sampleEntries = (SampleEntry[]) NodeBox.findAllPath(trak,
                 new String[] { "mdia", "minf", "stbl", "stsd", null });
 
         if (sortable(fragments))
@@ -286,7 +286,7 @@ public class DashMP4DemuxerTrack implements SeekableDemuxerTrack, Closeable {
         VideoCodecMeta videoCodecMeta = null;
         if (type == MP4TrackType.VIDEO) {
             videoCodecMeta = createSimpleVideoCodecMeta(trak.getCodedSize(), getColorInfo());
-            PixelAspectExt pasp = NodeBox.findFirst(sampleEntries[0], PixelAspectExt.class, "pasp");
+            PixelAspectExt pasp = (PixelAspectExt) NodeBox.findFirst(sampleEntries[0], "pasp");
             if (pasp != null)
                 videoCodecMeta.setPixelAspectRatio(pasp.getRational());
         }

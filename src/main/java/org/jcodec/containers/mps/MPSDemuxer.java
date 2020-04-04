@@ -36,6 +36,7 @@ import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
+import org.jcodec.containers.mp4.demuxer.DemuxerProbe;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -416,8 +417,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         return score > 50;
     }
 
-    @UsedViaReflection
-    public static int probe(ByteBuffer b_) {
+    public final static DemuxerProbe PROBE = b_ -> {
         ByteBuffer b = b_.duplicate();
         int marker = 0xffffffff;
         int sliceSize = 0;
@@ -496,7 +496,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 break;
         }
         return Math.max(rateSeq(nuSeq), state >= 3 ? 100 / (1 + errors) : 0);
-    }
+    };
 
     private static int rateSeq(List<NALUnit> nuSeq) {
         int score = 0;

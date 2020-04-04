@@ -316,7 +316,7 @@ public class FragToMov {
             totalDur += tt.getSegmentDuration();
         }
         trakBox.setDuration(movie.rescale(totalDur, trakBox.getTimescale()));
-        MediaHeaderBox mdhd = NodeBox.findFirstPath(trakBox, MediaHeaderBox.class, new String[] { "mdia", "mdhd" });
+        MediaHeaderBox mdhd = (MediaHeaderBox) NodeBox.findFirstPath(trakBox, new String[] { "mdia", "mdhd" });
         mdhd.setDuration(totalDur);
     }
 

@@ -26,9 +26,9 @@ public class SampleOffsetUtils {
     public static ByteBuffer getSampleData(int sample, File file) throws IOException {
         MovieBox moov = MP4Util.parseMovie(file);
         MediaInfoBox minf = moov.getAudioTracks().get(0).getMdia().getMinf();
-        ChunkOffsetsBox stco = NodeBox.findFirstPath(minf, ChunkOffsetsBox.class, Box.path("stbl.stco"));
-        SampleToChunkBox stsc = NodeBox.findFirstPath(minf, SampleToChunkBox.class, Box.path("stbl.stsc"));
-        SampleSizesBox stsz = NodeBox.findFirstPath(minf, SampleSizesBox.class, Box.path("stbl.stsz"));
+        ChunkOffsetsBox stco = (ChunkOffsetsBox) NodeBox.findFirstPath(minf, Box.path("stbl.stco"));
+        SampleToChunkBox stsc = (SampleToChunkBox) NodeBox.findFirstPath(minf, Box.path("stbl.stsc"));
+        SampleSizesBox stsz = (SampleSizesBox) NodeBox.findFirstPath(minf, Box.path("stbl.stsz"));
         long sampleOffset = getSampleOffset(sample, stsc, stco, stsz);
         MappedByteBuffer map = NIOUtils.mapFile(file);
         map.position((int) sampleOffset);

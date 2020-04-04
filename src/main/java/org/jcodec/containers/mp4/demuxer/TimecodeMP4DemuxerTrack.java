@@ -49,10 +49,10 @@ public class TimecodeMP4DemuxerTrack {
 
         NodeBox stbl = trak.getMdia().getMinf().getStbl();
 
-        TimeToSampleBox stts = NodeBox.findFirst(stbl, TimeToSampleBox.class, "stts");
-        SampleToChunkBox stsc = NodeBox.findFirst(stbl, SampleToChunkBox.class, "stsc");
-        ChunkOffsetsBox stco = NodeBox.findFirst(stbl, ChunkOffsetsBox.class, "stco");
-        ChunkOffsets64Box co64 = NodeBox.findFirst(stbl, ChunkOffsets64Box.class, "co64");
+        TimeToSampleBox stts = (TimeToSampleBox) NodeBox.findFirst(stbl, "stts");
+        SampleToChunkBox stsc = (SampleToChunkBox) NodeBox.findFirst(stbl, "stsc");
+        ChunkOffsetsBox stco = (ChunkOffsetsBox) NodeBox.findFirst(stbl, "stco");
+        ChunkOffsets64Box co64 = (ChunkOffsets64Box) NodeBox.findFirst(stbl, "co64");
 
         timeToSamples = stts.getEntries();
         chunkOffsets = stco != null ? stco.getChunkOffsets() : co64.getChunkOffsets();
@@ -144,7 +144,7 @@ public class TimecodeMP4DemuxerTrack {
 
     public int parseTimecode(String tc) {
         String[] split = tc.split(":");
-        TimecodeSampleEntry tmcd = NodeBox.findFirstPath(box, TimecodeSampleEntry.class, Box.path("mdia.minf.stbl.stsd.tmcd"));
+        TimecodeSampleEntry tmcd = (TimecodeSampleEntry) NodeBox.findFirstPath(box, Box.path("mdia.minf.stbl.stsd.tmcd"));
         byte nf = tmcd.getNumFrames();
 
         return Integer.parseInt(split[3]) + Integer.parseInt(split[2]) * nf + Integer.parseInt(split[1]) * 60 * nf

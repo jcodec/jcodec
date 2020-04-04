@@ -47,12 +47,12 @@ public class BoxUtil {
     }
 
     public static boolean containsBox(NodeBox box, String path) {
-        Box b = NodeBox.findFirstPath(box, Box.class, new String[] { path });
+        Box b = NodeBox.findFirstPath(box, new String[] { path });
         return b != null;
     }
 
     public static boolean containsBox2(NodeBox box, String path1, String path2) {
-        Box b = NodeBox.findFirstPath(box, Box.class, new String[] { path1, path2 });
+        Box b = NodeBox.findFirstPath(box, new String[] { path1, path2 });
         return b != null;
     }
     

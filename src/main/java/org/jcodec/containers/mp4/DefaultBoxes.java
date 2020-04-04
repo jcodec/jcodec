@@ -69,7 +69,7 @@ public class DefaultBoxes extends Boxes {
         mappings.put(MediaBox.fourcc(), MediaBox.class);
         mappings.put(MediaHeaderBox.fourcc(), MediaHeaderBox.class);
         mappings.put(MediaInfoBox.fourcc(), MediaInfoBox.class);
-        mappings.put(HandlerBox.fourcc(), HandlerBox.class);
+        mappings.put(HandlerBox.FOURCC, HandlerBox.class);
         mappings.put(DataInfoBox.fourcc(), DataInfoBox.class);
         mappings.put("stbl", NodeBox.class);
         mappings.put(SampleDescriptionBox.fourcc(), SampleDescriptionBox.class);

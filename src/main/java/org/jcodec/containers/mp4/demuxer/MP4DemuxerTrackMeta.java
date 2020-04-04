@@ -48,7 +48,7 @@ public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
 
     public static DemuxerTrackMeta fromTrack(AbstractMP4DemuxerTrack track) {
         TrakBox trak = track.getBox();
-        SyncSamplesBox stss = NodeBox.findFirstPath(trak, SyncSamplesBox.class, Box.path("mdia.minf.stbl.stss"));
+        SyncSamplesBox stss = (SyncSamplesBox) NodeBox.findFirstPath(trak, Box.path("mdia.minf.stbl.stss"));
         int[] syncSamples = stss == null ? null : stss.getSyncSamples();
 
         int[] seekFrames;
@@ -78,7 +78,7 @@ public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
 
         meta.setIndex(track.getBox().getTrackHeader().getNo());
         if (type == MP4TrackType.VIDEO) {
-            TrackHeaderBox tkhd = NodeBox.findFirstPath(trak, TrackHeaderBox.class, Box.path("tkhd"));
+            TrackHeaderBox tkhd = (TrackHeaderBox) NodeBox.findFirstPath(trak, Box.path("tkhd"));
 
             DemuxerTrackMeta.Orientation orientation;
             if (tkhd.isOrientation90())
@@ -98,12 +98,12 @@ public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
 
     public static ByteBuffer getCodecPrivateOpaque(Codec codec, SampleEntry se) {
         if (codec == Codec.H264) {
-            Box b = NodeBox.findFirst(se, Box.class, "avcC");
+            Box b = NodeBox.findFirst(se, "avcC");
             return b != null ? BoxUtil.writeBox(b) : null;
         } else if (codec == Codec.AAC) {
-            Box b = NodeBox.findFirst(se, Box.class, "esds");
+            Box b = NodeBox.findFirst(se, "esds");
             if (b == null) {
-                b = NodeBox.findFirstPath(se, Box.class, new String[] { null, "esds" });
+                b = NodeBox.findFirstPath(se, new String[] { null, "esds" });
             }
             return b != null ? BoxUtil.writeBox(b) : null;
         }
@@ -123,7 +123,7 @@ public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
         VideoCodecMeta videoCodecMeta = null;
         if (type == MP4TrackType.VIDEO) {
             videoCodecMeta = createSimpleVideoCodecMeta(trak.getCodedSize(), getColorInfo(track));
-            PixelAspectExt pasp = NodeBox.findFirst(track.getSampleEntries()[0], PixelAspectExt.class, "pasp");
+            PixelAspectExt pasp = (PixelAspectExt) NodeBox.findFirst(track.getSampleEntries()[0], "pasp");
             if (pasp != null)
                 videoCodecMeta.setPixelAspectRatio(pasp.getRational());
         }

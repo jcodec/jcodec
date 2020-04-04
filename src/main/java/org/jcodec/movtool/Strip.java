@@ -122,14 +122,14 @@ public class Strip {
             } else
                 result.add(chunk);
         }
-        NodeBox stbl = NodeBox.findFirstPath(track, NodeBox.class, Box.path("mdia.minf.stbl"));
+        NodeBox stbl = (NodeBox) NodeBox.findFirstPath(track, Box.path("mdia.minf.stbl"));
         stbl.replace("stts", getTimeToSamples(result));
         stbl.replace("stsz", getSampleSizes(result));
         stbl.replace("stsc", getSamplesToChunk(result));
         stbl.removeChildren(new String[] { "stco", "co64" });
         stbl.add(getChunkOffsets(result));
         long duration = totalDuration(result);
-        MediaHeaderBox mdhd = NodeBox.findFirstPath(track, MediaHeaderBox.class, Box.path("mdia.mdhd"));
+        MediaHeaderBox mdhd = (MediaHeaderBox) NodeBox.findFirstPath(track, Box.path("mdia.mdhd"));
         mdhd.setDuration(duration);
         track.setDuration(movie.rescale(duration, mdhd.getTimescale()));
         return new RationalLarge(duration, mdhd.getTimescale());
@@ -165,14 +165,14 @@ public class Strip {
             }
         }
 
-        NodeBox stbl = NodeBox.findFirstPath(track, NodeBox.class, Box.path("mdia.minf.stbl"));
+        NodeBox stbl = (NodeBox) NodeBox.findFirstPath(track, Box.path("mdia.minf.stbl"));
         stbl.replace("stts", getTimeToSamples(result));
         stbl.replace("stsz", getSampleSizes(result));
         stbl.replace("stsc", getSamplesToChunk(result));
         stbl.removeChildren(new String[] { "stco", "co64" });
         stbl.add(getChunkOffsets(result));
         long duration = totalDuration(result);
-        MediaHeaderBox mdhd = NodeBox.findFirstPath(track, MediaHeaderBox.class, Box.path("mdia.mdhd"));
+        MediaHeaderBox mdhd = (MediaHeaderBox) NodeBox.findFirstPath(track, Box.path("mdia.mdhd"));
         mdhd.setDuration(duration);
         track.setDuration(movie.rescale(duration, mdhd.getTimescale()));
         return new RationalLarge(duration, mdhd.getTimescale());

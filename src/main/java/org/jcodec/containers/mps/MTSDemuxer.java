@@ -1,4 +1,5 @@
 package org.jcodec.containers.mps;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -13,17 +14,17 @@ import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mp4.demuxer.DemuxerProbe;
 
 import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
- * 
+ * <p>
  * MPEG TS demuxer
- * 
+ *
  * @author The JCodec project
- * 
  */
 public class MTSDemuxer {
     private SeekableByteChannel channel;
@@ -106,7 +107,7 @@ public class MTSDemuxer {
         }
 
         public void storePacket(MTSPacket pkt) {
-            if(closed)
+            if (closed)
                 return;
             data.add(pkt.payload);
         }
@@ -160,8 +161,7 @@ public class MTSDemuxer {
         return new MTSPacket(guid, payloadStart == 1, ((b0 & 0x10) != 0) ? buffer : null);
     }
 
-    @UsedViaReflection
-    public static int probe(final ByteBuffer b_) {
+    public final static DemuxerProbe PROBE = b_ -> {
         ByteBuffer b = b_.duplicate();
         IntObjectMap<List<ByteBuffer>> streams = new IntObjectMap<List<ByteBuffer>>();
         while (true) {
@@ -189,11 +189,11 @@ public class MTSDemuxer {
         int[] keys = streams.keys();
         for (int i : keys) {
             List<ByteBuffer> packets = streams.get(i);
-            int score = MPSDemuxer.probe(NIOUtils.combineBuffers(packets));
+            int score = MPSDemuxer.PROBE.probe(NIOUtils.combineBuffers(packets));
             if (score > maxScore) {
                 maxScore = score + (packets.size() > 20 ? 50 : 0);
             }
         }
         return maxScore;
-    }
+    };
 }

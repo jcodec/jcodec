@@ -33,7 +33,7 @@ public class ChangeTimescale {
         new InplaceMP4Editor().modify(new File(args[0]), new MP4Edit() {
             public void apply(MovieBox mov) {
                 TrakBox vt = mov.getVideoTrack();
-                MediaHeaderBox mdhd = NodeBox.findFirstPath(vt, MediaHeaderBox.class, Box.path("mdia.mdhd"));
+                MediaHeaderBox mdhd = (MediaHeaderBox) NodeBox.findFirstPath(vt, Box.path("mdia.mdhd"));
                 int oldTs = mdhd.getTimescale();
 
                 if (oldTs > ts) {

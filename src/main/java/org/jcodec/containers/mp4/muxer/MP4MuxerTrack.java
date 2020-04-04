@@ -240,7 +240,7 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
             long min = minLongOffset(compositionOffsets);
             if (min > 0) {
                 for (LongEntry entry : compositionOffsets) {
-                    entry.offset -= min;
+                    entry.setOffset(entry.getOffset() - min);
                 }
             }
 
@@ -259,7 +259,7 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
             Entry[] intEntries = new Entry[compositionOffsets.size()];
             for (int i = 0; i < compositionOffsets.size(); i++) {
                 LongEntry longEntry = compositionOffsets.get(i);
-                intEntries[i] = new Entry(checkedCast(longEntry.count), checkedCast(longEntry.offset));
+                intEntries[i] = new Entry(checkedCast(longEntry.getCount()), checkedCast(longEntry.getOffset()));
             }
 
             stbl.add(CompositionOffsetsBox.createCompositionOffsetsBox(intEntries));

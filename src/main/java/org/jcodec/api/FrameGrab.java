@@ -296,7 +296,6 @@ public class FrameGrab {
      * Get frame at a specified frame number as JCodec image
      * 
      * @param file
-     * @param second
      * @return
      * @throws IOException
      * @throws JCodecException
@@ -315,7 +314,6 @@ public class FrameGrab {
      * Get frame at a specified frame number as JCodec image
      * 
      * @param file
-     * @param second
      * @return
      * @throws IOException
      * @throws JCodecException
@@ -345,7 +343,6 @@ public class FrameGrab {
      * 
      * @param vt
      * @param decoder
-     * @param frameNumber
      * @return
      * @throws IOException
      * @throws JCodecException
@@ -377,7 +374,6 @@ public class FrameGrab {
      * 
      * @param vt
      * @param decoder
-     * @param frameNumber
      * @return
      * @throws IOException
      * @throws JCodecException

@@ -15,14 +15,16 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
+import org.jcodec.containers.mp4.demuxer.DemuxerProbe;
 import org.jcodec.platform.Platform;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
- * 
+ * <p>
  * Reads integer samples from the wav file
- * 
+ *
  * @author Stanislav Vitvitskiy
  */
 public class WebpDemuxer implements Demuxer, DemuxerTrack {
@@ -67,22 +69,22 @@ public class WebpDemuxer implements Demuxer, DemuxerTrack {
         int size = raf.readInt();
         done = true;
         switch (fourCC) {
-        case FOURCC_VP8:
-            byte[] b = new byte[size];
-            raf.readFully(b);
-            return new Packet(ByteBuffer.wrap(b), 0, 25, 1, 0, FrameType.KEY, null, 0);
-        case FOURCC_ICCP:
-        case FOURCC_ANIM:
-        case FOURCC_ANMF:
-        case FOURCC_XMP:
-        case FOURCC_EXIF:
-        case FOURCC_ALPH:
-        case FOURCC_VP8L:
-        case FOURCC_VP8X:
-        default:
-            Logger.warn("Skipping unsupported chunk: " + dwToFourCC(fourCC) + ".");
-            byte[] b1 = new byte[size];
-            raf.readFully(b1);
+            case FOURCC_VP8:
+                byte[] b = new byte[size];
+                raf.readFully(b);
+                return new Packet(ByteBuffer.wrap(b), 0, 25, 1, 0, FrameType.KEY, null, 0);
+            case FOURCC_ICCP:
+            case FOURCC_ANIM:
+            case FOURCC_ANMF:
+            case FOURCC_XMP:
+            case FOURCC_EXIF:
+            case FOURCC_ALPH:
+            case FOURCC_VP8L:
+            case FOURCC_VP8X:
+            default:
+                Logger.warn("Skipping unsupported chunk: " + dwToFourCC(fourCC) + ".");
+                byte[] b1 = new byte[size];
+                raf.readFully(b1);
         }
         return null;
     }
@@ -116,26 +118,25 @@ public class WebpDemuxer implements Demuxer, DemuxerTrack {
         return new ArrayList<DemuxerTrack>();
     }
 
-    @UsedViaReflection
-    public static int probe(final ByteBuffer b_) {
-        ByteBuffer b = b_.duplicate();
-        if (b.remaining() < 12)
+    public final static DemuxerProbe PROBE = b -> {
+        ByteBuffer _b = b.duplicate();
+        if (_b.remaining() < 12)
             return 0;
-        b.order(ByteOrder.LITTLE_ENDIAN);
-        if (b.getInt() != FOURCC_RIFF)
+        _b.order(ByteOrder.LITTLE_ENDIAN);
+        if (_b.getInt() != FOURCC_RIFF)
             return 0;
-        int size = b.getInt(); // Size must be sane
-        if (b.getInt() != FOURCC_WEBP)
+        int size = _b.getInt(); // Size must be sane
+        if (_b.getInt() != FOURCC_WEBP)
             return 0;
         return 100;
-    }
+    };
 
     public static String dwToFourCC(int fourCC) {
         char[] ch = new char[4];
-        ch[0] = (char)((fourCC >> 24) & 0xff);
-        ch[1] = (char)((fourCC >> 16) & 0xff);
-        ch[2] = (char)((fourCC >> 8) & 0xff);
-        ch[3] = (char)((fourCC >> 0) & 0xff);
+        ch[0] = (char) ((fourCC >> 24) & 0xff);
+        ch[1] = (char) ((fourCC >> 16) & 0xff);
+        ch[2] = (char) ((fourCC >> 8) & 0xff);
+        ch[3] = (char) ((fourCC >> 0) & 0xff);
         return Platform.stringFromChars(ch);
     }
 }

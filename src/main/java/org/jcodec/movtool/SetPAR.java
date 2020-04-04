@@ -37,7 +37,7 @@ public class SetPAR {
             public void apply(MovieBox mov) {
                 TrakBox vt = mov.getVideoTrack();
                 vt.setPAR(newPAR);
-                Box box = NodeBox.findFirstPath(vt, SampleDescriptionBox.class, Box.path("mdia.minf.stbl.stsd")).getBoxes()
+                Box box = ((SampleDescriptionBox)NodeBox.findFirstPath(vt, Box.path("mdia.minf.stbl.stsd"))).getBoxes()
                         .get(0);
                 if (box != null && (box instanceof VideoSampleEntry)) {
                     VideoSampleEntry vs = (VideoSampleEntry) box;

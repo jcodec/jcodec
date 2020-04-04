@@ -647,7 +647,7 @@ public class H264Utils {
     }
 
     public static AvcCBox parseAVCC(VideoSampleEntry vse) {
-        Box lb = NodeBox.findFirst(vse, Box.class, "avcC");
+        Box lb = NodeBox.findFirst(vse, "avcC");
         if (lb instanceof AvcCBox)
             return (AvcCBox) lb;
         else if (lb != null) {
