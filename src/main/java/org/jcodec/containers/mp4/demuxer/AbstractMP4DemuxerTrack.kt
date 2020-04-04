@@ -60,7 +60,7 @@ abstract class AbstractMP4DemuxerTrack(trak: TrakBox) : SeekableDemuxerTrack {
     protected var pts: Long = 0
 
     @JvmField
-    protected var curFrame: Long = 0
+    protected var _curFrame: Long = 0
 
     @JvmField
     protected var timescale: Int
@@ -132,7 +132,7 @@ abstract class AbstractMP4DemuxerTrack(trak: TrakBox) : SeekableDemuxerTrack {
     override fun gotoFrame(frameNo: Long): Boolean {
         require(frameNo >= 0) { "negative frame number" }
         if (frameNo >= frameCount) return false
-        if (frameNo == curFrame) return true
+        if (frameNo == _curFrame) return true
         seekPointer(frameNo)
         seekFrame(frameNo)
         return true
@@ -155,7 +155,7 @@ abstract class AbstractMP4DemuxerTrack(trak: TrakBox) : SeekableDemuxerTrack {
 
     abstract val frameCount: Long
     override fun getCurFrame(): Long {
-        return curFrame
+        return _curFrame
     }
 
     val edits: List<Edit>?

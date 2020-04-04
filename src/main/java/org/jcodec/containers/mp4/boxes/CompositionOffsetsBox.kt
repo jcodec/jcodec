@@ -11,7 +11,7 @@ import java.nio.ByteBuffer
  * @author The JCodec project
  */
 class CompositionOffsetsBox(header: Header) : FullBox(header) {
-    var entries: Array<Entry?> = emptyArray()
+    var entries: Array<Entry> = emptyArray()
         private set
 
     class Entry(var count: Int, var offset: Int)
@@ -21,18 +21,15 @@ class CompositionOffsetsBox(header: Header) : FullBox(header) {
     override fun parse(input: ByteBuffer) {
         super.parse(input)
         val num = input.int
-        entries = arrayOfNulls(num)
-        for (i in 0 until num) {
-            entries[i] = Entry(input.int, input.int)
-        }
+        entries = Array(num) { Entry(input.int, input.int) }
     }
 
     override fun doWrite(out: ByteBuffer) {
         super.doWrite(out)
         out.putInt(entries.size)
         for (i in entries.indices) {
-            out.putInt(entries[i]!!.count)
-            out.putInt(entries[i]!!.offset)
+            out.putInt(entries[i].count)
+            out.putInt(entries[i].offset)
         }
     }
 
@@ -47,7 +44,7 @@ class CompositionOffsetsBox(header: Header) : FullBox(header) {
         }
 
         @JvmStatic
-        fun createCompositionOffsetsBox(entries: Array<Entry?>): CompositionOffsetsBox {
+        fun createCompositionOffsetsBox(entries: Array<Entry>): CompositionOffsetsBox {
             val ctts = CompositionOffsetsBox(Header(fourcc()))
             ctts.entries = entries
             return ctts

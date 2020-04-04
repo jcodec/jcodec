@@ -90,9 +90,9 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         shiftPts(doneFrames);
 
         MP4Packet pkt = new MP4Packet(result, QTTimeUtil.mediaToEdited(getBox(), ptsRem, movie.getTimescale()), timescale,
-                (int) (pts - ptsRem), curFrame, FrameType.KEY, null, 0, ptsRem, se - 1, pktOff, pktSize, true);
+                (int) (pts - ptsRem), _curFrame, FrameType.KEY, null, 0, ptsRem, se - 1, pktOff, pktSize, true);
 
-        curFrame += doneFrames;
+        _curFrame += doneFrames;
 
         posShift = 0;
 
@@ -119,15 +119,15 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     @Override
     protected void seekPointer(long frameNo) {
-        for (stcoInd = 0, stscInd = 0, curFrame = 0;;) {
-            long nextFrame = curFrame + sampleToChunks[stscInd].getCount();
+        for (stcoInd = 0, stscInd = 0, _curFrame = 0;;) {
+            long nextFrame = _curFrame + sampleToChunks[stscInd].getCount();
             if (nextFrame > frameNo)
                 break;
-            curFrame = nextFrame;
+            _curFrame = nextFrame;
             nextChunk();
         }
-        posShift = (int) ((frameNo - curFrame) * getFrameSize());
-        curFrame = frameNo;
+        posShift = (int) ((frameNo - _curFrame) * getFrameSize());
+        _curFrame = frameNo;
     }
 
     @Override

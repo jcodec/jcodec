@@ -41,7 +41,7 @@ open class MP4Demuxer internal constructor(protected var input: SeekableByteChan
     }
 
     protected open fun newTrack(trak: TrakBox?): SeekableDemuxerTrack {
-        return CodecMP4DemuxerTrack(MP4DemuxerTrack(movie, trak, input))
+        return CodecMP4DemuxerTrack(MP4DemuxerTrack(movie!!, trak, input))
     }
 
     @Throws(IOException::class)
@@ -132,7 +132,7 @@ open class MP4Demuxer internal constructor(protected var input: SeekableByteChan
         fun createRawMP4Demuxer(input: SeekableByteChannel): MP4Demuxer {
             return object : MP4Demuxer(input) {
                 override fun newTrack(trak: TrakBox?): SeekableDemuxerTrack {
-                    return MP4DemuxerTrack(movie, trak, this.input)
+                    return MP4DemuxerTrack(movie!!, trak, this.input)
                 }
             }
         }
