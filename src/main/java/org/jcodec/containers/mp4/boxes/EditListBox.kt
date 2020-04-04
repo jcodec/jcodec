@@ -49,9 +49,9 @@ class EditListBox(atom: Header) : FullBox(atom) {
         }
 
         @JvmStatic
-        fun createEditListBox(edits: MutableList<Edit>?): EditListBox {
+        fun createEditListBox(edits: List<Edit>?): EditListBox {
             val elst = EditListBox(Header(fourcc()))
-            elst.edits = edits
+            elst.edits = edits?.toMutableList()
             return elst
         }
     }
