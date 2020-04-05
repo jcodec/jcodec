@@ -68,10 +68,10 @@ class DashStreamDemuxer(url: URL) : Demuxer {
                         val vals: MutableMap<String, Any?> = HashMap()
                         vals["RepresentationID"] = selectedRprz
                         vals["Number"] = stpl.startNumber + no
-                        val tmp = fillTemplate(stpl.media, vals)
+                        val tmp = fillTemplate(stpl.media!!, vals)
                         urlInit = URL(url, tmp)
-                    } else if (rprz!!.segmentList != null && rprz.segmentList.segmentUrls.size > no) {
-                        val segmentURL = rprz.segmentList.segmentUrls[no]
+                    } else if (rprz!!.segmentList != null && rprz.segmentList!!.segmentUrls.size > no) {
+                        val segmentURL = rprz.segmentList!!.segmentUrls[no]
                         urlInit = URL(url, segmentURL.media)
                     }
                     if (urlInit != null) {
@@ -136,7 +136,7 @@ class DashStreamDemuxer(url: URL) : Demuxer {
         private fun downloadInit() {
             val rprz = rrprz
             if (segmentTemplate != null && segmentTemplate!!.initialization != null) {
-                val tmp = segmentTemplate!!.initialization.replace("\$RepresentationID$", selectedRprz!!)
+                val tmp = segmentTemplate!!.initialization!!.replace("\$RepresentationID$", selectedRprz!!)
                 val urlInit = URL(url, tmp)
                 val tempFile = File.createTempFile("org.jcodec", fileName(urlInit.path))
                 println("Fetching init: " + urlInit.toExternalForm())
@@ -148,8 +148,8 @@ class DashStreamDemuxer(url: URL) : Demuxer {
                 println("Fetching init: " + urlInit.toExternalForm())
                 NIOUtils.fetchUrl(urlInit, tempFile)
                 initFile = tempFile
-            } else if (rprz.segmentList != null && rprz.segmentList.initialization != null) {
-                val urlInit = URL(url, rprz.segmentList.initialization.sourceURL)
+            } else if (rprz.segmentList != null && rprz.segmentList!!.initialization != null) {
+                val urlInit = URL(url, rprz.segmentList!!.initialization!!.sourceURL)
                 val tempFile = File.createTempFile("org.jcodec", fileName(urlInit.path))
                 println("Fetching init: " + urlInit.toExternalForm())
                 NIOUtils.fetchUrl(urlInit, tempFile)
@@ -218,8 +218,8 @@ class DashStreamDemuxer(url: URL) : Demuxer {
             return try {
                 val frag = getCurFrag(future)!!
                 val fragMeta = frag.meta as MP4DemuxerTrackMeta
-                val totalDuration = period.duration.sec
-                val totalFrames = (period.duration.sec * frameRate).toInt()
+                val totalDuration = period.duration!!.sec
+                val totalFrames = (period.duration!!.sec * frameRate).toInt()
                 MP4DemuxerTrackMeta(fragMeta.type, fragMeta.codec, totalDuration, seekFrames,
                         totalFrames, fragMeta.codecPrivate, fragMeta.videoCodecMeta,
                         fragMeta.audioCodecMeta, fragMeta.sampleEntries, fragMeta.codecPrivateOpaque)
@@ -287,14 +287,14 @@ class DashStreamDemuxer(url: URL) : Demuxer {
             if (adaptationSet.representations.size > 0) {
                 val rprz = adaptationSet.representations[0]
                 selectedRprz = rprz.id
-                frameRate = if (rprz.frameRate == null) 0f else rprz.frameRate.scalar()
+                frameRate = if (rprz.frameRate == null) 0f else rprz.frameRate!!.scalar()
                 val stpl = segmentTemplate
-                segmentDuration = if (stpl != null) stpl.duration.toDouble() / stpl.timescale else period.duration.sec
+                segmentDuration = if (stpl != null) stpl.duration.toDouble() / stpl.timescale else period.duration!!.sec
                 downloadInit()
                 for (i in 0 until INIT_SIZE) {
                     scheduleFragment(i)
                 }
-                val numSeg = (period.duration.sec / segmentDuration).toInt()
+                val numSeg = (period.duration!!.sec / segmentDuration).toInt()
                 val segmentFrames = (segmentDuration * frameRate).toInt()
                 seekFrames = IntArray(numSeg)
                 var i = 0

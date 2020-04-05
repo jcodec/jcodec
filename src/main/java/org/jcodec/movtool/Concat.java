@@ -89,7 +89,7 @@ public class Concat {
     }
 
     public MovieBox concat(MovieBox[] movies, long[] offsets) throws IOException {
-        MovieBox result = (MovieBox) NodeBox.cloneBox(movies[0], 16 * 1024 * 1024, BoxFactory.getDefault());
+        MovieBox result = (MovieBox) NodeBox.cloneBox(movies[0], 16 * 1024 * 1024, BoxFactory.Companion.getDefault());
         int prevTracks = 0;
         long totalDuration = 0;
         for (int i = 0; i < movies.length; i++) {

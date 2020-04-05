@@ -143,7 +143,7 @@ public class Cut {
         }
         ArrayList<Movie> result = new ArrayList<Movie>();
         for (Slice cut : commands) {
-            MovieBox clone = (MovieBox) NodeBox.cloneBox(moov, 16 * 1024 * 1024, BoxFactory.getDefault());
+            MovieBox clone = (MovieBox) NodeBox.cloneBox(moov, 16 * 1024 * 1024, BoxFactory.Companion.getDefault());
             for (TrakBox trakBox : clone.getTracks()) {
                 selectInner(trakBox.getEdits(), cut, moov, trakBox);
             }

@@ -39,7 +39,7 @@ class WebOptimizedMP4Muxer(output: SeekableByteChannel, brand: Brand, headerSize
             Logger.warn("Could not web-optimize, header is bigger then allocated space.")
             createHeader("free", header.remaining().toLong()).writeChannel(out)
             out.setPosition(mdatEnd)
-            MP4Util.writeMovie(out, movie)
+            MP4Util.writeMovie(out, movie!!)
         }
     }
 

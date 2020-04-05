@@ -111,7 +111,7 @@ public class MoovVersions {
         Header header = atom.getHeader();
         is.setPosition(atom.getOffset() + header.headerSize());
         try {
-            Box mov = BoxUtil.parseBox(NIOUtils.fetchFromChannel(is, (int) header.getSize()), Header.createHeader("moov", header.getSize()), BoxFactory.getDefault());
+            Box mov = BoxUtil.parseBox(NIOUtils.fetchFromChannel(is, (int) header.getSize()), Header.createHeader("moov", header.getSize()), BoxFactory.Companion.getDefault());
             return (mov instanceof MovieBox) && BoxUtil.containsBox((NodeBox) mov, "mvhd");
         } catch (Throwable t) {
             return false;

@@ -2,7 +2,6 @@ package org.jcodec.containers.mp4.boxes
 
 import org.jcodec.common.model.Rational
 import org.jcodec.common.model.Size
-import org.jcodec.containers.mp4.Chunk
 import org.jcodec.containers.mp4.MP4TrackType
 import org.jcodec.containers.mp4.boxes.ClearApertureBox.Companion.createClearApertureBox
 import org.jcodec.containers.mp4.boxes.ClipRegionBox.Companion.createClipRegionBox
@@ -282,7 +281,7 @@ class TrakBox(atom: Header) : NodeBox(atom) {
         @JvmStatic
         fun getTrackType(trak: TrakBox?): MP4TrackType? {
             val handler = findFirstPath(trak, Box.path("mdia.hdlr")) as? HandlerBox?
-            return if (handler == null) null else MP4TrackType.fromHandler(handler.componentSubType)
+            return if (handler == null) null else MP4TrackType.fromHandler(handler.componentSubType!!)
         }
 
         /**

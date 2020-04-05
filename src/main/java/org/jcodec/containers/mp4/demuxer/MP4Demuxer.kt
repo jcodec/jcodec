@@ -139,7 +139,7 @@ open class MP4Demuxer internal constructor(protected var input: SeekableByteChan
 
         fun getTrackType(trak: TrakBox?): MP4TrackType {
             val handler = findFirstPath(trak, path("mdia.hdlr")) as HandlerBox?
-            return MP4TrackType.fromHandler(handler!!.componentSubType)
+            return MP4TrackType.fromHandler(handler!!.componentSubType!!)!!
         }
 
         @UsedViaReflection

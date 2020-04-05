@@ -36,13 +36,15 @@ class UdtaBox(atom: Header) : NodeBox(atom) {
     }
 
     override fun setFactory(_factory: IBoxFactory) {
-        this._factory = IBoxFactory { header ->
-            if (header.fourcc == UdtaMetaBox.fourcc()) {
-                val box = UdtaMetaBox(header)
-                box.setFactory(_factory)
-                return@IBoxFactory box
+        this._factory = object : IBoxFactory {
+            override fun newBox(header: Header): Box {
+                if (header.fourcc == UdtaMetaBox.fourcc()) {
+                    val box = UdtaMetaBox(header)
+                    box.setFactory(_factory)
+                    return box
+                }
+                return _factory.newBox(header)
             }
-            _factory.newBox(header)
         }
     }
 

@@ -83,7 +83,7 @@ open class MP4Muxer(output: SeekableByteChannel, ftyp: FileTypeBox) : Muxer {
     @Throws(IOException::class)
     open fun storeHeader(movie: MovieBox?) {
         val mdatSize = out.position() - mdatOffset + 8
-        MP4Util.writeMovie(out, movie)
+        MP4Util.writeMovie(out, movie!!)
         out.setPosition(mdatOffset)
         NIOUtils.writeLong(out, mdatSize)
     }

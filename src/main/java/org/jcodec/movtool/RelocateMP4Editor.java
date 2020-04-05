@@ -63,7 +63,7 @@ public class RelocateMP4Editor {
 
     private Box parseBox(ByteBuffer oldMov) {
         Header header = Header.read(oldMov);
-        Box box = BoxUtil.parseBox(oldMov, header, BoxFactory.getDefault());
+        Box box = BoxUtil.parseBox(oldMov, header, BoxFactory.Companion.getDefault());
         return box;
     }
 
