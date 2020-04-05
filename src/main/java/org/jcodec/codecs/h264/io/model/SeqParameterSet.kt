@@ -348,16 +348,13 @@ class SeqParameterSet {
         }
 
         fun fromColor(color: ColorSpace?): Int {
-            if (color == ColorSpace.MONO) {
-                return 0
-            } else if (color == ColorSpace.YUV420J) {
-                return 1
-            } else if (color == ColorSpace.YUV422) {
-                return 2
-            } else if (color == ColorSpace.YUV444) {
-                return 3
+            return when (color) {
+                ColorSpace.MONO -> 0
+                ColorSpace.YUV420J -> 1
+                ColorSpace.YUV422 -> 2
+                ColorSpace.YUV444 -> 3
+                else -> throw RuntimeException("Colorspace not supported")
             }
-            throw RuntimeException("Colorspace not supported")
         }
 
         @JvmStatic
@@ -424,7 +421,7 @@ class SeqParameterSet {
             return sps
         }
 
-        fun writeScalingList(out: BitWriter?, scalingMatrix: Array<IntArray?>, which: Int) {
+        fun writeScalingList(out: BitWriter, scalingMatrix: Array<IntArray?>, which: Int) {
             // Want to find out if the default scaling list is actually used
             var useDefaultScalingMatrixFlag = false
             when (which) {
