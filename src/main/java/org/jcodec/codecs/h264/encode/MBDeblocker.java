@@ -374,9 +374,9 @@ public class MBDeblocker {
 
     static void calcStrengthForBlocks(EncodedMB cur, EncodedMB other, int[][] outStrength, int[][] LOOKUP_IDX_P,
             int[][] LOOKUP_IDX_Q) {
-        boolean thisIntra = cur.getType().isIntra();
+        boolean thisIntra = cur.getType().isIntra;
         if (other != null) {
-            boolean otherIntra = other.getType().isIntra();
+            boolean otherIntra = other.getType().isIntra;
             for (int i = 0; i < 4; ++i) {
                 int bsMvx = strengthMv(other.getMx()[LOOKUP_IDX_P[0][i]], cur.getMx()[LOOKUP_IDX_Q[0][i]]);
                 int bsMvy = strengthMv(other.getMy()[LOOKUP_IDX_P[0][i]], cur.getMy()[LOOKUP_IDX_Q[0][i]]);

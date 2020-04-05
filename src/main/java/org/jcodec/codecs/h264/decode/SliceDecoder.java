@@ -165,7 +165,7 @@ public class SliceDecoder {
     }
 
     private void decodeMBlockB(MBlock mBlock, Picture mb, Frame[][] references) {
-        if (mBlock.curMbType.isIntra()) {
+        if (mBlock.curMbType.isIntra) {
             decodeMBlockIInt(mBlock, mb);
         } else {
             if (mBlock.curMbType == B_Direct_16x16) {

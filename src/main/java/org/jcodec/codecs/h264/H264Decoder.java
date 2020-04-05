@@ -216,7 +216,7 @@ public class H264Decoder extends VideoDecoder {
                 throw new RuntimeException("Unsupported h264 feature: " + sps.chromaFormatIdc + " color.");
             if (!sps.frameMbsOnlyFlag || sps.fieldPicFlag)
                 throw new RuntimeException("Unsupported h264 feature: interlace.");
-            if (pps.constrainedIntraPredFlag)
+            if (pps.isConstrainedIntraPredFlag)
                 throw new RuntimeException("Unsupported h264 feature: constrained intra prediction.");
 //            if (sps.getScalingMatrix() != null || pps.extended != null && pps.extended.getScalingMatrix() != null)
 //                throw new RuntimeException("Unsupported h264 feature: scaling list.");

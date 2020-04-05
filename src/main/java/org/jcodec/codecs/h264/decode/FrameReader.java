@@ -84,7 +84,7 @@ public class FrameReader {
         CABAC cabac = new CABAC(mbWidth);
 
         MDecoder mDecoder = null;
-        if (sh.pps.entropyCodingModeFlag) {
+        if (sh.pps.isEntropyCodingModeFlag) {
             _in.terminate();
             int[][] cm = new int[2][1024];
             int qp = sh.pps.picInitQpMinus26 + 26 + sh.sliceQpDelta;

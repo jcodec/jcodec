@@ -65,17 +65,17 @@ public class SliceHeaderReader {
         }
         if (sps.picOrderCntType == 0) {
             sh.picOrderCntLsb = readU(_in, sps.log2MaxPicOrderCntLsbMinus4 + 4, "SH: pic_order_cnt_lsb");
-            if (pps.picOrderPresentFlag && !sps.fieldPicFlag) {
+            if (pps.isPicOrderPresentFlag && !sps.fieldPicFlag) {
                 sh.deltaPicOrderCntBottom = readSE(_in, "SH: delta_pic_order_cnt_bottom");
             }
         }
         sh.deltaPicOrderCnt = new int[2];
         if (sps.picOrderCntType == 1 && !sps.deltaPicOrderAlwaysZeroFlag) {
             sh.deltaPicOrderCnt[0] = readSE(_in, "SH: delta_pic_order_cnt[0]");
-            if (pps.picOrderPresentFlag && !sps.fieldPicFlag)
+            if (pps.isPicOrderPresentFlag && !sps.fieldPicFlag)
                 sh.deltaPicOrderCnt[1] = readSE(_in, "SH: delta_pic_order_cnt[1]");
         }
-        if (pps.redundantPicCntPresentFlag) {
+        if (pps.isRedundantPicCntPresentFlag) {
             sh.redundantPicCnt = readUEtrace(_in, "SH: redundant_pic_cnt");
         }
         if (sh.sliceType == SliceType.B) {
@@ -91,12 +91,12 @@ public class SliceHeaderReader {
             }
         }
         readRefPicListReordering(sh, _in);
-        if ((pps.weightedPredFlag && (sh.sliceType == SliceType.P || sh.sliceType == SliceType.SP))
+        if ((pps.isWeightedPredFlag && (sh.sliceType == SliceType.P || sh.sliceType == SliceType.SP))
                 || (pps.weightedBipredIdc == 1 && sh.sliceType == SliceType.B))
             readPredWeightTable(sps, pps, sh, _in);
         if (nalUnit.nal_ref_idc != 0)
             readDecoderPicMarking(nalUnit, sh, _in);
-        if (pps.entropyCodingModeFlag && sh.sliceType.isInter()) {
+        if (pps.isEntropyCodingModeFlag && sh.sliceType.isInter()) {
             sh.cabacInitIdc = readUEtrace(_in, "SH: cabac_init_idc");
         }
         sh.sliceQpDelta = readSE(_in, "SH: slice_qp_delta");
@@ -106,7 +106,7 @@ public class SliceHeaderReader {
             }
             sh.sliceQsDelta = readSE(_in, "SH: slice_qs_delta");
         }
-        if (pps.deblockingFilterControlPresentFlag) {
+        if (pps.isDeblockingFilterControlPresentFlag) {
             sh.disableDeblockingFilterIdc = readUEtrace(_in, "SH: disable_deblocking_filter_idc");
             if (sh.disableDeblockingFilterIdc != 1) {
                 sh.sliceAlphaC0OffsetDiv2 = readSE(_in, "SH: slice_alpha_c0_offset_div2");

@@ -90,7 +90,7 @@ public class SliceReader {
         topCBPLuma = new int[mbWidth];
         topCBPChroma = new int[mbWidth];
         chromaFormat = sh.sps.chromaFormatIdc;
-        transform8x8 = sh.pps.extended == null ? false : sh.pps.extended.transform8x8ModeFlag;
+        transform8x8 = sh.pps.extended == null ? false : sh.pps.extended.isTransform8x8ModeFlag;
         if (sh.numRefIdxActiveOverrideFlag)
             numRef = new int[] { sh.numRefIdxActiveMinus1[0] + 1, sh.numRefIdxActiveMinus1[1] + 1 };
         else
@@ -115,7 +115,7 @@ public class SliceReader {
 
         boolean mbaffFrameFlag = (sh.sps.mbAdaptiveFrameFieldFlag && !sh.fieldPicFlag);
 
-        if (sh.sliceType.isInter() && !activePps.entropyCodingModeFlag) {
+        if (sh.sliceType.isInter() && !activePps.isEntropyCodingModeFlag) {
             if (!prevMbSkipped && mbSkipRun == 0) {
                 mbSkipRun = readUEtrace(reader, "mb_skip_run");
                 if (!moreRBSPData(reader)) {
@@ -148,7 +148,7 @@ public class SliceReader {
         debugPrint("---------------------- MB (%d,%d) ---------------------", mbX, mbY);
 
         if (sh.sliceType.isIntra()
-                || (!activePps.entropyCodingModeFlag || !readMBSkipFlag(sh.sliceType, mapper.leftAvailable(mbIdx),
+                || (!activePps.isEntropyCodingModeFlag || !readMBSkipFlag(sh.sliceType, mapper.leftAvailable(mbIdx),
                         mapper.topAvailable(mbIdx), mbX))) {
 
             boolean mb_field_decoding_flag = false;
@@ -169,8 +169,8 @@ public class SliceReader {
             predModeLeft[0] = predModeLeft[1] = predModeTop[blk8x8X] = predModeTop[blk8x8X + 1] = L0;
         }
 
-        endOfData = (activePps.entropyCodingModeFlag && mDecoder.decodeFinalBin() == 1)
-                || (!activePps.entropyCodingModeFlag && !moreRBSPData(reader));
+        endOfData = (activePps.isEntropyCodingModeFlag && mDecoder.decodeFinalBin() == 1)
+                || (!activePps.isEntropyCodingModeFlag && !moreRBSPData(reader));
 
         ++mbIdx;
 
@@ -181,7 +181,7 @@ public class SliceReader {
 
     int readMBQpDelta(MBType prevMbType) {
         int mbQPDelta;
-        if (!activePps.entropyCodingModeFlag) {
+        if (!activePps.isEntropyCodingModeFlag) {
             mbQPDelta = readSE(reader, "mb_qp_delta");
         } else {
             mbQPDelta = cabac.readMBQpDelta(mDecoder, prevMbType);
@@ -191,7 +191,7 @@ public class SliceReader {
 
     int readChromaPredMode(int mbX, boolean leftAvailable, boolean topAvailable) {
         int chromaPredictionMode;
-        if (!activePps.entropyCodingModeFlag) {
+        if (!activePps.isEntropyCodingModeFlag) {
             chromaPredictionMode = readUEtrace(reader, "MBP: intra_chroma_pred_mode");
         } else {
             chromaPredictionMode = cabac.readIntraChromaPredMode(mDecoder, mbX, leftMBType, topMBType[mbX],
@@ -202,7 +202,7 @@ public class SliceReader {
 
     boolean readTransform8x8Flag(boolean leftAvailable, boolean topAvailable, MBType leftType, MBType topType,
             boolean is8x8Left, boolean is8x8Top) {
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             return readBool(reader, "transform_size_8x8_flag");
         else
             return cabac.readTransform8x8Flag(mDecoder, leftAvailable, topAvailable, leftType, topType, is8x8Left,
@@ -212,7 +212,7 @@ public class SliceReader {
     protected int readCodedBlockPatternIntra(boolean leftAvailable, boolean topAvailable, int leftCBP, int topCBP,
             MBType leftMB, MBType topMB) {
 
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             return H264Const.CODED_BLOCK_PATTERN_INTRA_COLOR[readUEtrace(reader, "coded_block_pattern")];
         else
             return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
@@ -220,7 +220,7 @@ public class SliceReader {
 
     protected int readCodedBlockPatternInter(boolean leftAvailable, boolean topAvailable, int leftCBP, int topCBP,
             MBType leftMB, MBType topMB) {
-        if (!activePps.entropyCodingModeFlag) {
+        if (!activePps.isEntropyCodingModeFlag) {
             int code = readUEtrace(reader, "coded_block_pattern");
             return H264Const.CODED_BLOCK_PATTERN_INTER_COLOR[code];
         } else
@@ -229,7 +229,7 @@ public class SliceReader {
 
     int readRefIdx(boolean leftAvailable, boolean topAvailable, MBType leftType, MBType topType, PartPred leftPred,
             PartPred topPred, PartPred curPred, int mbX, int partX, int partY, int partW, int partH, int list) {
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             return readTE(reader, numRef[list] - 1);
         else
             return cabac.readRefIdx(mDecoder, leftAvailable, topAvailable, leftType, topType, leftPred, topPred,
@@ -239,7 +239,7 @@ public class SliceReader {
     int readMVD(int comp, boolean leftAvailable, boolean topAvailable, MBType leftType, MBType topType,
             PartPred leftPred, PartPred topPred, PartPred curPred, int mbX, int partX, int partY, int partW, int partH,
             int list) {
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             return readSE(reader, "mvd_l0_x");
         else
             return cabac.readMVD(mDecoder, comp, leftAvailable, topAvailable, leftType, topType, leftPred, topPred,
@@ -263,21 +263,21 @@ public class SliceReader {
     }
 
     int rem4x4PredMode() {
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             return readNBit(reader, 3, "MB: rem_intra4x4_pred_mode");
         else
             return cabac.rem4x4PredMode(mDecoder);
     }
 
     boolean prev4x4PredMode() {
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             return readBool(reader, "MBP: prev_intra4x4_pred_mode_flag");
         else
             return cabac.prev4x4PredModeFlag(mDecoder);
     }
 
     void read16x16DC(boolean leftAvailable, boolean topAvailable, int mbX, int[] dc) {
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             cavlc[0].readLumaDCBlock(reader, dc, mbX, leftAvailable, leftMBType, topAvailable, topMBType[mbX],
                     CoeffTransformer.zigzag4x4);
         else {
@@ -296,7 +296,7 @@ public class SliceReader {
      */
     int read16x16AC(boolean leftAvailable, boolean topAvailable, int mbX, int cbpLuma, int[] ac, int blkOffLeft,
             int blkOffTop, int blkX, int blkY) {
-        if (!activePps.entropyCodingModeFlag) {
+        if (!activePps.isEntropyCodingModeFlag) {
             return cavlc[0].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
                     blkOffLeft == 0 ? leftMBType : I_16x16, blkOffTop != 0 || topAvailable,
                     blkOffTop == 0 ? topMBType[mbX] : I_16x16, 1, 15, CoeffTransformer.zigzag4x4);
@@ -316,7 +316,7 @@ public class SliceReader {
      */
     int readResidualAC(boolean leftAvailable, boolean topAvailable, int mbX, MBType curMbType, int cbpLuma,
             int blkOffLeft, int blkOffTop, int blkX, int blkY, int[] ac) {
-        if (!activePps.entropyCodingModeFlag) {
+        if (!activePps.isEntropyCodingModeFlag) {
             if (reader.remaining() <= 0)
                 return 0;
             return cavlc[0].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
@@ -336,7 +336,7 @@ public class SliceReader {
     }
 
     public void savePrevCBP(int codedBlockPattern) {
-        if (activePps.entropyCodingModeFlag)
+        if (activePps.isEntropyCodingModeFlag)
             cabac.setPrevCBP(codedBlockPattern);
     }
 
@@ -365,21 +365,21 @@ public class SliceReader {
     }
 
     public int readSubMBTypeP() {
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             return readUEtrace(reader, "SUB: sub_mb_type");
         else
             return cabac.readSubMbTypeP(mDecoder);
     }
 
     public int readSubMBTypeB() {
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             return readUEtrace(reader, "SUB: sub_mb_type");
         else
             return cabac.readSubMbTypeB(mDecoder);
     }
 
     public void readChromaDC(int mbX, boolean leftAvailable, boolean topAvailable, int[] dc, int comp, MBType curMbType) {
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             cavlc[comp].readChromaDCBlock(reader, dc, leftAvailable, topAvailable);
         else {
             if (cabac.readCodedBlockFlagChromaDC(mDecoder, mbX, comp, leftMBType, topMBType[mbX], leftAvailable,
@@ -391,7 +391,7 @@ public class SliceReader {
 
     public void readChromaAC(boolean leftAvailable, boolean topAvailable, int mbX, int comp, MBType curMbType,
             int[] ac, int blkOffLeft, int blkOffTop, int blkX) {
-        if (!activePps.entropyCodingModeFlag) {
+        if (!activePps.isEntropyCodingModeFlag) {
             if (reader.remaining() <= 0)
                 return;
             cavlc[comp].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
@@ -407,7 +407,7 @@ public class SliceReader {
 
     public int decodeMBTypeI(int mbIdx, boolean leftAvailable, boolean topAvailable, MBType leftMBType, MBType topMBType) {
         int mbType;
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             mbType = readUEtrace(reader, "MB: mb_type");
         else
             mbType = cabac.readMBTypeI(mDecoder, leftMBType, topMBType, leftAvailable, topAvailable);
@@ -416,7 +416,7 @@ public class SliceReader {
 
     public int readMBTypeP() {
         int mbType;
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             mbType = readUEtrace(reader, "MB: mb_type");
         else
             mbType = cabac.readMBTypeP(mDecoder);
@@ -425,7 +425,7 @@ public class SliceReader {
 
     public int readMBTypeB(int mbIdx, boolean leftAvailable, boolean topAvailable, MBType leftMBType, MBType topMBType) {
         int mbType;
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.isEntropyCodingModeFlag)
             mbType = readUEtrace(reader, "MB: mb_type");
         else
             mbType = cabac.readMBTypeB(mDecoder, leftMBType, topMBType, leftAvailable, topAvailable);
@@ -456,7 +456,7 @@ public class SliceReader {
                 mBlock.nCoeff[i] = read16x16AC(leftAvailable, topAvailable, mbX, mBlock.cbpLuma(), mBlock.ac[0][i],
                         blkOffLeft, blkOffTop, blkX, blkY);
             } else {
-                if (!sh.pps.entropyCodingModeFlag)
+                if (!sh.pps.isEntropyCodingModeFlag)
                     setZeroCoeff(0, blkX, blkOffTop);
             }
         }
@@ -868,7 +868,7 @@ public class SliceReader {
     public void readResidualLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         if (!mBlock.transform8x8Used) {
             readLuma(mBlock, leftAvailable, topAvailable, mbX, mbY);
-        } else if (sh.pps.entropyCodingModeFlag) {
+        } else if (sh.pps.isEntropyCodingModeFlag) {
             readLuma8x8CABAC(mBlock, mbX, mbY);
         } else {
             readLuma8x8CAVLC(mBlock, leftAvailable, topAvailable, mbX, mbY);
@@ -883,7 +883,7 @@ public class SliceReader {
             int blkY = (mbY << 2) + blkOffTop;
 
             if ((mBlock.cbpLuma() & (1 << (i >> 2))) == 0) {
-                if (!sh.pps.entropyCodingModeFlag)
+                if (!sh.pps.isEntropyCodingModeFlag)
                     setZeroCoeff(0, blkX, blkOffTop);
                 continue;
             }
@@ -953,7 +953,7 @@ public class SliceReader {
                     (mBlock.cbpChroma() & 2) > 0, mBlock.ac[1]);
             _readChromaAC(leftAvailable, topAvailable, mbX, mBlock.dc2, 2, mBlock.curMbType,
                     (mBlock.cbpChroma() & 2) > 0, mBlock.ac[2]);
-        } else if (!sh.pps.entropyCodingModeFlag) {
+        } else if (!sh.pps.isEntropyCodingModeFlag) {
             setZeroCoeff(1, mbX << 1, 0);
             setZeroCoeff(1, (mbX << 1) + 1, 1);
             setZeroCoeff(2, mbX << 1, 0);
@@ -973,7 +973,7 @@ public class SliceReader {
             if (codedAC) {
                 readChromaAC(leftAvailable, topAvailable, mbX, comp, curMbType, ac, blkOffLeft, blkOffTop, blkX);
             } else {
-                if (!sh.pps.entropyCodingModeFlag)
+                if (!sh.pps.isEntropyCodingModeFlag)
                     setZeroCoeff(comp, blkX, blkOffTop);
             }
         }

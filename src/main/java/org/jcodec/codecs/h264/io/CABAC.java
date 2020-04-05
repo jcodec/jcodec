@@ -417,8 +417,8 @@ public class CABAC {
     public int readIntraChromaPredMode(MDecoder decoder, int mbX, MBType left, MBType top, boolean leftAvailable,
             boolean topAvailable) {
         int ctx = 64;
-        ctx += !leftAvailable || left == null || !left.isIntra() || chromaPredModeLeft == 0 ? 0 : 1;
-        ctx += !topAvailable || top == null || !top.isIntra() || chromaPredModeTop[mbX] == 0 ? 0 : 1;
+        ctx += !leftAvailable || left == null || !left.isIntra || chromaPredModeLeft == 0 ? 0 : 1;
+        ctx += !topAvailable || top == null || !top.isIntra || chromaPredModeTop[mbX] == 0 ? 0 : 1;
         int mode;
         if (decoder.decodeBin(ctx) == 0)
             mode = 0;
@@ -436,8 +436,8 @@ public class CABAC {
     public void writeIntraChromaPredMode(MEncoder encoder, int mbX, MBType left, MBType top, boolean leftAvailable,
             boolean topAvailable, int mode) {
         int ctx = 64;
-        ctx += !leftAvailable || !left.isIntra() || chromaPredModeLeft == 0 ? 0 : 1;
-        ctx += !topAvailable || !top.isIntra() || chromaPredModeTop[mbX] == 0 ? 0 : 1;
+        ctx += !leftAvailable || !left.isIntra || chromaPredModeLeft == 0 ? 0 : 1;
+        ctx += !topAvailable || !top.isIntra || chromaPredModeTop[mbX] == 0 ? 0 : 1;
         encoder.encodeBin(ctx, mode-- == 0 ? 0 : 1);
         for (int i = 0; mode >= 0 && i < 2; i++)
             encoder.encodeBin(67, mode-- == 0 ? 0 : 1);
@@ -446,7 +446,7 @@ public class CABAC {
 
     public int condTerm(MBType mbCur, boolean nAvb, MBType mbN, boolean nBlkAvb, int cbpN) {
         if (!nAvb)
-            return mbCur.isIntra() ? 1 : 0;
+            return mbCur.isIntra ? 1 : 0;
         if (mbN == I_PCM)
             return 1;
         if (!nBlkAvb)
@@ -620,9 +620,9 @@ public class CABAC {
                 && (topPred == Bi || topPred == curPred || (curPred == Bi && H264Const.usesList(topPred, list)));
 
         // prefix and suffix as given by UEG3 with signedValFlag=1, uCoff=9
-        int absMvdComp = !leftAvailable || leftType == null || leftType.isIntra() || !predEqA ? 0 : Math
+        int absMvdComp = !leftAvailable || leftType == null || leftType.isIntra || !predEqA ? 0 : Math
                 .abs(mvdLeft[list][comp][partY]);
-        absMvdComp += !topAvailable || topType == null || topType.isIntra() || !predEqB ? 0 : Math
+        absMvdComp += !topAvailable || topType == null || topType.isIntra || !predEqB ? 0 : Math
                 .abs(mvdTop[list][comp][partAbsX]);
 
         int val, b = decoder.decodeBin(ctx + (absMvdComp < 3 ? 0 : (absMvdComp > 32 ? 2 : 1)));
@@ -671,9 +671,9 @@ public class CABAC {
         boolean predEqB = topPred != null && topPred != Direct
                 && (topPred == Bi || topPred == curPred || (curPred == Bi && H264Const.usesList(topPred, list)));
 
-        int ctA = !leftAvailable || leftType == null || leftType.isIntra() || !predEqA || refIdxLeft[list][partY] == 0 ? 0
+        int ctA = !leftAvailable || leftType == null || leftType.isIntra || !predEqA || refIdxLeft[list][partY] == 0 ? 0
                 : 1;
-        int ctB = !topAvailable || topType == null || topType.isIntra() || !predEqB || refIdxTop[list][partAbsX] == 0 ? 0
+        int ctB = !topAvailable || topType == null || topType.isIntra || !predEqB || refIdxTop[list][partAbsX] == 0 ? 0
                 : 1;
         int b0 = mDecoder.decodeBin(54 + ctA + 2 * ctB);
         int val;

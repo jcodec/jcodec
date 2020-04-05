@@ -139,10 +139,10 @@ public class DeblockingFilter {
         int mbY = mbAddr / mbWidth;
 
         boolean topAvailable = mbY > 0 && (sh.disableDeblockingFilterIdc != 2 || di.shs[mbAddr - mbWidth] == sh);
-        boolean thisIntra = di.mbTypes[mbAddr] != null && di.mbTypes[mbAddr].isIntra();
+        boolean thisIntra = di.mbTypes[mbAddr] != null && di.mbTypes[mbAddr].isIntra;
 
         if (topAvailable) {
-            boolean topIntra = di.mbTypes[mbAddr - mbWidth] != null && di.mbTypes[mbAddr - mbWidth].isIntra();
+            boolean topIntra = di.mbTypes[mbAddr - mbWidth] != null && di.mbTypes[mbAddr - mbWidth].isIntra;
             for (int blkX = 0; blkX < 4; blkX++) {
                 int thisBlkX = (mbX << 2) + blkX;
                 int thisBlkY = (mbY << 2);
@@ -220,10 +220,10 @@ public class DeblockingFilter {
         int mbY = mbAddr / mbWidth;
 
         boolean leftAvailable = mbX > 0 && (sh.disableDeblockingFilterIdc != 2 || di.shs[mbAddr - 1] == sh);
-        boolean thisIntra = di.mbTypes[mbAddr] != null && di.mbTypes[mbAddr].isIntra();
+        boolean thisIntra = di.mbTypes[mbAddr] != null && di.mbTypes[mbAddr].isIntra;
 
         if (leftAvailable) {
-            boolean leftIntra = di.mbTypes[mbAddr - 1] != null && di.mbTypes[mbAddr - 1].isIntra();
+            boolean leftIntra = di.mbTypes[mbAddr - 1] != null && di.mbTypes[mbAddr - 1].isIntra;
             for (int blkY = 0; blkY < 4; blkY++) {
                 int thisBlkX = (mbX << 2);
                 int thisBlkY = (mbY << 2) + blkY;

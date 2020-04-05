@@ -775,7 +775,7 @@ public class H264Utils {
 
             SliceHeaderWriter.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
 
-            if (pps.entropyCodingModeFlag)
+            if (pps.isEntropyCodingModeFlag)
                 copyDataCABAC(is, os, reader, writer);
             else
                 copyDataCAVLC(is, os, reader, writer);

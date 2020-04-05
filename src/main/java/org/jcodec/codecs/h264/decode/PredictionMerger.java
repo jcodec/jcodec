@@ -31,7 +31,7 @@ public class PredictionMerger {
         if (sh.sliceType == SliceType.P) {
             weightPrediction(sh, refIdxL0, comp, pred0, off, stride, blkW, blkH, out);
         } else {
-            if (!pps.weightedPredFlag || sh.pps.weightedBipredIdc == 0
+            if (!pps.isWeightedPredFlag || sh.pps.weightedBipredIdc == 0
                     || (sh.pps.weightedBipredIdc == 2 && predType != Bi)) {
                 mergeAvg(pred0, pred1, stride, predType, off, blkW, blkH, out);
             } else if (sh.pps.weightedBipredIdc == 1) {
@@ -68,7 +68,7 @@ public class PredictionMerger {
     public static void weightPrediction(SliceHeader sh, int refIdxL0, int comp, byte[] pred0, int off, int stride,
             int blkW, int blkH, byte[] out) {
         PictureParameterSet pps = sh.pps;
-        if (pps.weightedPredFlag && sh.predWeightTable != null) {
+        if (pps.isWeightedPredFlag && sh.predWeightTable != null) {
             PredictionWeightTable w = sh.predWeightTable;
             weight(pred0, stride, off, blkW, blkH, comp == 0 ? w.lumaLog2WeightDenom
                     : w.chromaLog2WeightDenom, comp == 0 ? w.lumaWeight[0][refIdxL0]

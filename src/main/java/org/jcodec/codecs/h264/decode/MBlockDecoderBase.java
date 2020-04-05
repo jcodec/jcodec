@@ -51,7 +51,7 @@ public class MBlockDecoderBase {
     void residualLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         if (!mBlock.transform8x8Used) {
             residualLuma4x4(mBlock);
-        } else if (sh.pps.entropyCodingModeFlag) {
+        } else if (sh.pps.isEntropyCodingModeFlag) {
             residualLuma8x8CABAC(mBlock);
         } else {
             residualLuma8x8CAVLC(mBlock);
@@ -65,7 +65,7 @@ public class MBlockDecoderBase {
                 continue;
             }
 
-            CoeffTransformer.dequantizeAC(mBlock.ac[0][i], s.qp, getScalingList(mBlock.curMbType.intra ? 0 : 3));
+            CoeffTransformer.dequantizeAC(mBlock.ac[0][i], s.qp, getScalingList(mBlock.curMbType.isIntra ? 0 : 3));
             CoeffTransformer.idct4x4(mBlock.ac[0][i]);
         }
     }
@@ -115,7 +115,7 @@ public class MBlockDecoderBase {
                 continue;
             }
 
-            CoeffTransformer.dequantizeAC8x8(mBlock.ac[0][i], s.qp, getScalingList(mBlock.curMbType.intra ? 6 : 7));
+            CoeffTransformer.dequantizeAC8x8(mBlock.ac[0][i], s.qp, getScalingList(mBlock.curMbType.isIntra ? 6 : 7));
             CoeffTransformer.idct8x8(mBlock.ac[0][i]);
         }
     }
@@ -127,7 +127,7 @@ public class MBlockDecoderBase {
                 continue;
             }
 
-            CoeffTransformer.dequantizeAC8x8(mBlock.ac[0][i], s.qp, getScalingList(mBlock.curMbType.intra ? 6 : 7));
+            CoeffTransformer.dequantizeAC8x8(mBlock.ac[0][i], s.qp, getScalingList(mBlock.curMbType.isIntra ? 6 : 7));
             CoeffTransformer.idct8x8(mBlock.ac[0][i]);
         }
     }
@@ -175,7 +175,7 @@ public class MBlockDecoderBase {
     private void chromaDC(int mbX, boolean leftAvailable, boolean topAvailable, int[] dc, int comp, int crQp,
             MBType curMbType) {
         CoeffTransformer.invDC2x2(dc);
-        CoeffTransformer.dequantizeDC2x2(dc, crQp, getScalingList((curMbType.intra ? 6 : 7) + comp * 2));
+        CoeffTransformer.dequantizeDC2x2(dc, crQp, getScalingList((curMbType.isIntra ? 6 : 7) + comp * 2));
     }
 
     private void chromaAC(boolean leftAvailable, boolean topAvailable, int mbX, int mbY, int[] dc, int comp, int crQp,
@@ -184,7 +184,7 @@ public class MBlockDecoderBase {
             int[] ac = residualOut[i];
 
             if (codedAC) {
-                CoeffTransformer.dequantizeAC(ac, crQp, getScalingList((curMbType.intra ? 0 : 3) + comp));
+                CoeffTransformer.dequantizeAC(ac, crQp, getScalingList((curMbType.isIntra ? 0 : 3) + comp));
             }
             ac[0] = dc[i];
                 

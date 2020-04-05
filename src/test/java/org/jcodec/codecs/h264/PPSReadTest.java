@@ -17,18 +17,18 @@ public class PPSReadTest {
         expected = new PictureParameterSet();
         expected.picParameterSetId = 0;
         expected.seqParameterSetId = 0;
-        expected.entropyCodingModeFlag = true;
-        expected.picOrderPresentFlag = false;
+        expected.isEntropyCodingModeFlag = true;
+        expected.isPicOrderPresentFlag = false;
         expected.numSliceGroupsMinus1 = 0;
         expected.numRefIdxActiveMinus1 = new int[] { 0, 0 };
-        expected.weightedPredFlag = false;
+        expected.isWeightedPredFlag = false;
         expected.weightedBipredIdc = 0;
         expected.picInitQpMinus26 = 0;
         expected.picInitQsMinus26 = 0;
         expected.chromaQpIndexOffset = -2;
-        expected.deblockingFilterControlPresentFlag = true;
-        expected.constrainedIntraPredFlag = false;
-        expected.redundantPicCntPresentFlag = false;
+        expected.isDeblockingFilterControlPresentFlag = true;
+        expected.isConstrainedIntraPredFlag = false;
+        expected.isRedundantPicCntPresentFlag = false;
     }
 
     @Test

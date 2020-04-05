@@ -94,19 +94,19 @@ public class MapManager {
             mapUnitsInSliceGroup0 = mapUnitsInSliceGroup0 > picSizeInMapUnits ? picSizeInMapUnits
                     : mapUnitsInSliceGroup0;
 
-            int sizeOfUpperLeftGroup = (pps.sliceGroupChangeDirectionFlag ? (picSizeInMapUnits - mapUnitsInSliceGroup0)
+            int sizeOfUpperLeftGroup = (pps.isSliceGroupChangeDirectionFlag ? (picSizeInMapUnits - mapUnitsInSliceGroup0)
                     : mapUnitsInSliceGroup0);
 
             int[] map;
             if (mapType == 3) {
                 map = SliceGroupMapBuilder.buildBoxOutMap(picWidthInMbs, picHeightInMbs,
-                        pps.sliceGroupChangeDirectionFlag, mapUnitsInSliceGroup0);
+                        pps.isSliceGroupChangeDirectionFlag, mapUnitsInSliceGroup0);
             } else if (mapType == 4) {
                 map = SliceGroupMapBuilder.buildRasterScanMap(picWidthInMbs, picHeightInMbs, sizeOfUpperLeftGroup,
-                        pps.sliceGroupChangeDirectionFlag);
+                        pps.isSliceGroupChangeDirectionFlag);
             } else {
                 map = SliceGroupMapBuilder.buildWipeMap(picWidthInMbs, picHeightInMbs, sizeOfUpperLeftGroup,
-                        pps.sliceGroupChangeDirectionFlag);
+                        pps.isSliceGroupChangeDirectionFlag);
             }
 
             this.mbToSliceGroupMap = buildMapIndices(map, numGroups);

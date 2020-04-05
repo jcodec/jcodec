@@ -54,16 +54,16 @@ public class SliceHeaderWriter {
                 throw new IllegalArgumentException("pic_order_cnt_lsb > " + (1 << (sps.log2MaxPicOrderCntLsbMinus4 + 4)));
             }
             writeU(writer, sliceHeader.picOrderCntLsb, sps.log2MaxPicOrderCntLsbMinus4 + 4);
-            if (pps.picOrderPresentFlag && !sps.fieldPicFlag) {
+            if (pps.isPicOrderPresentFlag && !sps.fieldPicFlag) {
                 writeSEtrace(writer, sliceHeader.deltaPicOrderCntBottom, "SH: delta_pic_order_cnt_bottom");
             }
         }
         if (sps.picOrderCntType == 1 && !sps.deltaPicOrderAlwaysZeroFlag) {
             writeSEtrace(writer, sliceHeader.deltaPicOrderCnt[0], "SH: delta_pic_order_cnt");
-            if (pps.picOrderPresentFlag && !sps.fieldPicFlag)
+            if (pps.isPicOrderPresentFlag && !sps.fieldPicFlag)
                 writeSEtrace(writer, sliceHeader.deltaPicOrderCnt[1], "SH: delta_pic_order_cnt");
         }
-        if (pps.redundantPicCntPresentFlag) {
+        if (pps.isRedundantPicCntPresentFlag) {
             writeUEtrace(writer, sliceHeader.redundantPicCnt, "SH: redundant_pic_cnt");
         }
         if (sliceHeader.sliceType == SliceType.B) {
@@ -80,12 +80,12 @@ public class SliceHeaderWriter {
             }
         }
         writeRefPicListReordering(sliceHeader, writer);
-        if ((pps.weightedPredFlag && (sliceHeader.sliceType == SliceType.P || sliceHeader.sliceType == SliceType.SP))
+        if ((pps.isWeightedPredFlag && (sliceHeader.sliceType == SliceType.P || sliceHeader.sliceType == SliceType.SP))
                 || (pps.weightedBipredIdc == 1 && sliceHeader.sliceType == SliceType.B))
             writePredWeightTable(sliceHeader, writer);
         if (nalRefIdc != 0)
             writeDecRefPicMarking(sliceHeader, idrSlice, writer);
-        if (pps.entropyCodingModeFlag && sliceHeader.sliceType.isInter()) {
+        if (pps.isEntropyCodingModeFlag && sliceHeader.sliceType.isInter()) {
             writeUEtrace(writer, sliceHeader.cabacInitIdc, "SH: cabac_init_idc");
         }
         writeSEtrace(writer, sliceHeader.sliceQpDelta, "SH: slice_qp_delta");
@@ -95,7 +95,7 @@ public class SliceHeaderWriter {
             }
             writeSEtrace(writer, sliceHeader.sliceQsDelta, "SH: slice_qs_delta");
         }
-        if (pps.deblockingFilterControlPresentFlag) {
+        if (pps.isDeblockingFilterControlPresentFlag) {
             writeUEtrace(writer, sliceHeader.disableDeblockingFilterIdc, "SH: disable_deblocking_filter_idc");
             if (sliceHeader.disableDeblockingFilterIdc != 1) {
                 writeSEtrace(writer, sliceHeader.sliceAlphaC0OffsetDiv2, "SH: slice_alpha_c0_offset_div2");

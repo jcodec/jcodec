@@ -352,7 +352,7 @@ public class FLVTool {
                         }
                         for (PictureParameterSet pps : H264Utils.readPPSFromBufferList(avcc.getPpsList())) {
                             System.out.println();
-                            System.out.print("  PPS[" + pps.getPicParameterSetId() + "]:" + Platform.toJSON(pps));
+                            System.out.print("  PPS[" + pps.picParameterSetId + "]:" + Platform.toJSON(pps));
                         }
                     }
                 }
