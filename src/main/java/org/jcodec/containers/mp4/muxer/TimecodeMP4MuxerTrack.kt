@@ -66,8 +66,9 @@ class TimecodeMP4MuxerTrack(trackId: Int) : CodecMP4MuxerTrack(trackId, MP4Track
         processGop()
         outTimecodeSample()
         if (sampleEntries.orEmpty().size == 0) return null
-        _edits = if (_edits != null) {
-            Util.editsOnEdits(Rational(1, 1), lower, _edits)
+        val __edits = _edits
+        _edits = if (__edits != null) {
+            Util.editsOnEdits(Rational(1, 1), lower, __edits).toMutableList()
         } else lower
         return super.finish(mvhd)
     }

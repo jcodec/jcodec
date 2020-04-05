@@ -52,7 +52,7 @@ class TrakBox(atom: Header) : NodeBox(atom) {
     val trackHeader: TrackHeaderBox
         get() = findFirst(this, "tkhd") as TrackHeaderBox
 
-    var edits: List<Edit>?
+    var edits: MutableList<Edit>?
         get() {
             val elst = (findFirstPath(this, Box.path("edts.elst")) as EditListBox?) ?: return null
             return elst.getEdits()

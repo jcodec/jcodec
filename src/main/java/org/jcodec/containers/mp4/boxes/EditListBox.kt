@@ -38,7 +38,7 @@ class EditListBox(atom: Header) : FullBox(atom) {
         return 12 + 4 + edits!!.size * 12
     }
 
-    fun getEdits(): List<Edit>? {
+    fun getEdits(): MutableList<Edit>? {
         return edits
     }
 

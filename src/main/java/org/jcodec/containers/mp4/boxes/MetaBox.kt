@@ -16,9 +16,9 @@ import java.util.*
  * @author The JCodec project
  */
 open class MetaBox(atom: Header) : NodeBox(atom) {
-    var keyedMeta: Map<String?, MetaValue>
+    var keyedMeta: Map<String, MetaValue>
         get() {
-            val result: MutableMap<String?, MetaValue> = LinkedHashMap()
+            val result: MutableMap<String, MetaValue> = LinkedHashMap()
             val ilst = findFirst(this, IListBox.fourcc()) as IListBox?
             val findAllPath = findAllPath(this, arrayOf(KeysBox.fourcc(), MdtaBox.fourcc()))
             val keys: List<MdtaBox?> = findAllPath.map { it as? MdtaBox? }
@@ -28,7 +28,7 @@ open class MetaBox(atom: Header) : NodeBox(atom) {
                 val db = getDataBox(value1) ?: continue
                 val value = MetaValue.createOtherWithLocale(db.type, db.locale, db.data)
                 if (index > 0 && index <= keys.size) {
-                    result[keys[index - 1]!!.key] = value
+                    result[keys[index - 1]!!.key!!] = value
                 }
             }
             return result

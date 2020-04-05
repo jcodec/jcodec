@@ -33,7 +33,7 @@ class SampleDescriptionBox(header: Header) : NodeBox(header) {
         }
 
         @JvmStatic
-        fun createSampleDescriptionBox(entries: Array<SampleEntry?>): SampleDescriptionBox {
+        fun createSampleDescriptionBox(entries: Array<SampleEntry>): SampleDescriptionBox {
             val box = SampleDescriptionBox(Header(fourcc()))
             for (i in entries.indices) {
                 val e = entries[i]
