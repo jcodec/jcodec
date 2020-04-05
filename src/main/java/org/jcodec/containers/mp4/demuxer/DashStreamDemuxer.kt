@@ -201,7 +201,7 @@ class DashStreamDemuxer(url: URL) : Demuxer {
             val off = curFragNo * segmentDuration
             frame.setPts((frame.getPts() + off * frame.getTimescale()).toLong())
             frame.mediaPts = (frame.mediaPts + off * frame.getTimescale()).toLong()
-            frame.setFrameNo(globalFrame - 1)
+            frame.frameNo = (globalFrame - 1).toLong()
             if (id == 5) println(String.format("[%d] PTS: %f DUR: %s", id, frame.ptsD.toFloat(), frame.durationD.toFloat()))
             return frame
         }
