@@ -113,7 +113,7 @@ public class SliceReader {
         mBlock.mbIdx = mbIdx;
         mBlock.prevMbType = prevMBType;
 
-        boolean mbaffFrameFlag = (sh.sps.mbAdaptiveFrameFieldFlag && !sh.fieldPicFlag);
+        boolean mbaffFrameFlag = (sh.sps.isMbAdaptiveFrameFieldFlag && !sh.fieldPicFlag);
 
         if (sh.sliceType.isInter() && !activePps.isEntropyCodingModeFlag) {
             if (!prevMbSkipped && mbSkipRun == 0) {
@@ -475,7 +475,7 @@ public class SliceReader {
                 | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         mBlock.transform8x8Used = false;
-        if (transform8x8 && mBlock.cbpLuma() != 0 && sh.sps.direct8x8InferenceFlag) {
+        if (transform8x8 && mBlock.cbpLuma() != 0 && sh.sps.isDirect8x8InferenceFlag) {
             mBlock.transform8x8Used = readTransform8x8Flag(lAvb, tAvb, leftMBType, topMBType[mbX], tf8x8Left,
                     tf8x8Top[mbX]);
         }

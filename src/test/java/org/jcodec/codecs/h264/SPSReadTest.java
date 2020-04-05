@@ -24,25 +24,25 @@ public class SPSReadTest {
         sps1 = new SeqParameterSet();
         sps1.profileIdc = 66;
 
-        sps1.constraintSet0Flag = false;
-        sps1.constraintSet1Flag = false;
-        sps1.constraintSet2Flag = false;
-        sps1.constraintSet3Flag = false;
-        sps1.constraintSet4Flag = false;
-        sps1.constraintSet5Flag = false;
+        sps1.isConstraintSet0Flag = false;
+        sps1.isConstraintSet1Flag = false;
+        sps1.isConstraintSet2Flag = false;
+        sps1.isConstraintSet3Flag = false;
+        sps1.isConstraintSet4Flag = false;
+        sps1.isConstraintSet5Flag = false;
         sps1.levelIdc = 30;
         sps1.seqParameterSetId = 0;
         sps1.log2MaxFrameNumMinus4 = 5;
         sps1.picOrderCntType = 0;
         sps1.log2MaxPicOrderCntLsbMinus4 = 6;
         sps1.numRefFrames = 1;
-        sps1.gapsInFrameNumValueAllowedFlag = false;
+        sps1.isGapsInFrameNumValueAllowedFlag = false;
         sps1.picWidthInMbsMinus1 = 31;
         sps1.picHeightInMapUnitsMinus1 = 23;
-        sps1.frameMbsOnlyFlag = true;
-        sps1.direct8x8InferenceFlag = true;
+        sps1.isFrameMbsOnlyFlag = true;
+        sps1.isDirect8x8InferenceFlag = true;
 
-        sps1.frameCroppingFlag = false;
+        sps1.isFrameCroppingFlag = false;
         sps1.vuiParams = new VUIParameters();
         sps1.vuiParams.aspectRatioInfoPresentFlag = false;
         sps1.vuiParams.overscanInfoPresentFlag = false;
@@ -79,25 +79,25 @@ public class SPSReadTest {
 
             assertEquals(sps.profileIdc, 66);
 
-            assertEquals(sps.constraintSet0Flag, false);
-            assertEquals(sps.constraintSet1Flag, false);
-            assertEquals(sps.constraintSet2Flag, false);
-            assertEquals(sps.constraintSet3Flag, false);
-            assertEquals(sps.constraintSet4Flag, false);
-            assertEquals(sps.constraintSet5Flag, false);
+            assertEquals(sps.isConstraintSet0Flag, false);
+            assertEquals(sps.isConstraintSet1Flag, false);
+            assertEquals(sps.isConstraintSet2Flag, false);
+            assertEquals(sps.isConstraintSet3Flag, false);
+            assertEquals(sps.isConstraintSet4Flag, false);
+            assertEquals(sps.isConstraintSet5Flag, false);
             assertEquals(sps.levelIdc, 30);
             assertEquals(sps.seqParameterSetId, 0);
             assertEquals(sps.log2MaxFrameNumMinus4, 5);
             assertEquals(sps.picOrderCntType, 0);
             assertEquals(sps.log2MaxPicOrderCntLsbMinus4, 6);
             assertEquals(sps.numRefFrames, 1);
-            assertEquals(sps.gapsInFrameNumValueAllowedFlag, false);
+            assertEquals(sps.isGapsInFrameNumValueAllowedFlag, false);
             assertEquals(sps.picWidthInMbsMinus1, 31);
             assertEquals(sps.picHeightInMapUnitsMinus1, 23);
-            assertEquals(sps.frameMbsOnlyFlag, true);
-            assertEquals(sps.direct8x8InferenceFlag, true);
+            assertEquals(sps.isFrameMbsOnlyFlag, true);
+            assertEquals(sps.isDirect8x8InferenceFlag, true);
 
-            assertEquals(sps.frameCroppingFlag, false);
+            assertEquals(sps.isFrameCroppingFlag, false);
             assertNotNull(sps.vuiParams);
             assertEquals(sps.vuiParams.aspectRatioInfoPresentFlag, false);
             assertEquals(sps.vuiParams.overscanInfoPresentFlag, false);

@@ -96,7 +96,7 @@ class MP4DemuxerTrackMeta(type: TrackType?, codec: Codec?, totalDuration: Double
                     val spsList = avcC.getSpsList()
                     if (spsList.size > 0) {
                         val sps = SeqParameterSet.read(spsList[0].duplicate())
-                        return sps.getChromaFormatIdc()
+                        return sps.chromaFormatIdc
                     }
                 }
             }

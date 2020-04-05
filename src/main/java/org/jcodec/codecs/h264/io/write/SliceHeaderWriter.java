@@ -40,7 +40,7 @@ public class SliceHeaderWriter {
             throw new IllegalArgumentException("frame_num > " + (1 << (sps.log2MaxFrameNumMinus4 + 4)));
         }
         writeUtrace(writer, sliceHeader.frameNum, sps.log2MaxFrameNumMinus4 + 4, "SH: frame_num");
-        if (!sps.frameMbsOnlyFlag) {
+        if (!sps.isFrameMbsOnlyFlag) {
             writeBool(writer, sliceHeader.fieldPicFlag, "SH: field_pic_flag");
             if (sliceHeader.fieldPicFlag) {
                 writeBool(writer, sliceHeader.bottomFieldFlag, "SH: bottom_field_flag");
@@ -54,13 +54,13 @@ public class SliceHeaderWriter {
                 throw new IllegalArgumentException("pic_order_cnt_lsb > " + (1 << (sps.log2MaxPicOrderCntLsbMinus4 + 4)));
             }
             writeU(writer, sliceHeader.picOrderCntLsb, sps.log2MaxPicOrderCntLsbMinus4 + 4);
-            if (pps.isPicOrderPresentFlag && !sps.fieldPicFlag) {
+            if (pps.isPicOrderPresentFlag && !sps.isFieldPicFlag) {
                 writeSEtrace(writer, sliceHeader.deltaPicOrderCntBottom, "SH: delta_pic_order_cnt_bottom");
             }
         }
-        if (sps.picOrderCntType == 1 && !sps.deltaPicOrderAlwaysZeroFlag) {
+        if (sps.picOrderCntType == 1 && !sps.isDeltaPicOrderAlwaysZeroFlag) {
             writeSEtrace(writer, sliceHeader.deltaPicOrderCnt[0], "SH: delta_pic_order_cnt");
-            if (pps.isPicOrderPresentFlag && !sps.fieldPicFlag)
+            if (pps.isPicOrderPresentFlag && !sps.isFieldPicFlag)
                 writeSEtrace(writer, sliceHeader.deltaPicOrderCnt[1], "SH: delta_pic_order_cnt");
         }
         if (pps.isRedundantPicCntPresentFlag) {

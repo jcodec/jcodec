@@ -836,7 +836,7 @@ public class H264Utils {
     public static Size getPicSize(SeqParameterSet sps) {
         int w = (sps.picWidthInMbsMinus1 + 1) << 4;
         int h = SeqParameterSet.getPicHeightInMbs(sps) << 4;
-        if (sps.frameCroppingFlag) {
+        if (sps.isFrameCroppingFlag) {
             w -= (sps.frameCropLeftOffset + sps.frameCropRightOffset) << sps.chromaFormatIdc.compWidth[1];
             h -= (sps.frameCropTopOffset + sps.frameCropBottomOffset) << sps.chromaFormatIdc.compHeight[1];
         }

@@ -107,7 +107,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
             int blk4x4_0 = H264Const.BLK8x8_BLOCKS[blk8x8][0];
             pp[blk8x8] = Bi;
 
-            if (!sh.sps.direct8x8InferenceFlag) {
+            if (!sh.sps.isDirect8x8InferenceFlag) {
                 int[] js = BLK8x8_BLOCKS[blk8x8];
                 for (int j = 0; j < js.length; j++) {
                     int blk4x4 = js[j];
@@ -244,7 +244,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
             int blk8x8 = blocks8x8[i];
             int blk4x4_0 = H264Const.BLK8x8_BLOCKS[blk8x8][0];
 
-            if (!sh.sps.direct8x8InferenceFlag) {
+            if (!sh.sps.isDirect8x8InferenceFlag) {
                 int[] js = BLK8x8_BLOCKS[blk8x8];
                 for (int j = 0; j < js.length; j++) {
                     int blk4x4 = js[j];

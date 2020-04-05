@@ -164,7 +164,7 @@ class PictureParameterSet {
                 for (i in 0 until 6 + 2 * if (extended!!.isTransform8x8ModeFlag) 1 else 0) {
                     CAVLCWriter.writeBool(writer, extended!!.scalingMatrix!![i] != null, "PPS: ")
                     if (extended!!.scalingMatrix!![i] != null) {
-                        SeqParameterSet.writeScalingList(writer, extended!!.scalingMatrix, i)
+                        SeqParameterSet.writeScalingList(writer, extended!!.scalingMatrix!!, i)
                     }
                 }
             }

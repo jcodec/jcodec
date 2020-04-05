@@ -54,7 +54,7 @@ public class SliceHeaderReader {
         sh.sps = sps;
 
         sh.frameNum = readU(_in, sps.log2MaxFrameNumMinus4 + 4, "SH: frame_num");
-        if (!sps.frameMbsOnlyFlag) {
+        if (!sps.isFrameMbsOnlyFlag) {
             sh.fieldPicFlag = readBool(_in, "SH: field_pic_flag");
             if (sh.fieldPicFlag) {
                 sh.bottomFieldFlag = readBool(_in, "SH: bottom_field_flag");
@@ -65,14 +65,14 @@ public class SliceHeaderReader {
         }
         if (sps.picOrderCntType == 0) {
             sh.picOrderCntLsb = readU(_in, sps.log2MaxPicOrderCntLsbMinus4 + 4, "SH: pic_order_cnt_lsb");
-            if (pps.isPicOrderPresentFlag && !sps.fieldPicFlag) {
+            if (pps.isPicOrderPresentFlag && !sps.isFieldPicFlag) {
                 sh.deltaPicOrderCntBottom = readSE(_in, "SH: delta_pic_order_cnt_bottom");
             }
         }
         sh.deltaPicOrderCnt = new int[2];
-        if (sps.picOrderCntType == 1 && !sps.deltaPicOrderAlwaysZeroFlag) {
+        if (sps.picOrderCntType == 1 && !sps.isDeltaPicOrderAlwaysZeroFlag) {
             sh.deltaPicOrderCnt[0] = readSE(_in, "SH: delta_pic_order_cnt[0]");
-            if (pps.isPicOrderPresentFlag && !sps.fieldPicFlag)
+            if (pps.isPicOrderPresentFlag && !sps.isFieldPicFlag)
                 sh.deltaPicOrderCnt[1] = readSE(_in, "SH: delta_pic_order_cnt[1]");
         }
         if (pps.isRedundantPicCntPresentFlag) {

@@ -208,19 +208,19 @@ public class H264Decoder extends VideoDecoder {
         }
 
         private void validateSupportedFeatures(SeqParameterSet sps, PictureParameterSet pps) {
-            if (sps.mbAdaptiveFrameFieldFlag)
+            if (sps.isMbAdaptiveFrameFieldFlag)
                 throw new RuntimeException("Unsupported h264 feature: MBAFF.");
             if (sps.bitDepthLumaMinus8 != 0 || sps.bitDepthChromaMinus8 != 0)
                 throw new RuntimeException("Unsupported h264 feature: High bit depth.");
             if (sps.chromaFormatIdc != ColorSpace.YUV420J)
                 throw new RuntimeException("Unsupported h264 feature: " + sps.chromaFormatIdc + " color.");
-            if (!sps.frameMbsOnlyFlag || sps.fieldPicFlag)
+            if (!sps.isFrameMbsOnlyFlag || sps.isFieldPicFlag)
                 throw new RuntimeException("Unsupported h264 feature: interlace.");
             if (pps.isConstrainedIntraPredFlag)
                 throw new RuntimeException("Unsupported h264 feature: constrained intra prediction.");
 //            if (sps.getScalingMatrix() != null || pps.extended != null && pps.extended.getScalingMatrix() != null)
 //                throw new RuntimeException("Unsupported h264 feature: scaling list.");
-            if (sps.qpprimeYZeroTransformBypassFlag)
+            if (sps.isQpprimeYZeroTransformBypassFlag)
                 throw new RuntimeException("Unsupported h264 feature: qprime zero transform bypass.");
             if (sps.profileIdc != PROFILE_BASELINE && sps.profileIdc != PROFILE_MAIN && sps.profileIdc != PROFILE_HIGH)
                 throw new RuntimeException("Unsupported h264 feature: " + sps.profileIdc + " profile.");
@@ -370,7 +370,7 @@ public class H264Decoder extends VideoDecoder {
         int height = SeqParameterSet.getPicHeightInMbs(sps) << 4;
 
         Rect crop = null;
-        if (sps.frameCroppingFlag) {
+        if (sps.isFrameCroppingFlag) {
             int sX = sps.frameCropLeftOffset << 1;
             int sY = sps.frameCropTopOffset << 1;
             int w = width - (sps.frameCropRightOffset << 1) - sX;

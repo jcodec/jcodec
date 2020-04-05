@@ -348,7 +348,7 @@ public class FLVTool {
                         AvcCBox avcc = H264Utils.parseAVCCFromBuffer(frameData);
                         for (SeqParameterSet sps : H264Utils.readSPSFromBufferList(avcc.getSpsList())) {
                             System.out.println();
-                            System.out.print("  SPS[" + sps.getSeqParameterSetId() + "]:" + Platform.toJSON(sps));
+                            System.out.print("  SPS[" + sps.seqParameterSetId + "]:" + Platform.toJSON(sps));
                         }
                         for (PictureParameterSet pps : H264Utils.readPPSFromBufferList(avcc.getPpsList())) {
                             System.out.println();
