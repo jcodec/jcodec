@@ -57,9 +57,9 @@ class Frame(width: Int, height: Int, data: Array<ByteArray?>?, color: ColorSpace
         }
 
         @JvmField
-        var POCAsc: Comparator<Frame> = Comparator { o1, o2 -> if (o1 == null && o2 == null) 0 else if (o1 == null) 1 else if (o2 == null) -1 else if (o1.pOC > o2.pOC) 1 else if (o1.pOC == o2.pOC) 0 else -1 }
+        var POCAsc: Comparator<Frame?> = Comparator { o1, o2 -> if (o1 == null && o2 == null) 0 else if (o1 == null) 1 else if (o2 == null) -1 else if (o1.pOC > o2.pOC) 1 else if (o1.pOC == o2.pOC) 0 else -1 }
         @JvmField
-        var POCDesc: Comparator<Frame> = Comparator { o1, o2 -> if (o1 == null && o2 == null) 0 else if (o1 == null) 1 else if (o2 == null) -1 else if (o1.pOC < o2.pOC) 1 else if (o1.pOC == o2.pOC) 0 else -1 }
+        var POCDesc: Comparator<Frame?> = Comparator { o1, o2 -> if (o1 == null && o2 == null) 0 else if (o1 == null) 1 else if (o2 == null) -1 else if (o1.pOC < o2.pOC) 1 else if (o1.pOC == o2.pOC) 0 else -1 }
     }
 
 }
