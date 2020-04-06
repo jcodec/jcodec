@@ -17,7 +17,7 @@ import java.util.*
  * @author The JCodec project
  */
 class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecoder: MBlockDecoderBDirect, sh: SliceHeader?, di: DeblockerInput?,
-                            poc: Int, decoderState: DecoderState?) : MBlockDecoderBase(sh, di, poc, decoderState) {
+                            poc: Int, decoderState: DecoderState?) : MBlockDecoderBase(sh!!, di!!, poc, decoderState!!) {
     fun decode(mBlock: MBlock, references: Array<Array<Frame?>>, mb: Picture, sliceType: SliceType, ref0: Boolean) {
         val mbX = mapper.getMbX(mBlock.mbIdx)
         val mbY = mapper.getMbY(mBlock.mbIdx)

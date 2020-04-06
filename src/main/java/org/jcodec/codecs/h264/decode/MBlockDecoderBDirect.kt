@@ -16,7 +16,7 @@ import org.jcodec.common.tools.MathUtil
  *
  * @author The JCodec project
  */
-class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: DeblockerInput?, poc: Int, decoderState: DecoderState?) : MBlockDecoderBase(sh, di, poc, decoderState) {
+class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: DeblockerInput?, poc: Int, decoderState: DecoderState?) : MBlockDecoderBase(sh!!, di!!, poc, decoderState!!) {
     fun decode(mBlock: MBlock, mb: Picture, references: Array<Array<Frame?>>) {
         val mbX = mapper.getMbX(mBlock.mbIdx)
         val mbY = mapper.getMbY(mBlock.mbIdx)

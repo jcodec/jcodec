@@ -11,7 +11,7 @@ import org.jcodec.common.model.Picture
  * @author The JCodec project
  */
 class MBlockDecoderIntraNxN(private val mapper: Mapper, sh: SliceHeader?, di: DeblockerInput?, poc: Int,
-                            decoderState: DecoderState?) : MBlockDecoderBase(sh, di, poc, decoderState) {
+                            decoderState: DecoderState?) : MBlockDecoderBase(sh!!, di!!, poc, decoderState!!) {
     private val prediction8x8Builder: Intra8x8PredictionBuilder
     fun decode(mBlock: MBlock, mb: Picture) {
         val mbX = mapper.getMbX(mBlock.mbIdx)

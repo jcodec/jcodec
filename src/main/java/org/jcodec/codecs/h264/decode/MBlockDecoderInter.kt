@@ -15,7 +15,7 @@ import org.jcodec.common.model.Picture
  *
  * @author The JCodec project
  */
-class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: DeblockerInput?, poc: Int, decoderState: DecoderState?) : MBlockDecoderBase(sh, di, poc, decoderState) {
+class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: DeblockerInput?, poc: Int, decoderState: DecoderState?) : MBlockDecoderBase(sh!!, di!!, poc, decoderState!!) {
     fun decode16x16(mBlock: MBlock, mb: Picture, refs: Array<Array<Frame?>>, p0: PartPred?) {
         val mbX = mapper.getMbX(mBlock.mbIdx)
         val mbY = mapper.getMbY(mBlock.mbIdx)

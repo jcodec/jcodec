@@ -17,7 +17,7 @@ import java.util.*
  * @author The JCodec project
  */
 class MBlockSkipDecoder(private val mapper: Mapper, private val bDirectDecoder: MBlockDecoderBDirect,
-                        sh: SliceHeader?, di: DeblockerInput?, poc: Int, sharedState: DecoderState?) : MBlockDecoderBase(sh, di, poc, sharedState) {
+                        sh: SliceHeader?, di: DeblockerInput?, poc: Int, sharedState: DecoderState?) : MBlockDecoderBase(sh!!, di!!, poc, sharedState!!) {
     fun decodeSkip(mBlock: MBlock, refs: Array<Array<Frame?>>, mb: Picture, sliceType: SliceType) {
         val mbX = mapper.getMbX(mBlock.mbIdx)
         val mbY = mapper.getMbY(mBlock.mbIdx)
@@ -70,7 +70,7 @@ class MBlockSkipDecoder(private val mapper: Mapper, private val bDirectDecoder: 
     }
 
     fun decodeChromaSkip(reference: Array<Array<Frame?>>?, vectors: MvList?, pp: Array<PartPred?>?, mbX: Int, mbY: Int, mb: Picture?) {
-        predictChromaInter(reference, vectors, mbX shl 3, mbY shl 3, 1, mb, pp)
+        predictChromaInter(reference!!, vectors!!, mbX shl 3, mbY shl 3, 1, mb!!, pp!!)
         predictChromaInter(reference, vectors, mbX shl 3, mbY shl 3, 2, mb, pp)
     }
 
