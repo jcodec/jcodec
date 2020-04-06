@@ -25,9 +25,9 @@ object SliceHeaderWriter {
         val sps = sliceHeader.sps
         val pps = sliceHeader.pps
         writeUEtrace(writer, sliceHeader.firstMbInSlice, "SH: first_mb_in_slice")
-        writeUEtrace(writer, sliceHeader.sliceType.ordinal() + if (sliceHeader.sliceTypeRestr) 5 else 0, "SH: slice_type")
+        writeUEtrace(writer, sliceHeader.sliceType!!.ordinal() + if (sliceHeader.sliceTypeRestr) 5 else 0, "SH: slice_type")
         writeUEtrace(writer, sliceHeader.picParameterSetId, "SH: pic_parameter_set_id")
-        require(sliceHeader.frameNum <= 1 shl sps.log2MaxFrameNumMinus4 + 4) { "frame_num > " + (1 shl sps.log2MaxFrameNumMinus4 + 4) }
+        require(sliceHeader.frameNum <= 1 shl sps!!.log2MaxFrameNumMinus4 + 4) { "frame_num > " + (1 shl sps.log2MaxFrameNumMinus4 + 4) }
         writeUtrace(writer, sliceHeader.frameNum, sps.log2MaxFrameNumMinus4 + 4, "SH: frame_num")
         if (!sps.isFrameMbsOnlyFlag) {
             writeBool(writer, sliceHeader.fieldPicFlag, "SH: field_pic_flag")
@@ -41,15 +41,15 @@ object SliceHeaderWriter {
         if (sps.picOrderCntType == 0) {
             require(sliceHeader.picOrderCntLsb <= 1 shl sps.log2MaxPicOrderCntLsbMinus4 + 4) { "pic_order_cnt_lsb > " + (1 shl sps.log2MaxPicOrderCntLsbMinus4 + 4) }
             writeU(writer, sliceHeader.picOrderCntLsb, sps.log2MaxPicOrderCntLsbMinus4 + 4)
-            if (pps.isPicOrderPresentFlag && !sps.isFieldPicFlag) {
+            if (pps!!.isPicOrderPresentFlag && !sps.isFieldPicFlag) {
                 writeSEtrace(writer, sliceHeader.deltaPicOrderCntBottom, "SH: delta_pic_order_cnt_bottom")
             }
         }
         if (sps.picOrderCntType == 1 && !sps.isDeltaPicOrderAlwaysZeroFlag) {
-            writeSEtrace(writer, sliceHeader.deltaPicOrderCnt[0], "SH: delta_pic_order_cnt")
-            if (pps.isPicOrderPresentFlag && !sps.isFieldPicFlag) writeSEtrace(writer, sliceHeader.deltaPicOrderCnt[1], "SH: delta_pic_order_cnt")
+            writeSEtrace(writer, sliceHeader.deltaPicOrderCnt!![0], "SH: delta_pic_order_cnt")
+            if (pps!!.isPicOrderPresentFlag && !sps.isFieldPicFlag) writeSEtrace(writer, sliceHeader.deltaPicOrderCnt!![1], "SH: delta_pic_order_cnt")
         }
-        if (pps.isRedundantPicCntPresentFlag) {
+        if (pps!!.isRedundantPicCntPresentFlag) {
             writeUEtrace(writer, sliceHeader.redundantPicCnt, "SH: redundant_pic_cnt")
         }
         if (sliceHeader.sliceType == SliceType.B) {
@@ -68,7 +68,7 @@ object SliceHeaderWriter {
         if (pps.isWeightedPredFlag && (sliceHeader.sliceType == SliceType.P || sliceHeader.sliceType == SliceType.SP)
                 || pps.weightedBipredIdc == 1 && sliceHeader.sliceType == SliceType.B) writePredWeightTable(sliceHeader, writer)
         if (nalRefIdc != 0) writeDecRefPicMarking(sliceHeader, idrSlice, writer)
-        if (pps.isEntropyCodingModeFlag && sliceHeader.sliceType.isInter) {
+        if (pps.isEntropyCodingModeFlag && sliceHeader.sliceType!!.isInter) {
             writeUEtrace(writer, sliceHeader.cabacInitIdc, "SH: cabac_init_idc")
         }
         writeSEtrace(writer, sliceHeader.sliceQpDelta, "SH: slice_qp_delta")
@@ -108,13 +108,13 @@ object SliceHeaderWriter {
     private fun writeDecRefPicMarking(sliceHeader: SliceHeader, idrSlice: Boolean, writer: BitWriter) {
         if (idrSlice) {
             val drpmidr = sliceHeader.refPicMarkingIDR
-            writeBool(writer, drpmidr.isDiscardDecodedPics, "SH: no_output_of_prior_pics_flag")
+            writeBool(writer, drpmidr!!.isDiscardDecodedPics, "SH: no_output_of_prior_pics_flag")
             writeBool(writer, drpmidr.isUseForlongTerm, "SH: long_term_reference_flag")
         } else {
             writeBool(writer, sliceHeader.refPicMarkingNonIDR != null, "SH: adaptive_ref_pic_marking_mode_flag")
             if (sliceHeader.refPicMarkingNonIDR != null) {
                 val drpmidr = sliceHeader.refPicMarkingNonIDR
-                val instructions = drpmidr.instructions
+                val instructions = drpmidr!!.instructions
                 for (i in instructions.indices) {
                     val mmop = instructions[i]
                     when (mmop.type) {
@@ -149,9 +149,9 @@ object SliceHeaderWriter {
 
     private fun writePredWeightTable(sliceHeader: SliceHeader, writer: BitWriter) {
         val sps = sliceHeader.sps
-        writeUEtrace(writer, sliceHeader.predWeightTable.lumaLog2WeightDenom, "SH: luma_log2_weight_denom")
-        if (sps.chromaFormatIdc != ColorSpace.MONO) {
-            writeUEtrace(writer, sliceHeader.predWeightTable.chromaLog2WeightDenom, "SH: chroma_log2_weight_denom")
+        writeUEtrace(writer, sliceHeader.predWeightTable!!.lumaLog2WeightDenom, "SH: luma_log2_weight_denom")
+        if (sps!!.chromaFormatIdc != ColorSpace.MONO) {
+            writeUEtrace(writer, sliceHeader.predWeightTable!!.chromaLog2WeightDenom, "SH: chroma_log2_weight_denom")
         }
         writeOffsetWeight(sliceHeader, writer, 0)
         if (sliceHeader.sliceType == SliceType.B) {
@@ -161,47 +161,49 @@ object SliceHeaderWriter {
 
     private fun writeOffsetWeight(sliceHeader: SliceHeader, writer: BitWriter, list: Int) {
         val sps = sliceHeader.sps
-        val defaultLW = 1 shl sliceHeader.predWeightTable.lumaLog2WeightDenom
-        val defaultCW = 1 shl sliceHeader.predWeightTable.chromaLog2WeightDenom
-        for (i in 0 until sliceHeader.predWeightTable.lumaWeight[list]!!.size) {
-            val flagLuma = (sliceHeader.predWeightTable.lumaWeight[list]!![i] != defaultLW
-                    || sliceHeader.predWeightTable.lumaOffset[list]!![i] != 0)
+        val predWeightTable = sliceHeader.predWeightTable!!
+        val defaultLW = 1 shl predWeightTable.lumaLog2WeightDenom
+        val defaultCW = 1 shl predWeightTable.chromaLog2WeightDenom
+        for (i in 0 until predWeightTable.lumaWeight[list]!!.size) {
+            val flagLuma = (predWeightTable.lumaWeight[list]!![i] != defaultLW
+                    || predWeightTable.lumaOffset[list]!![i] != 0)
             writeBool(writer, flagLuma, "SH: luma_weight_l0_flag")
             if (flagLuma) {
-                writeSEtrace(writer, sliceHeader.predWeightTable.lumaWeight[list]!![i], "SH: luma_weight_l$list")
-                writeSEtrace(writer, sliceHeader.predWeightTable.lumaOffset[list]!![i], "SH: luma_offset_l$list")
+                writeSEtrace(writer, predWeightTable.lumaWeight[list]!![i], "SH: luma_weight_l$list")
+                writeSEtrace(writer, predWeightTable.lumaOffset[list]!![i], "SH: luma_offset_l$list")
             }
-            if (sps.chromaFormatIdc != ColorSpace.MONO) {
-                val flagChroma = sliceHeader.predWeightTable.chromaWeight[list]!![0][i] != defaultCW || sliceHeader.predWeightTable.chromaOffset[list]!![0][i] != 0 || sliceHeader.predWeightTable.chromaWeight[list]!![1][i] != defaultCW || sliceHeader.predWeightTable.chromaOffset[list]!![1][i] != 0
+            if (sps!!.chromaFormatIdc != ColorSpace.MONO) {
+                val flagChroma = predWeightTable.chromaWeight[list]!![0][i] != defaultCW || predWeightTable.chromaOffset[list]!![0][i] != 0 || predWeightTable.chromaWeight[list]!![1][i] != defaultCW || predWeightTable.chromaOffset[list]!![1][i] != 0
                 writeBool(writer, flagChroma, "SH: chroma_weight_l0_flag")
                 if (flagChroma) for (j in 0..1) {
-                    writeSEtrace(writer, sliceHeader.predWeightTable.chromaWeight[list]!![j][i], "SH: chroma_weight_l$list")
-                    writeSEtrace(writer, sliceHeader.predWeightTable.chromaOffset[list]!![j][i], "SH: chroma_offset_l$list")
+                    writeSEtrace(writer, predWeightTable.chromaWeight[list]!![j][i], "SH: chroma_weight_l$list")
+                    writeSEtrace(writer, predWeightTable.chromaOffset[list]!![j][i], "SH: chroma_offset_l$list")
                 }
             }
         }
     }
 
     private fun writeRefPicListReordering(sliceHeader: SliceHeader, writer: BitWriter) {
-        if (sliceHeader.sliceType.isInter) {
-            val l0ReorderingPresent = (sliceHeader.refPicReordering != null
-                    && sliceHeader.refPicReordering[0] != null)
+        val refPicReordering = sliceHeader.refPicReordering
+        if (sliceHeader.sliceType!!.isInter) {
+            val l0ReorderingPresent = (refPicReordering != null
+                    && refPicReordering[0] != null)
             writeBool(writer, l0ReorderingPresent, "SH: ref_pic_list_reordering_flag_l0")
-            if (l0ReorderingPresent) writeReorderingList(sliceHeader.refPicReordering[0], writer)
+            if (l0ReorderingPresent) writeReorderingList(refPicReordering!![0], writer)
         }
         if (sliceHeader.sliceType == SliceType.B) {
-            val l1ReorderingPresent = (sliceHeader.refPicReordering != null
-                    && sliceHeader.refPicReordering[1] != null)
+            val l1ReorderingPresent = (refPicReordering != null
+                    && refPicReordering[1] != null)
             writeBool(writer, l1ReorderingPresent, "SH: ref_pic_list_reordering_flag_l1")
-            if (l1ReorderingPresent) writeReorderingList(sliceHeader.refPicReordering[1], writer)
+            if (l1ReorderingPresent) writeReorderingList(refPicReordering!![1], writer)
         }
     }
 
-    private fun writeReorderingList(reordering: Array<IntArray>?, writer: BitWriter) {
+    private fun writeReorderingList(reordering: Array<IntArray?>?, writer: BitWriter) {
         if (reordering == null) return
-        for (i in 0 until reordering[0].size) {
-            writeUEtrace(writer, reordering[0][i], "SH: reordering_of_pic_nums_idc")
-            writeUEtrace(writer, reordering[1][i], "SH: abs_diff_pic_num_minus1")
+        for (i in 0 until reordering[0]!!.size) {
+            writeUEtrace(writer, reordering[0]!![i], "SH: reordering_of_pic_nums_idc")
+            writeUEtrace(writer, reordering[1]!![i], "SH: abs_diff_pic_num_minus1")
         }
         writeUEtrace(writer, 3, "SH: reordering_of_pic_nums_idc")
     }

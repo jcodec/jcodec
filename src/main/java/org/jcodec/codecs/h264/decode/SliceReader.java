@@ -37,7 +37,7 @@ import org.jcodec.common.model.ColorSpace;
 
 /**
  * Contains methods for reading high-level symbols out of H.264 bitstream
- * 
+ *
  * @author The JCodec Project
  */
 public class SliceReader {
@@ -291,7 +291,7 @@ public class SliceReader {
     /**
      * Reads AC block of macroblock encoded as I_16x16, returns number of
      * non-zero coefficients
-     * 
+     *
      * @return
      */
     int read16x16AC(boolean leftAvailable, boolean topAvailable, int mbX, int cbpLuma, int[] ac, int blkOffLeft,
@@ -311,7 +311,7 @@ public class SliceReader {
 
     /**
      * Reads AC block of a macroblock, return number of non-zero coefficients
-     * 
+     *
      * @return
      */
     int readResidualAC(boolean leftAvailable, boolean topAvailable, int mbX, MBType curMbType, int cbpLuma,
@@ -350,7 +350,7 @@ public class SliceReader {
     /**
      * Reads luma AC coeffiecients for 8x8 blocks, returns number of non-zero
      * coefficients
-     * 
+     *
      * @return
      */
     public int readLumaAC8x8(int blkX, int blkY, int[] ac) {
