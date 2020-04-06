@@ -72,7 +72,7 @@ class FrameReader {
             cabac.initModels(cm, sh.sliceType!!, sh.cabacInitIdc, qp)
             mDecoder = MDecoder(segment, cm)
         }
-        return SliceReader(sh.pps, cabac, cavlc, mDecoder, _in, mapper, sh, nalUnit)
+        return SliceReader(sh.pps!!, cabac, cavlc, mDecoder, _in, mapper, sh, nalUnit)
     }
 
     fun addSpsList(spsList: List<ByteBuffer?>) {
