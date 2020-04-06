@@ -449,7 +449,7 @@ class SeqParameterSet {
         }
 
         //Wrong usage of Javascript keyword:in
-        fun readScalingList(src: BitReader?, sizeOfScalingList: Int): IntArray? {
+        fun readScalingList(src: BitReader, sizeOfScalingList: Int): IntArray? {
             val scalingList = IntArray(sizeOfScalingList)
             var lastScale = 8
             var nextScale = 8

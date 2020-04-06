@@ -18,7 +18,7 @@ import java.util.*
  */
 object SliceHeaderReader {
     @JvmStatic
-    fun readPart1(_in: BitReader?): SliceHeader {
+    fun readPart1(_in: BitReader): SliceHeader {
         val sh = SliceHeader()
         sh.firstMbInSlice = CAVLCReader.readUEtrace(_in, "SH: first_mb_in_slice")
         val shType = CAVLCReader.readUEtrace(_in, "SH: slice_type")
