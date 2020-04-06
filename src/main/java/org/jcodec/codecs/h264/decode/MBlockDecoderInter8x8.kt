@@ -155,7 +155,7 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         x.setMv(i11, list, mv)
         MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX, mvpY, mBlock.pb8x8.mvdX1[list][partNo],
                 mBlock.pb8x8.mvdY1[list][partNo], Mv.mvX(mv), Mv.mvY(mv), refIdx)
-        interpolator.getBlockLuma(references[refIdx], mb, off, offX + Mv.mvX(mv), offY + Mv.mvY(mv), 8, 8)
+        interpolator.getBlockLuma(references[refIdx]!!, mb, off, offX + Mv.mvX(mv), offY + Mv.mvY(mv), 8, 8)
     }
 
     private fun decodeSub8x4(mBlock: MBlock, partNo: Int, references: Array<Frame?>, offX: Int, offY: Int, tl: Int,
@@ -177,8 +177,8 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         x.setMv(i11, list, mv2)
         MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX2, mvpY2, mBlock.pb8x8.mvdX2[list][partNo],
                 mBlock.pb8x8.mvdY2[list][partNo], Mv.mvX(mv2), Mv.mvY(mv2), refIdx)
-        interpolator.getBlockLuma(references[refIdx], mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 8, 4)
-        interpolator.getBlockLuma(references[refIdx], mb, off + mb.width * 4, offX + Mv.mvX(mv2),
+        interpolator.getBlockLuma(references[refIdx]!!, mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 8, 4)
+        interpolator.getBlockLuma(references[refIdx]!!, mb, off + mb.width * 4, offX + Mv.mvX(mv2),
                 offY + Mv.mvY(mv2) + 16, 8, 4)
     }
 
@@ -199,8 +199,8 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         x.setMv(i11, list, mv2)
         MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX2, mvpY2, mBlock.pb8x8.mvdX2[list][partNo],
                 mBlock.pb8x8.mvdY2[list][partNo], Mv.mvX(mv2), Mv.mvY(mv2), refIdx)
-        interpolator.getBlockLuma(references[refIdx], mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 4, 8)
-        interpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + Mv.mvX(mv2) + 16, offY + Mv.mvY(mv2), 4, 8)
+        interpolator.getBlockLuma(references[refIdx]!!, mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 4, 8)
+        interpolator.getBlockLuma(references[refIdx]!!, mb, off + 4, offX + Mv.mvX(mv2) + 16, offY + Mv.mvY(mv2), 4, 8)
     }
 
     private fun decodeSub4x4(mBlock: MBlock, partNo: Int, references: Array<Frame?>, offX: Int, offY: Int, tl: Int,
@@ -230,11 +230,11 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         x.setMv(i11, list, mv4)
         MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX4, mvpY4, mBlock.pb8x8.mvdX4[list][partNo],
                 mBlock.pb8x8.mvdY4[list][partNo], Mv.mvX(mv4), Mv.mvY(mv4), refIdx)
-        interpolator.getBlockLuma(references[refIdx], mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 4, 4)
-        interpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + Mv.mvX(mv2) + 16, offY + Mv.mvY(mv2), 4, 4)
-        interpolator.getBlockLuma(references[refIdx], mb, off + mb.width * 4, offX + Mv.mvX(mv3), offY + Mv.mvY(mv3)
+        interpolator.getBlockLuma(references[refIdx]!!, mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 4, 4)
+        interpolator.getBlockLuma(references[refIdx]!!, mb, off + 4, offX + Mv.mvX(mv2) + 16, offY + Mv.mvY(mv2), 4, 4)
+        interpolator.getBlockLuma(references[refIdx]!!, mb, off + mb.width * 4, offX + Mv.mvX(mv3), offY + Mv.mvY(mv3)
                 + 16, 4, 4)
-        interpolator.getBlockLuma(references[refIdx], mb, off + mb.width * 4 + 4, offX + Mv.mvX(mv4) + 16, offY
+        interpolator.getBlockLuma(references[refIdx]!!, mb, off + mb.width * 4 + 4, offX + Mv.mvX(mv4) + 16, offY
                 + Mv.mvY(mv4) + 16, 4, 4)
     }
 

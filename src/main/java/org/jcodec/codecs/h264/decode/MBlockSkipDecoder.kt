@@ -64,7 +64,7 @@ class MBlockSkipDecoder(private val mapper: Mapper, private val bDirectDecoder: 
         for (i in 0..15) {
             x.setMv(i, 0, Mv.packMv(mvX, mvY, 0))
         }
-        interpolator.getBlockLuma(refs[0][0], mb, 0, (mbX shl 6) + mvX, (mbY shl 6) + mvY, 16, 16)
+        interpolator.getBlockLuma(refs[0][0]!!, mb, 0, (mbX shl 6) + mvX, (mbY shl 6) + mvY, 16, 16)
         PredictionMerger.mergePrediction(sh, 0, 0, PartPred.L0, 0, mb.getPlaneData(0), null, 0, 16, 16, 16, mb.getPlaneData(0),
                 refs, poc)
     }

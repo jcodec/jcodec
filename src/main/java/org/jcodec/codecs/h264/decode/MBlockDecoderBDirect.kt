@@ -69,9 +69,9 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
                             x.mv0Y(blk4x4), x.mv0R(blk4x4), x.mv1X(blk4x4), x.mv1Y(blk4x4), x.mv1R(blk4x4))
                     val blkPredX = (mbX shl 6) + (blkIndX shl 4)
                     val blkPredY = (mbY shl 6) + (blkIndY shl 4)
-                    interpolator.getBlockLuma(refs[0][x.mv0R(blk4x4)], mbb[0], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
+                    interpolator.getBlockLuma(refs[0][x.mv0R(blk4x4)]!!, mbb[0], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                             + x.mv0X(blk4x4), blkPredY + x.mv0Y(blk4x4), 4, 4)
-                    interpolator.getBlockLuma(refs[1][0], mbb[1], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
+                    interpolator.getBlockLuma(refs[1][0]!!, mbb[1], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                             + x.mv1X(blk4x4), blkPredY + x.mv1Y(blk4x4), 4, 4)
                 }
             } else {
@@ -84,9 +84,9 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
                         x.mv0Y(blk4x4_0), x.mv0R(blk4x4_0), x.mv1X(blk4x4_0), x.mv1Y(blk4x4_0), x.mv1R(blk4x4_0))
                 val blkPredX = (mbX shl 6) + (blkIndX shl 4)
                 val blkPredY = (mbY shl 6) + (blkIndY shl 4)
-                interpolator.getBlockLuma(refs[0][x.mv0R(blk4x4_0)], mbb[0], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
+                interpolator.getBlockLuma(refs[0][x.mv0R(blk4x4_0)]!!, mbb[0], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
                         + x.mv0X(blk4x4_0), blkPredY + x.mv0Y(blk4x4_0), 8, 8)
-                interpolator.getBlockLuma(refs[1][0], mbb[1], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
+                interpolator.getBlockLuma(refs[1][0]!!, mbb[1], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
                         + x.mv1X(blk4x4_0), blkPredY + x.mv1Y(blk4x4_0), 8, 8)
             }
             PredictionMerger.mergePrediction(sh, x.mv0R(blk4x4_0), x.mv1R(blk4x4_0), PartPred.Bi, 0, mbb[0].getPlaneData(0), mbb[1].getPlaneData(0),
@@ -158,9 +158,9 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
                 pp[blk8x8] = PartPred.Bi
                 val blkOffX = blk8x8 and 1 shl 5
                 val blkOffY = blk8x8 shr 1 shl 5
-                interpolator.getBlockLuma(refs[0][0], mbb[0], H264Const.BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX shl 6) + blkOffX,
+                interpolator.getBlockLuma(refs[0][0]!!, mbb[0], H264Const.BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX shl 6) + blkOffX,
                         (mbY shl 6) + blkOffY, 8, 8)
-                interpolator.getBlockLuma(refs[1][0], mbb[1], H264Const.BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX shl 6) + blkOffX,
+                interpolator.getBlockLuma(refs[1][0]!!, mbb[1], H264Const.BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX shl 6) + blkOffX,
                         (mbY shl 6) + blkOffY, 8, 8)
                 PredictionMerger.mergePrediction(sh, 0, 0, PartPred.Bi, 0, mbb[0].getPlaneData(0), mbb[1].getPlaneData(0),
                         H264Const.BLK_8x8_MB_OFF_LUMA[blk8x8], 16, 8, 8, mb.getPlaneData(0), refs, poc)
@@ -188,9 +188,9 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
                             x.mv0X(blk4x4), x.mv0Y(blk4x4), refIdxL0, x.mv1X(blk4x4), x.mv1Y(blk4x4))
                     val blkPredX = (mbX shl 6) + (blkIndX shl 4)
                     val blkPredY = (mbY shl 6) + (blkIndY shl 4)
-                    if (refIdxL0 >= 0) interpolator.getBlockLuma(refs[0][refIdxL0], mbb[0], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
+                    if (refIdxL0 >= 0) interpolator.getBlockLuma(refs[0][refIdxL0]!!, mbb[0], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                             + x.mv0X(blk4x4), blkPredY + x.mv0Y(blk4x4), 4, 4)
-                    if (refIdxL1 >= 0) interpolator.getBlockLuma(refs[1][refIdxL1], mbb[1], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
+                    if (refIdxL1 >= 0) interpolator.getBlockLuma(refs[1][refIdxL1]!!, mbb[1], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                             + x.mv1X(blk4x4), blkPredY + x.mv1Y(blk4x4), 4, 4)
                 }
             } else {
@@ -203,9 +203,9 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
                         x.mv0Y(blk4x4_0), refIdxL0, x.mv1X(blk4x4_0), x.mv1Y(blk4x4_0), refIdxL1)
                 val blkPredX = (mbX shl 6) + (blkIndX shl 4)
                 val blkPredY = (mbY shl 6) + (blkIndY shl 4)
-                if (refIdxL0 >= 0) interpolator.getBlockLuma(refs[0][refIdxL0], mbb[0], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
+                if (refIdxL0 >= 0) interpolator.getBlockLuma(refs[0][refIdxL0]!!, mbb[0], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
                         + x.mv0X(blk4x4_0), blkPredY + x.mv0Y(blk4x4_0), 8, 8)
-                if (refIdxL1 >= 0) interpolator.getBlockLuma(refs[1][refIdxL1], mbb[1], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
+                if (refIdxL1 >= 0) interpolator.getBlockLuma(refs[1][refIdxL1]!!, mbb[1], H264Const.BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
                         + x.mv1X(blk4x4_0), blkPredY + x.mv1Y(blk4x4_0), 8, 8)
             }
             PredictionMerger.mergePrediction(sh, x.mv0R(blk4x4_0), x.mv1R(blk4x4_0),
