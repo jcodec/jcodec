@@ -18,7 +18,7 @@ import java.util.*
  */
 class MBlockSkipDecoder(private val mapper: Mapper, private val bDirectDecoder: MBlockDecoderBDirect,
                         sh: SliceHeader?, di: DeblockerInput?, poc: Int, sharedState: DecoderState?) : MBlockDecoderBase(sh!!, di!!, poc, sharedState!!) {
-    fun decodeSkip(mBlock: MBlock, refs: Array<Array<Frame?>>, mb: Picture, sliceType: SliceType) {
+    fun decodeSkip(mBlock: MBlock, refs: Array<Array<Frame?>?>?, mb: Picture, sliceType: SliceType) {
         val mbX = mapper.getMbX(mBlock.mbIdx)
         val mbY = mapper.getMbY(mBlock.mbIdx)
         val mbAddr = mapper.getAddress(mBlock.mbIdx)
@@ -41,7 +41,7 @@ class MBlockSkipDecoder(private val mapper: Mapper, private val bDirectDecoder: 
         di.mbQps[2][mbAddr] = calcQpChroma(s.qp, s.chromaQpOffset[1])
     }
 
-    fun predictPSkip(refs: Array<Array<Frame?>>, mbX: Int, mbY: Int, lAvb: Boolean, tAvb: Boolean, tlAvb: Boolean,
+    fun predictPSkip(refs: Array<Array<Frame?>?>?, mbX: Int, mbY: Int, lAvb: Boolean, tAvb: Boolean, tlAvb: Boolean,
                      trAvb: Boolean, x: MvList, mb: Picture) {
         var mvX = 0
         var mvY = 0
@@ -64,12 +64,12 @@ class MBlockSkipDecoder(private val mapper: Mapper, private val bDirectDecoder: 
         for (i in 0..15) {
             x.setMv(i, 0, Mv.packMv(mvX, mvY, 0))
         }
-        interpolator.getBlockLuma(refs[0][0]!!, mb, 0, (mbX shl 6) + mvX, (mbY shl 6) + mvY, 16, 16)
+        interpolator.getBlockLuma(refs!![0]!![0]!!, mb, 0, (mbX shl 6) + mvX, (mbY shl 6) + mvY, 16, 16)
         PredictionMerger.mergePrediction(sh, 0, 0, PartPred.L0, 0, mb.getPlaneData(0), null, 0, 16, 16, 16, mb.getPlaneData(0),
                 refs, poc)
     }
 
-    fun decodeChromaSkip(reference: Array<Array<Frame?>>?, vectors: MvList?, pp: Array<PartPred?>?, mbX: Int, mbY: Int, mb: Picture?) {
+    fun decodeChromaSkip(reference: Array<Array<Frame?>?>?, vectors: MvList?, pp: Array<PartPred?>?, mbX: Int, mbY: Int, mb: Picture?) {
         predictChromaInter(reference!!, vectors!!, mbX shl 3, mbY shl 3, 1, mb!!, pp!!)
         predictChromaInter(reference, vectors, mbX shl 3, mbY shl 3, 2, mb, pp)
     }

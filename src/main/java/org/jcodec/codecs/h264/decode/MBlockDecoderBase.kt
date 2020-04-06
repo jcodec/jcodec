@@ -125,7 +125,7 @@ open class MBlockDecoderBase(sh: SliceHeader, di: DeblockerInput, poc: Int, deco
         }
     }
 
-    fun predictChromaInter(refs: Array<Array<Frame?>>, vectors: MvList, x: Int, y: Int, comp: Int, mb: Picture,
+    fun predictChromaInter(refs: Array<Array<Frame?>?>?, vectors: MvList, x: Int, y: Int, comp: Int, mb: Picture,
                            predType: Array<PartPred?>) {
         for (blk8x8 in 0..3) {
             for (list in 0..1) {
@@ -133,7 +133,7 @@ open class MBlockDecoderBase(sh: SliceHeader, di: DeblockerInput, poc: Int, deco
                 for (blk4x4 in 0..3) {
                     val i = H264Const.BLK_INV_MAP[(blk8x8 shl 2) + blk4x4]
                     val mv = vectors.getMv(i, list)
-                    val ref = refs[list][Mv.mvRef(mv)]!!
+                    val ref = refs!![list]!![Mv.mvRef(mv)]!!
                     val blkPox = i and 3 shl 1
                     val blkPoy = i shr 2 shl 1
                     val xx = (x + blkPox shl 3) + Mv.mvX(mv)

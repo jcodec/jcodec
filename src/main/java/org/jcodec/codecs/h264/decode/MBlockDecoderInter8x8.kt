@@ -18,7 +18,7 @@ import java.util.*
  */
 class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecoder: MBlockDecoderBDirect, sh: SliceHeader?, di: DeblockerInput?,
                             poc: Int, decoderState: DecoderState?) : MBlockDecoderBase(sh!!, di!!, poc, decoderState!!) {
-    fun decode(mBlock: MBlock, references: Array<Array<Frame?>>, mb: Picture, sliceType: SliceType, ref0: Boolean) {
+    fun decode(mBlock: MBlock, references: Array<Array<Frame?>?>?, mb: Picture, sliceType: SliceType, ref0: Boolean) {
         val mbX = mapper.getMbX(mBlock.mbIdx)
         val mbY = mapper.getMbY(mBlock.mbIdx)
         val leftAvailable = mapper.leftAvailable(mBlock.mbIdx)
@@ -27,7 +27,7 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         val topLeftAvailable = mapper.topLeftAvailable(mBlock.mbIdx)
         val topRightAvailable = mapper.topRightAvailable(mBlock.mbIdx)
         if (sliceType == SliceType.P) {
-            predict8x8P(mBlock, references[0], mb, ref0, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
+            predict8x8P(mBlock, references!![0], mb, ref0, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
                     topRightAvailable, mBlock.x, mBlock.partPreds)
         } else {
             predict8x8B(mBlock, references, mb, ref0, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
@@ -53,7 +53,7 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         di.tr8x8Used[mbAddr] = mBlock.transform8x8Used
     }
 
-    private fun predict8x8P(mBlock: MBlock, references: Array<Frame?>, mb: Picture, ref0: Boolean, mbX: Int, mbY: Int,
+    private fun predict8x8P(mBlock: MBlock, references: Array<Frame?>?, mb: Picture, ref0: Boolean, mbX: Int, mbY: Int,
                             leftAvailable: Boolean, topAvailable: Boolean, tlAvailable: Boolean, topRightAvailable: Boolean, x: MvList,
                             pp: Array<PartPred?>) {
         decodeSubMb8x8(mBlock, 0, mBlock.pb8x8.subMbTypes[0], references, mbX shl 6, mbY shl 6, s.mvTopLeft.getMv(0, 0),
@@ -81,7 +81,7 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         Arrays.fill(pp, PartPred.L0)
     }
 
-    private fun predict8x8B(mBlock: MBlock, refs: Array<Array<Frame?>>, mb: Picture, ref0: Boolean, mbX: Int, mbY: Int,
+    private fun predict8x8B(mBlock: MBlock, refs: Array<Array<Frame?>?>?, mb: Picture, ref0: Boolean, mbX: Int, mbY: Int,
                             leftAvailable: Boolean, topAvailable: Boolean, tlAvailable: Boolean, topRightAvailable: Boolean, x: MvList,
                             p: Array<PartPred?>) {
         for (i in 0..3) {
@@ -93,27 +93,27 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         }
         for (list in 0..1) {
             if (H264Const.usesList(H264Const.bPartPredModes[mBlock.pb8x8.subMbTypes[0]], list)) {
-                decodeSubMb8x8(mBlock, 0, H264Const.bSubMbTypes[mBlock.pb8x8.subMbTypes[0]], refs[list], mbX shl 6, mbY shl 6,
+                decodeSubMb8x8(mBlock, 0, H264Const.bSubMbTypes[mBlock.pb8x8.subMbTypes[0]], refs!![list], mbX shl 6, mbY shl 6,
                         s.mvTopLeft.getMv(0, list), s.mvTop.getMv(mbX shl 2, list), s.mvTop.getMv((mbX shl 2) + 1, list),
                         s.mvTop.getMv((mbX shl 2) + 2, list), s.mvLeft.getMv(0, list), s.mvLeft.getMv(1, list),
                         tlAvailable, topAvailable, topAvailable, leftAvailable, x, 0, 1, 4, 5,
                         mBlock.pb8x8.refIdx[list][0], mbb[list], 0, list)
             }
             if (H264Const.usesList(H264Const.bPartPredModes[mBlock.pb8x8.subMbTypes[1]], list)) {
-                decodeSubMb8x8(mBlock, 1, H264Const.bSubMbTypes[mBlock.pb8x8.subMbTypes[1]], refs[list], (mbX shl 6) + 32,
+                decodeSubMb8x8(mBlock, 1, H264Const.bSubMbTypes[mBlock.pb8x8.subMbTypes[1]], refs!![list], (mbX shl 6) + 32,
                         mbY shl 6, s.mvTop.getMv((mbX shl 2) + 1, list), s.mvTop.getMv((mbX shl 2) + 2, list),
                         s.mvTop.getMv((mbX shl 2) + 3, list), s.mvTop.getMv((mbX shl 2) + 4, list), x.getMv(1, list),
                         x.getMv(5, list), topAvailable, topAvailable, topRightAvailable, true, x, 2, 3, 6, 7,
                         mBlock.pb8x8.refIdx[list][1], mbb[list], 8, list)
             }
             if (H264Const.usesList(H264Const.bPartPredModes[mBlock.pb8x8.subMbTypes[2]], list)) {
-                decodeSubMb8x8(mBlock, 2, H264Const.bSubMbTypes[mBlock.pb8x8.subMbTypes[2]], refs[list], mbX shl 6,
+                decodeSubMb8x8(mBlock, 2, H264Const.bSubMbTypes[mBlock.pb8x8.subMbTypes[2]], refs!![list], mbX shl 6,
                         (mbY shl 6) + 32, s.mvLeft.getMv(1, list), x.getMv(4, list), x.getMv(5, list), x.getMv(6, list),
                         s.mvLeft.getMv(2, list), s.mvLeft.getMv(3, list), leftAvailable, true, true, leftAvailable, x,
                         8, 9, 12, 13, mBlock.pb8x8.refIdx[list][2], mbb[list], 128, list)
             }
             if (H264Const.usesList(H264Const.bPartPredModes[mBlock.pb8x8.subMbTypes[3]], list)) {
-                decodeSubMb8x8(mBlock, 3, H264Const.bSubMbTypes[mBlock.pb8x8.subMbTypes[3]], refs[list], (mbX shl 6) + 32,
+                decodeSubMb8x8(mBlock, 3, H264Const.bSubMbTypes[mBlock.pb8x8.subMbTypes[3]], refs!![list], (mbX shl 6) + 32,
                         (mbY shl 6) + 32, x.getMv(5, list), x.getMv(6, list), x.getMv(7, list), MBlockDecoderUtils.NULL_VECTOR,
                         x.getMv(9, list), x.getMv(13, list), true, true, false, true, x, 10, 11, 14, 15,
                         mBlock.pb8x8.refIdx[list][3], mbb[list], 136, list)
@@ -128,7 +128,7 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         MBlockDecoderUtils.savePrediction8x8(s, mbX, x)
     }
 
-    private fun decodeSubMb8x8(mBlock: MBlock, partNo: Int, subMbType: Int, references: Array<Frame?>, offX: Int, offY: Int,
+    private fun decodeSubMb8x8(mBlock: MBlock, partNo: Int, subMbType: Int, references: Array<Frame?>?, offX: Int, offY: Int,
                                tl: Int, t0: Int, t1: Int, tr: Int, l0: Int, l1: Int, tlAvb: Boolean, tAvb: Boolean, trAvb: Boolean, lAvb: Boolean,
                                x: MvList, i00: Int, i01: Int, i10: Int, i11: Int, refIdx: Int, mb: Picture, off: Int, list: Int) {
         when (subMbType) {
@@ -143,7 +143,7 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         }
     }
 
-    private fun decodeSub8x8(mBlock: MBlock, partNo: Int, references: Array<Frame?>, offX: Int, offY: Int, tl: Int,
+    private fun decodeSub8x8(mBlock: MBlock, partNo: Int, references: Array<Frame?>?, offX: Int, offY: Int, tl: Int,
                              t0: Int, tr: Int, l0: Int, tlAvb: Boolean, tAvb: Boolean, trAvb: Boolean, lAvb: Boolean, x: MvList, i00: Int,
                              i01: Int, i10: Int, i11: Int, refIdx: Int, mb: Picture, off: Int, list: Int) {
         val mvpX = MBlockDecoderUtils.calcMVPredictionMedian(l0, t0, tr, tl, lAvb, tAvb, trAvb, tlAvb, refIdx, 0)
@@ -155,10 +155,10 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         x.setMv(i11, list, mv)
         MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX, mvpY, mBlock.pb8x8.mvdX1[list][partNo],
                 mBlock.pb8x8.mvdY1[list][partNo], Mv.mvX(mv), Mv.mvY(mv), refIdx)
-        interpolator.getBlockLuma(references[refIdx]!!, mb, off, offX + Mv.mvX(mv), offY + Mv.mvY(mv), 8, 8)
+        interpolator.getBlockLuma(references!![refIdx]!!, mb, off, offX + Mv.mvX(mv), offY + Mv.mvY(mv), 8, 8)
     }
 
-    private fun decodeSub8x4(mBlock: MBlock, partNo: Int, references: Array<Frame?>, offX: Int, offY: Int, tl: Int,
+    private fun decodeSub8x4(mBlock: MBlock, partNo: Int, references: Array<Frame?>?, offX: Int, offY: Int, tl: Int,
                              t0: Int, tr: Int, l0: Int, l1: Int, tlAvb: Boolean, tAvb: Boolean, trAvb: Boolean, lAvb: Boolean, x: MvList,
                              i00: Int, i01: Int, i10: Int, i11: Int, refIdx: Int, mb: Picture, off: Int, list: Int) {
         val mvpX1 = MBlockDecoderUtils.calcMVPredictionMedian(l0, t0, tr, tl, lAvb, tAvb, trAvb, tlAvb, refIdx, 0)
@@ -177,12 +177,12 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         x.setMv(i11, list, mv2)
         MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX2, mvpY2, mBlock.pb8x8.mvdX2[list][partNo],
                 mBlock.pb8x8.mvdY2[list][partNo], Mv.mvX(mv2), Mv.mvY(mv2), refIdx)
-        interpolator.getBlockLuma(references[refIdx]!!, mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 8, 4)
+        interpolator.getBlockLuma(references!![refIdx]!!, mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 8, 4)
         interpolator.getBlockLuma(references[refIdx]!!, mb, off + mb.width * 4, offX + Mv.mvX(mv2),
                 offY + Mv.mvY(mv2) + 16, 8, 4)
     }
 
-    private fun decodeSub4x8(mBlock: MBlock, partNo: Int, references: Array<Frame?>, offX: Int, offY: Int, tl: Int, t0: Int,
+    private fun decodeSub4x8(mBlock: MBlock, partNo: Int, references: Array<Frame?>?, offX: Int, offY: Int, tl: Int, t0: Int,
                              t1: Int, tr: Int, l0: Int, tlAvb: Boolean, tAvb: Boolean, trAvb: Boolean, lAvb: Boolean, x: MvList, i00: Int,
                              i01: Int, i10: Int, i11: Int, refIdx: Int, mb: Picture, off: Int, list: Int) {
         val mvpX1 = MBlockDecoderUtils.calcMVPredictionMedian(l0, t0, t1, tl, lAvb, tAvb, tAvb, tlAvb, refIdx, 0)
@@ -199,11 +199,11 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         x.setMv(i11, list, mv2)
         MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX2, mvpY2, mBlock.pb8x8.mvdX2[list][partNo],
                 mBlock.pb8x8.mvdY2[list][partNo], Mv.mvX(mv2), Mv.mvY(mv2), refIdx)
-        interpolator.getBlockLuma(references[refIdx]!!, mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 4, 8)
+        interpolator.getBlockLuma(references!![refIdx]!!, mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 4, 8)
         interpolator.getBlockLuma(references[refIdx]!!, mb, off + 4, offX + Mv.mvX(mv2) + 16, offY + Mv.mvY(mv2), 4, 8)
     }
 
-    private fun decodeSub4x4(mBlock: MBlock, partNo: Int, references: Array<Frame?>, offX: Int, offY: Int, tl: Int,
+    private fun decodeSub4x4(mBlock: MBlock, partNo: Int, references: Array<Frame?>?, offX: Int, offY: Int, tl: Int,
                              t0: Int, t1: Int, tr: Int, l0: Int, l1: Int, tlAvb: Boolean, tAvb: Boolean, trAvb: Boolean, lAvb: Boolean, x: MvList,
                              i00: Int, i01: Int, i10: Int, i11: Int, refIdx: Int, mb: Picture, off: Int, list: Int) {
         val mvpX1 = MBlockDecoderUtils.calcMVPredictionMedian(l0, t0, t1, tl, lAvb, tAvb, tAvb, tlAvb, refIdx, 0)
@@ -230,7 +230,7 @@ class MBlockDecoderInter8x8(private val mapper: Mapper, private val bDirectDecod
         x.setMv(i11, list, mv4)
         MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX4, mvpY4, mBlock.pb8x8.mvdX4[list][partNo],
                 mBlock.pb8x8.mvdY4[list][partNo], Mv.mvX(mv4), Mv.mvY(mv4), refIdx)
-        interpolator.getBlockLuma(references[refIdx]!!, mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 4, 4)
+        interpolator.getBlockLuma(references!![refIdx]!!, mb, off, offX + Mv.mvX(mv1), offY + Mv.mvY(mv1), 4, 4)
         interpolator.getBlockLuma(references[refIdx]!!, mb, off + 4, offX + Mv.mvX(mv2) + 16, offY + Mv.mvY(mv2), 4, 4)
         interpolator.getBlockLuma(references[refIdx]!!, mb, off + mb.width * 4, offX + Mv.mvX(mv3), offY + Mv.mvY(mv3)
                 + 16, 4, 4)

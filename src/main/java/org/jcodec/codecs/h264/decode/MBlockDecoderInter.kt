@@ -16,7 +16,7 @@ import org.jcodec.common.model.Picture
  * @author The JCodec project
  */
 class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: DeblockerInput?, poc: Int, decoderState: DecoderState?) : MBlockDecoderBase(sh!!, di!!, poc, decoderState!!) {
-    fun decode16x16(mBlock: MBlock, mb: Picture, refs: Array<Array<Frame?>>, p0: PartPred?) {
+    fun decode16x16(mBlock: MBlock, mb: Picture, refs: Array<Array<Frame?>?>?, p0: PartPred?) {
         val mbX = mapper.getMbX(mBlock.mbIdx)
         val mbY = mapper.getMbY(mBlock.mbIdx)
         val leftAvailable = mapper.leftAvailable(mBlock.mbIdx)
@@ -45,7 +45,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
         di.mbTypes[address] = mBlock.curMbType
     }
 
-    private fun predictInter8x16(mBlock: MBlock, mb: Picture, references: Array<Array<Frame?>>, mbX: Int, mbY: Int,
+    private fun predictInter8x16(mBlock: MBlock, mb: Picture, references: Array<Array<Frame?>?>?, mbX: Int, mbY: Int,
                                  leftAvailable: Boolean, topAvailable: Boolean, tlAvailable: Boolean, trAvailable: Boolean, x: MvList,
                                  list: Int, p0: PartPred, p1: PartPred) {
         val xx = mbX shl 2
@@ -66,7 +66,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
             mvY1 = mBlock.pb168x168.mvdY1[list] + mvpY1
             MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX1, mvpY1, mBlock.pb168x168.mvdX1[list],
                     mBlock.pb168x168.mvdY1[list], mvX1, mvY1, mBlock.pb168x168.refIdx1[list])
-            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx1[list]]!!, mb, 0, (mbX shl 6) + mvX1,
+            interpolator.getBlockLuma(references!![list]!![mBlock.pb168x168.refIdx1[list]]!!, mb, 0, (mbX shl 6) + mvX1,
                     (mbY shl 6) + mvY1, 8, 16)
             r1 = mBlock.pb168x168.refIdx1[list]
         }
@@ -86,7 +86,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
             MBlockDecoderUtils.debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mBlock.pb168x168.mvdX2[list] + ", "
                     + mBlock.pb168x168.mvdY2[list] + "), MV: (" + mvX2 + "," + mvY2 + ","
                     + mBlock.pb168x168.refIdx2[list] + ")")
-            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]]!!, mb, 8, (mbX shl 6) + 32
+            interpolator.getBlockLuma(references!![list]!![mBlock.pb168x168.refIdx2[list]]!!, mb, 8, (mbX shl 6) + 32
                     + mvX2, (mbY shl 6) + mvY2, 8, 16)
             r2 = mBlock.pb168x168.refIdx2[list]
         }
@@ -105,7 +105,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
         }
     }
 
-    private fun predictInter16x8(mBlock: MBlock, mb: Picture, references: Array<Array<Frame?>>, mbX: Int, mbY: Int,
+    private fun predictInter16x8(mBlock: MBlock, mb: Picture, references: Array<Array<Frame?>?>?, mbX: Int, mbY: Int,
                                  leftAvailable: Boolean, topAvailable: Boolean, tlAvailable: Boolean, trAvailable: Boolean, xx: Int, x: MvList,
                                  p0: PartPred, p1: PartPred, list: Int) {
         var mvX1 = 0
@@ -125,7 +125,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
             mvY1 = mBlock.pb168x168.mvdY1[list] + mvpY1
             MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX1, mvpY1, mBlock.pb168x168.mvdX1[list],
                     mBlock.pb168x168.mvdY1[list], mvX1, mvY1, mBlock.pb168x168.refIdx1[list])
-            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx1[list]]!!, mb, 0, (mbX shl 6) + mvX1,
+            interpolator.getBlockLuma(references!![list]!![mBlock.pb168x168.refIdx1[list]]!!, mb, 0, (mbX shl 6) + mvX1,
                     (mbY shl 6) + mvY1, 16, 8)
             r1 = mBlock.pb168x168.refIdx1[list]
         }
@@ -139,7 +139,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
             mvY2 = mBlock.pb168x168.mvdY2[list] + mvpY2
             MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX2, mvpY2, mBlock.pb168x168.mvdX2[list],
                     mBlock.pb168x168.mvdY2[list], mvX2, mvY2, mBlock.pb168x168.refIdx2[list])
-            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]]!!, mb, 128,
+            interpolator.getBlockLuma(references!![list]!![mBlock.pb168x168.refIdx2[list]]!!, mb, 128,
                     (mbX shl 6) + mvX2, (mbY shl 6) + 32 + mvY2, 16, 8)
             r2 = mBlock.pb168x168.refIdx2[list]
         }
@@ -156,7 +156,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
         }
     }
 
-    fun decode16x8(mBlock: MBlock, mb: Picture, refs: Array<Array<Frame?>>, p0: PartPred, p1: PartPred) {
+    fun decode16x8(mBlock: MBlock, mb: Picture, refs: Array<Array<Frame?>?>?, p0: PartPred, p1: PartPred) {
         val mbX = mapper.getMbX(mBlock.mbIdx)
         val mbY = mapper.getMbY(mBlock.mbIdx)
         val leftAvailable = mapper.leftAvailable(mBlock.mbIdx)
@@ -187,7 +187,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
         di.mbTypes[address] = mBlock.curMbType
     }
 
-    fun decode8x16(mBlock: MBlock, mb: Picture, refs: Array<Array<Frame?>>, p0: PartPred, p1: PartPred) {
+    fun decode8x16(mBlock: MBlock, mb: Picture, refs: Array<Array<Frame?>?>?, p0: PartPred, p1: PartPred) {
         val mbX = mapper.getMbX(mBlock.mbIdx)
         val mbY = mapper.getMbY(mBlock.mbIdx)
         val leftAvailable = mapper.leftAvailable(mBlock.mbIdx)
@@ -217,7 +217,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
         di.mbTypes[address] = mBlock.curMbType
     }
 
-    fun predictInter16x16(mBlock: MBlock, mb: Picture?, references: Array<Array<Frame?>>, mbX: Int, mbY: Int,
+    fun predictInter16x16(mBlock: MBlock, mb: Picture?, references: Array<Array<Frame?>?>?, mbX: Int, mbY: Int,
                           leftAvailable: Boolean, topAvailable: Boolean, tlAvailable: Boolean, trAvailable: Boolean, x: MvList, xx: Int,
                           list: Int, curPred: PartPred?) {
         var mvX = 0
@@ -235,7 +235,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
             MBlockDecoderUtils.debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX, mvpY, mBlock.pb16x16.mvdX[list],
                     mBlock.pb16x16.mvdY[list], mvX, mvY, mBlock.pb16x16.refIdx[list])
             r = mBlock.pb16x16.refIdx[list]
-            interpolator.getBlockLuma(references[list][r]!!, mb!!, 0, (mbX shl 6) + mvX, (mbY shl 6) + mvY, 16, 16)
+            interpolator.getBlockLuma(references!![list]!![r]!!, mb!!, 0, (mbX shl 6) + mvX, (mbY shl 6) + mvY, 16, 16)
         }
         val v = Mv.packMv(mvX, mvY, r)
         s.mvTopLeft.setMv(0, list, s.mvTop.getMv(xx + 3, list))
@@ -246,7 +246,7 @@ class MBlockDecoderInter(private val mapper: Mapper, sh: SliceHeader?, di: Deblo
         }
     }
 
-    private fun residualInter(mBlock: MBlock, refs: Array<Array<Frame?>>, leftAvailable: Boolean, topAvailable: Boolean, mbX: Int,
+    private fun residualInter(mBlock: MBlock, refs: Array<Array<Frame?>?>?, leftAvailable: Boolean, topAvailable: Boolean, mbX: Int,
                               mbY: Int, mbAddr: Int) {
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
             s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52

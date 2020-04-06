@@ -16,7 +16,7 @@ import org.jcodec.common.tools.MathUtil
  */
 object PredictionMerger {
     fun mergePrediction(sh: SliceHeader, refIdxL0: Int, refIdxL1: Int, predType: PartPred?, comp: Int,
-                        pred0: ByteArray, pred1: ByteArray?, off: Int, stride: Int, blkW: Int, blkH: Int, out: ByteArray, refs: Array<Array<Frame?>>, thisPoc: Int) {
+                        pred0: ByteArray, pred1: ByteArray?, off: Int, stride: Int, blkW: Int, blkH: Int, out: ByteArray, refs: Array<Array<Frame?>?>?, thisPoc: Int) {
         val pps = sh.pps
         if (sh.sliceType == SliceType.P) {
             weightPrediction(sh, refIdxL0, comp, pred0, off, stride, blkW, blkH, out)
@@ -31,11 +31,11 @@ object PredictionMerger {
                 val o1 = if (refIdxL1 == -1) 0 else if (comp == 0) w!!.lumaOffset[1]!![refIdxL1] else w!!.chromaOffset[1]!![comp - 1][refIdxL1]
                 mergeWeight(pred0, pred1, stride, predType, off, blkW, blkH, if (comp == 0) w!!.lumaLog2WeightDenom else w!!.chromaLog2WeightDenom, w0, w1, o0, o1, out)
             } else {
-                val tb = MathUtil.clip(thisPoc - refs[0][refIdxL0]!!.pOC, -128, 127)
-                val td = MathUtil.clip(refs[1][refIdxL1]!!.pOC - refs[0][refIdxL0]!!.pOC, -128, 127)
+                val tb = MathUtil.clip(thisPoc - refs!![0]!![refIdxL0]!!.pOC, -128, 127)
+                val td = MathUtil.clip(refs[1]!![refIdxL1]!!.pOC - refs[0]!![refIdxL0]!!.pOC, -128, 127)
                 var w0 = 32
                 var w1 = 32
-                if (td != 0 && refs[0][refIdxL0]!!.isShortTerm && refs[1][refIdxL1]!!.isShortTerm) {
+                if (td != 0 && refs[0]!![refIdxL0]!!.isShortTerm && refs[1]!![refIdxL1]!!.isShortTerm) {
                     val tx = (16384 + Math.abs(td / 2)) / td
                     val dsf = MathUtil.clip(tb * tx + 32 shr 6, -1024, 1023) shr 2
                     if (dsf >= -64 && dsf <= 128) {
