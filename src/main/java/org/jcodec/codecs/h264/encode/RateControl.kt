@@ -12,7 +12,7 @@ import org.jcodec.common.model.Size
  * @author The JCodec project
  */
 interface RateControl {
-    fun startPicture(sz: Size?, maxSize: Int, sliceType: SliceType?): Int
+    fun startPicture(sz: Size, maxSize: Int, sliceType: SliceType): Int
     fun initialQpDelta(): Int
     fun accept(bits: Int): Int
 }

@@ -255,7 +255,7 @@ class SeqParameterSet {
     private fun writeVUIParameters(vuip: VUIParameters, writer: BitWriter) {
         CAVLCWriter.writeBool(writer, vuip.aspectRatioInfoPresentFlag, "VUI: aspect_ratio_info_present_flag")
         if (vuip.aspectRatioInfoPresentFlag) {
-            CAVLCWriter.writeNBit(writer, vuip.aspectRatio.value.toLong(), 8, "VUI: aspect_ratio")
+            CAVLCWriter.writeNBit(writer, vuip.aspectRatio!!.value.toLong(), 8, "VUI: aspect_ratio")
             if (vuip.aspectRatio == AspectRatio.Extended_SAR) {
                 CAVLCWriter.writeNBit(writer, vuip.sarWidth.toLong(), 16, "VUI: sar_width")
                 CAVLCWriter.writeNBit(writer, vuip.sarHeight.toLong(), 16, "VUI: sar_height")
@@ -289,11 +289,11 @@ class SeqParameterSet {
         }
         CAVLCWriter.writeBool(writer, vuip.nalHRDParams != null, "VUI: ")
         if (vuip.nalHRDParams != null) {
-            writeHRDParameters(vuip.nalHRDParams, writer)
+            writeHRDParameters(vuip.nalHRDParams!!, writer)
         }
         CAVLCWriter.writeBool(writer, vuip.vclHRDParams != null, "VUI: ")
         if (vuip.vclHRDParams != null) {
-            writeHRDParameters(vuip.vclHRDParams, writer)
+            writeHRDParameters(vuip.vclHRDParams!!, writer)
         }
         if (vuip.nalHRDParams != null || vuip.vclHRDParams != null) {
             CAVLCWriter.writeBool(writer, vuip.lowDelayHrdFlag, "VUI: low_delay_hrd_flag")
@@ -301,15 +301,15 @@ class SeqParameterSet {
         CAVLCWriter.writeBool(writer, vuip.picStructPresentFlag, "VUI: pic_struct_present_flag")
         CAVLCWriter.writeBool(writer, vuip.bitstreamRestriction != null, "VUI: ")
         if (vuip.bitstreamRestriction != null) {
-            CAVLCWriter.writeBool(writer, vuip.bitstreamRestriction.motionVectorsOverPicBoundariesFlag,
+            CAVLCWriter.writeBool(writer, vuip.bitstreamRestriction!!.motionVectorsOverPicBoundariesFlag,
                     "VUI: motion_vectors_over_pic_boundaries_flag")
-            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction.maxBytesPerPicDenom, "VUI: max_bytes_per_pic_denom")
-            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction.maxBitsPerMbDenom, "VUI: max_bits_per_mb_denom")
-            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction.log2MaxMvLengthHorizontal,
+            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction!!.maxBytesPerPicDenom, "VUI: max_bytes_per_pic_denom")
+            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction!!.maxBitsPerMbDenom, "VUI: max_bits_per_mb_denom")
+            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction!!.log2MaxMvLengthHorizontal,
                     "VUI: log2_max_mv_length_horizontal")
-            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction.log2MaxMvLengthVertical, "VUI: log2_max_mv_length_vertical")
-            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction.numReorderFrames, "VUI: num_reorder_frames")
-            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction.maxDecFrameBuffering, "VUI: max_dec_frame_buffering")
+            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction!!.log2MaxMvLengthVertical, "VUI: log2_max_mv_length_vertical")
+            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction!!.numReorderFrames, "VUI: num_reorder_frames")
+            CAVLCWriter.writeUEtrace(writer, vuip.bitstreamRestriction!!.maxDecFrameBuffering, "VUI: max_dec_frame_buffering")
         }
     }
 
@@ -524,14 +524,15 @@ class SeqParameterSet {
             val bitstreamRestrictionFlag = CAVLCReader.readBool(_in, "VUI: bitstream_restriction_flag")
             if (bitstreamRestrictionFlag) {
                 vuip.bitstreamRestriction = BitstreamRestriction()
-                vuip.bitstreamRestriction.motionVectorsOverPicBoundariesFlag = CAVLCReader.readBool(_in,
+                val bitstreamRestriction = vuip.bitstreamRestriction!!
+                bitstreamRestriction.motionVectorsOverPicBoundariesFlag = CAVLCReader.readBool(_in,
                         "VUI: motion_vectors_over_pic_boundaries_flag")
-                vuip.bitstreamRestriction.maxBytesPerPicDenom = CAVLCReader.readUEtrace(_in, "VUI max_bytes_per_pic_denom")
-                vuip.bitstreamRestriction.maxBitsPerMbDenom = CAVLCReader.readUEtrace(_in, "VUI max_bits_per_mb_denom")
-                vuip.bitstreamRestriction.log2MaxMvLengthHorizontal = CAVLCReader.readUEtrace(_in, "VUI log2_max_mv_length_horizontal")
-                vuip.bitstreamRestriction.log2MaxMvLengthVertical = CAVLCReader.readUEtrace(_in, "VUI log2_max_mv_length_vertical")
-                vuip.bitstreamRestriction.numReorderFrames = CAVLCReader.readUEtrace(_in, "VUI num_reorder_frames")
-                vuip.bitstreamRestriction.maxDecFrameBuffering = CAVLCReader.readUEtrace(_in, "VUI max_dec_frame_buffering")
+                bitstreamRestriction.maxBytesPerPicDenom = CAVLCReader.readUEtrace(_in, "VUI max_bytes_per_pic_denom")
+                bitstreamRestriction.maxBitsPerMbDenom = CAVLCReader.readUEtrace(_in, "VUI max_bits_per_mb_denom")
+                bitstreamRestriction.log2MaxMvLengthHorizontal = CAVLCReader.readUEtrace(_in, "VUI log2_max_mv_length_horizontal")
+                bitstreamRestriction.log2MaxMvLengthVertical = CAVLCReader.readUEtrace(_in, "VUI log2_max_mv_length_vertical")
+                bitstreamRestriction.numReorderFrames = CAVLCReader.readUEtrace(_in, "VUI num_reorder_frames")
+                bitstreamRestriction.maxDecFrameBuffering = CAVLCReader.readUEtrace(_in, "VUI max_dec_frame_buffering")
             }
             return vuip
         }
