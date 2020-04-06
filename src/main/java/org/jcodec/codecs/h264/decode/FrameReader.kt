@@ -59,7 +59,7 @@ class FrameReader {
         sh.pps = pps[sh.picParameterSetId]
         sh.sps = sps[sh.pps!!.seqParameterSetId]
         readPart2(sh, nalUnit, sh.sps!!, sh.pps!!, _in)
-        val mapper = MapManager(sh.sps, sh.pps).getMapper(sh)
+        val mapper = MapManager(sh.sps!!, sh.pps!!).getMapper(sh)
         val cavlc = arrayOf(CAVLC(sh.sps, sh.pps, 2, 2), CAVLC(sh.sps, sh.pps, 1, 1),
                 CAVLC(sh.sps, sh.pps, 1, 1))
         val mbWidth = sh.sps!!.picWidthInMbsMinus1 + 1
