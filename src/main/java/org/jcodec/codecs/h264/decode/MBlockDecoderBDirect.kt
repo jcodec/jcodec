@@ -17,7 +17,7 @@ import org.jcodec.common.tools.MathUtil
  * @author The JCodec project
  */
 class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: DeblockerInput?, poc: Int, decoderState: DecoderState?) : MBlockDecoderBase(sh, di, poc, decoderState) {
-    fun decode(mBlock: MBlock, mb: Picture, references: Array<Array<Frame>>) {
+    fun decode(mBlock: MBlock, mb: Picture, references: Array<Array<Frame?>>) {
         val mbX = mapper.getMbX(mBlock.mbIdx)
         val mbY = mapper.getMbY(mBlock.mbIdx)
         val lAvb = mapper.leftAvailable(mBlock.mbIdx)
@@ -47,12 +47,12 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
         di.tr8x8Used[mbAddr] = mBlock.transform8x8Used
     }
 
-    fun predictBDirect(refs: Array<Array<Frame>>, mbX: Int, mbY: Int, lAvb: Boolean, tAvb: Boolean, tlAvb: Boolean,
+    fun predictBDirect(refs: Array<Array<Frame?>>, mbX: Int, mbY: Int, lAvb: Boolean, tAvb: Boolean, tlAvb: Boolean,
                        trAvb: Boolean, x: MvList, pp: Array<PartPred?>, mb: Picture, blocks: IntArray) {
         if (sh.directSpatialMvPredFlag) predictBSpatialDirect(refs, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, x, pp, mb, blocks) else predictBTemporalDirect(refs, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, x, pp, mb, blocks)
     }
 
-    private fun predictBTemporalDirect(refs: Array<Array<Frame>>, mbX: Int, mbY: Int, lAvb: Boolean, tAvb: Boolean, tlAvb: Boolean,
+    private fun predictBTemporalDirect(refs: Array<Array<Frame?>>, mbX: Int, mbY: Int, lAvb: Boolean, tAvb: Boolean, tlAvb: Boolean,
                                        trAvb: Boolean, x: MvList, pp: Array<PartPred?>, mb: Picture, blocks8x8: IntArray) {
         for (i in blocks8x8.indices) {
             val blk8x8 = blocks8x8[i]
@@ -94,15 +94,15 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
         }
     }
 
-    private fun predTemp4x4(refs: Array<Array<Frame>>, mbX: Int, mbY: Int, x: MvList, blk4x4: Int) {
+    private fun predTemp4x4(refs: Array<Array<Frame?>>, mbX: Int, mbY: Int, x: MvList, blk4x4: Int) {
         val mbWidth = sh.sps!!.picWidthInMbsMinus1 + 1
-        val picCol = refs[1][0]
+        val picCol = refs[1][0]!!
         val blkIndX = blk4x4 and 3
         val blkIndY = blk4x4 shr 2
         val blkPosX = (mbX shl 2) + blkIndX
         val blkPosY = (mbY shl 2) + blkIndY
         var mvCol = picCol.mvs.getMv(blkPosX, blkPosY, 0)
-        val refL0: Frame
+        val refL0: Frame?
         val refIdxL0: Int
         if (Mv.mvRef(mvCol) == -1) {
             mvCol = picCol.mvs.getMv(blkPosX, blkPosY, 1)
@@ -117,7 +117,7 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
             refL0 = picCol.refsUsed[mbY * mbWidth + mbX]!![0]!![Mv.mvRef(mvCol)]!!
             refIdxL0 = findPic(refs[0], refL0)
         }
-        val td = MathUtil.clip(picCol.pOC - refL0.pOC, -128, 127)
+        val td = MathUtil.clip(picCol.pOC - refL0!!.pOC, -128, 127)
         if (!refL0.isShortTerm || td == 0) {
             x.setPair(blk4x4, Mv.packMv(Mv.mvX(mvCol), Mv.mvY(mvCol), refIdxL0), 0)
         } else {
@@ -129,13 +129,13 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
         }
     }
 
-    private fun findPic(frames: Array<Frame>, refL0: Frame): Int {
+    private fun findPic(frames: Array<Frame?>, refL0: Frame): Int {
         for (i in frames.indices) if (frames[i] === refL0) return i
         Logger.error("RefPicList0 shall contain refPicCol")
         return 0
     }
 
-    private fun predictBSpatialDirect(refs: Array<Array<Frame>>, mbX: Int, mbY: Int, lAvb: Boolean, tAvb: Boolean, tlAvb: Boolean,
+    private fun predictBSpatialDirect(refs: Array<Array<Frame?>>, mbX: Int, mbY: Int, lAvb: Boolean, tAvb: Boolean, tlAvb: Boolean,
                                       trAvb: Boolean, x: MvList, pp: Array<PartPred?>, mb: Picture, blocks8x8: IntArray) {
         val a0 = s.mvLeft.getMv(0, 0)
         val a1 = s.mvLeft.getMv(0, 1)
@@ -181,7 +181,7 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
                 val js = H264Const.BLK8x8_BLOCKS[blk8x8]
                 for (j in js.indices) {
                     val blk4x4 = js[j]
-                    pred4x4(mbX, mbY, x, pp, refIdxL0, refIdxL1, mvX0, mvY0, mvX1, mvY1, col, partPred, blk4x4)
+                    pred4x4(mbX, mbY, x, pp, refIdxL0, refIdxL1, mvX0, mvY0, mvX1, mvY1, col!!, partPred, blk4x4)
                     val blkIndX = blk4x4 and 3
                     val blkIndY = blk4x4 shr 2
                     MBlockDecoderUtils.debugPrint("DIRECT_4x4 [%d, %d]: (%d,%d,%d), (%d,%d,$refIdxL1)", blkIndY, blkIndX,
@@ -195,7 +195,7 @@ class MBlockDecoderBDirect(private val mapper: Mapper, sh: SliceHeader?, di: Deb
                 }
             } else {
                 val blk4x4Pred = H264Const.BLK_INV_MAP[blk8x8 * 5]
-                pred4x4(mbX, mbY, x, pp, refIdxL0, refIdxL1, mvX0, mvY0, mvX1, mvY1, col, partPred, blk4x4Pred)
+                pred4x4(mbX, mbY, x, pp, refIdxL0, refIdxL1, mvX0, mvY0, mvX1, mvY1, col!!, partPred, blk4x4Pred)
                 propagatePred(x, blk8x8, blk4x4Pred)
                 val blkIndX = blk4x4_0 and 3
                 val blkIndY = blk4x4_0 shr 2
