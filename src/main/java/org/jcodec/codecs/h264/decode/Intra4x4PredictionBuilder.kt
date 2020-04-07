@@ -1,5 +1,6 @@
 package org.jcodec.codecs.h264.decode
 
+import org.jcodec.common.shl
 import org.jcodec.common.tools.MathUtil
 
 /**
@@ -100,8 +101,6 @@ object Intra4x4PredictionBuilder {
             rOff += 4
         }
     }
-
-    infix fun Byte.shl(x: Int): Int = this.toInt() shl x
 
     @JvmStatic
     fun predictDiagonalDownLeft(residual: IntArray, topAvailable: Boolean, topRightAvailable: Boolean,

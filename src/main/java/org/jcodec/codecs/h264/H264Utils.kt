@@ -10,6 +10,7 @@ import org.jcodec.codecs.h264.mp4.AvcCBox
 import org.jcodec.codecs.h264.mp4.AvcCBox.Companion.createAvcCBox
 import org.jcodec.codecs.h264.mp4.AvcCBox.Companion.parseAvcCBox
 import org.jcodec.common.IntArrayList
+import org.jcodec.common.and
 import org.jcodec.common.io.*
 import org.jcodec.common.model.Size
 import org.jcodec.containers.mp4.boxes.Box.LeafBox
@@ -78,10 +79,6 @@ object H264Utils {
         }
         return result
     }
-
-    infix fun Byte.shl(x: Int): Int = this.toInt() shl x
-    infix fun Byte.and(x: Int): Int = this.toInt() and x
-    infix fun Short.and(x: Int): Int = this.toInt() and x
 
     /**
      * Finds next Nth H.264 bitstream NAL unit (0x00000001) and returns the data

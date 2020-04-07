@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264.decode
 
 import org.jcodec.common.Preconditions
+import org.jcodec.common.shl
 import org.jcodec.common.tools.MathUtil
 
 /**
@@ -90,8 +91,6 @@ class Intra8x8PredictionBuilder {
             }
         }
     }
-
-    infix fun Byte.shl(x: Int): Int = this.toInt() shl x
 
     private fun interpolateLeft(topLeftAvailable: Boolean, topLeft: ByteArray, leftRow: ByteArray, blkY: Int, out: ByteArray) {
         val a = (if (topLeftAvailable) topLeft[blkY shr 2] else leftRow[0]).toInt()
