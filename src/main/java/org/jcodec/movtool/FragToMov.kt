@@ -168,7 +168,7 @@ class FragToMov {
             movieBox.addFirst(init.movieHeader)
             val keys = tracks.keys()
             for (i in keys.indices) {
-                val trak = createTrack(movieBox, init.getTrackById(keys[i]), tracks[keys[i]])
+                val trak = createTrack(movieBox, init.getTrackById(keys[i]), tracks[keys[i]]!!)
                 movieBox.add(trak!!)
                 if (trak.duration > movieBox.duration) movieBox.duration = trak.duration
             }

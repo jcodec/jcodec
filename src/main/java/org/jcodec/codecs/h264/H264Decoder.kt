@@ -244,7 +244,7 @@ class H264Decoder : VideoDecoder() {
             val ind = MathUtil.wrap(firstSliceHeader!!.frameNum - shortNo,
                     1 shl firstSliceHeader!!.sps!!.log2MaxFrameNumMinus4 + 4)
             releaseRef(dec.lRefs!![longNo])
-            dec.lRefs!!.put(longNo, dec.sRefs!![ind])
+            dec.lRefs!!.put(longNo, dec.sRefs!![ind]!!)
             dec.sRefs!![ind] = null
             dec.lRefs!![longNo]!!.isShortTerm = false
         }

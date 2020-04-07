@@ -242,7 +242,7 @@ public class FrameGrab {
             return null;
 
         Picture picture = decoder.decodeFrame(frame, getBuffer());
-        return new PictureWithMetadata(picture, frame.getPtsD(), frame.getDurationD(), videoTrack.getMeta().getOrientation());
+        return new PictureWithMetadata(picture, frame.getPtsD(), frame.getDurationD(), videoTrack.getMeta().orientation);
     }
 
     /**

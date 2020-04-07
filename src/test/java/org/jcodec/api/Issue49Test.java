@@ -14,7 +14,7 @@ public class Issue49Test {
     @Test
     public void testFrameGrabCanExtractOrientation() throws Exception {
         FrameGrab fg = createFrameGrab(readableChannel(new File("src/test/resources/issue49/orientation.mp4")));
-        Orientation orientation = fg.getVideoTrack().getMeta().getOrientation();
+        Orientation orientation = fg.getVideoTrack().getMeta().orientation;
         assertEquals(D_90, orientation);
     }
 }
