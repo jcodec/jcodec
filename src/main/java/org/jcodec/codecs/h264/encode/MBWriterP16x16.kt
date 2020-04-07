@@ -55,15 +55,16 @@ class MBWriterP16x16(private val sps: SeqParameterSet, private val ref: Picture?
         val mvpy = H264EncoderUtils.median(ay, ar, by, br, cy, cr, dy, dr, mbX > 0, mbY > 0, trAvb, tlAvb)
 
         // Motion estimation for the current macroblock
-        writeSE(out, params.mv[0] - mvpx) // mvdx
-        writeSE(out, params.mv[1] - mvpy) // mvdy
+        val mv = params.mv!!
+        writeSE(out, mv[0] - mvpx) // mvdx
+        writeSE(out, mv[1] - mvpy) // mvdy
         val mbRef = Picture.create(16, 16, sps.chromaFormatIdc)
         val mb = arrayOf(IntArray(256), IntArray(64), IntArray(64))
-        interpolator.getBlockLuma(ref!!, mbRef, 0, (mbX shl 6) + params.mv[0], (mbY shl 6) + params.mv[1], 16, 16)
+        interpolator.getBlockLuma(ref!!, mbRef, 0, (mbX shl 6) + mv[0], (mbY shl 6) + mv[1], 16, 16)
         getBlockChroma(ref.getPlaneData(1), ref.getPlaneWidth(1), ref.getPlaneHeight(1),
-                mbRef.getPlaneData(1), 0, mbRef.getPlaneWidth(1), (mbX shl 6) + params.mv[0], (mbY shl 6) + params.mv[1], 8, 8)
+                mbRef.getPlaneData(1), 0, mbRef.getPlaneWidth(1), (mbX shl 6) + mv[0], (mbY shl 6) + mv[1], 8, 8)
         getBlockChroma(ref.getPlaneData(2), ref.getPlaneWidth(2), ref.getPlaneHeight(2),
-                mbRef.getPlaneData(2), 0, mbRef.getPlaneWidth(2), (mbX shl 6) + params.mv[0], (mbY shl 6) + params.mv[1], 8, 8)
+                mbRef.getPlaneData(2), 0, mbRef.getPlaneWidth(2), (mbX shl 6) + mv[0], (mbY shl 6) + mv[1], 8, 8)
         MBEncoderHelper.takeSubtract(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX shl 4,
                 mbY shl 4, mb[0], mbRef.getPlaneData(0), 16, 16)
         MBEncoderHelper.takeSubtract(pic.getPlaneData(1), pic.getPlaneWidth(1), pic.getPlaneHeight(1), mbX shl 3,
@@ -78,8 +79,8 @@ class MBWriterP16x16(private val sps: SeqParameterSet, private val ref: Picture?
         MBEncoderHelper.putBlk(outMB.pixels.getPlaneData(0), mb[0], mbRef.getPlaneData(0), 4, 0, 0, 16, 16)
         MBEncoderHelper.putBlk(outMB.pixels.getPlaneData(1), mb[1], mbRef.getPlaneData(1), 3, 0, 0, 8, 8)
         MBEncoderHelper.putBlk(outMB.pixels.getPlaneData(2), mb[2], mbRef.getPlaneData(2), 3, 0, 0, 8, 8)
-        Arrays.fill(outMB.mx, params.mv[0])
-        Arrays.fill(outMB.my, params.mv[1])
+        Arrays.fill(outMB.mx, mv[0])
+        Arrays.fill(outMB.my, mv[1])
         Arrays.fill(outMB.mr, refIdx)
         outMB.type = MBType.P_16x16
         outMB.qp = qp
