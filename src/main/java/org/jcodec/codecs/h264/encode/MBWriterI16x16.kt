@@ -58,7 +58,7 @@ class MBWriterI16x16 {
         val pred2 = Array(4) { ByteArray(16) }
         predictChroma(ctx, pic, ac1, pred1, 1, x, y)
         predictChroma(ctx, pic, ac2, pred2, 2, x, y)
-        chromaResidual(mbX, mbY, out, qp, ac1, ac2, ctx.cavlc[1], ctx.cavlc[2], MBType.I_16x16, MBType.I_16x16)
+        chromaResidual(mbX, mbY, out, qp, ac1, ac2, ctx.cavlc!![1]!!, ctx.cavlc!![2]!!, MBType.I_16x16, MBType.I_16x16)
         putChroma(outMB.data[1], 1, x, y, ac1, pred1)
         putChroma(outMB.data[2], 2, x, y, ac2, pred2)
     }
@@ -71,8 +71,8 @@ class MBWriterI16x16 {
         lumaPred(predType, x != 0, y != 0, ctx.leftRow[0], ctx.topLine[0], ctx.topLeft[0], x, pred)
         transform(pic, 0, ac, pred, x, y)
         val dc = extractDC(ac)
-        writeDC(ctx.cavlc[0], mbX, mbY, out, qp, mbX shl 2, mbY shl 2, dc, MBType.I_16x16, MBType.I_16x16)
-        writeAC(ctx.cavlc[0], mbX, mbY, out, mbX shl 2, mbY shl 2, ac, qp, MBType.I_16x16, MBType.I_16x16, DUMMY)
+        writeDC(ctx.cavlc!![0]!!, mbX, mbY, out, qp, mbX shl 2, mbY shl 2, dc, MBType.I_16x16, MBType.I_16x16)
+        writeAC(ctx.cavlc!![0]!!, mbX, mbY, out, mbX shl 2, mbY shl 2, ac, qp, MBType.I_16x16, MBType.I_16x16, DUMMY)
         restorePlane(dc, ac, qp)
         for (blk in ac.indices) {
             MBEncoderHelper.putBlk(outMB.getPlaneData(0), ac[blk], pred[blk], 4, H264Const.BLK_X[blk], H264Const.BLK_Y[blk], 4, 4)

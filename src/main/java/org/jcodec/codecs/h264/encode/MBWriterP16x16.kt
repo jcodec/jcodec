@@ -124,7 +124,7 @@ class MBWriterP16x16(private val sps: SeqParameterSet, private val ref: Picture?
         for (i in ac2.indices) {
             for (j in 0 until H264Const.PIX_MAP_SPLIT_2x2[i].size) ac2[i][j] = pix2[H264Const.PIX_MAP_SPLIT_2x2[i][j]]
         }
-        chromaResidual(mbX, mbY, out, qp, ac1, ac2, ctx.cavlc[1], ctx.cavlc[2], MBType.P_16x16, MBType.P_16x16)
+        chromaResidual(mbX, mbY, out, qp, ac1, ac2, ctx.cavlc!![1]!!, ctx.cavlc!![2]!!, MBType.P_16x16, MBType.P_16x16)
         for (i in ac1.indices) {
             for (j in 0 until H264Const.PIX_MAP_SPLIT_2x2[i].size) pix1[H264Const.PIX_MAP_SPLIT_2x2[i][j]] = ac1[i][j]
         }
@@ -138,7 +138,7 @@ class MBWriterP16x16(private val sps: SeqParameterSet, private val ref: Picture?
         for (i in ac.indices) {
             val blkI = H264Const.BLK_INV_MAP[i]
             quantizeAC(ac[blkI], qp)
-            val coeffToken = ctx.cavlc[comp].writeACBlock(out, mbLeftBlk + H264Const.MB_BLK_OFF_LEFT[i], mbTopBlk + H264Const.MB_BLK_OFF_TOP[i], MBType.P_16x16,
+            val coeffToken = ctx.cavlc!![comp]!!.writeACBlock(out, mbLeftBlk + H264Const.MB_BLK_OFF_LEFT[i], mbTopBlk + H264Const.MB_BLK_OFF_TOP[i], MBType.P_16x16,
                     MBType.P_16x16, ac[blkI], H264Const.totalZeros16, 0, 16, CoeffTransformer.zigzag4x4)
             nc[blkI] = coeffToken shr 4 // total coeff
         }
