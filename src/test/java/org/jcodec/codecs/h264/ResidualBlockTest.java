@@ -6,6 +6,7 @@ import org.jcodec.codecs.common.biari.MEncoder;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.codecs.h264.io.CABAC;
 import org.jcodec.codecs.h264.io.CAVLC;
+import org.jcodec.codecs.h264.io.CAVLCUtil;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.util.BinUtil;
@@ -68,7 +69,7 @@ public class ResidualBlockTest {
 
         CAVLC cavlc = new CAVLC(new SeqParameterSet(), new PictureParameterSet(), 4, 4);
         int[] actual = new int[expected.length];
-        cavlc.readCoeffs(reader, coeffTokenTab, H264Const.totalZeros16, actual, 0, 16, CoeffTransformer.zigzag4x4);
+        CAVLCUtil.readCoeffs(reader, coeffTokenTab, H264Const.totalZeros16, actual, 0, 16, CoeffTransformer.zigzag4x4);
 
         assertArrayEquals(zigzag(expected, CoeffTransformer.zigzag4x4), actual);
     }

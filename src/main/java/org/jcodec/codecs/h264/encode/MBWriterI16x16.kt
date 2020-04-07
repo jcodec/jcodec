@@ -22,6 +22,7 @@ import org.jcodec.codecs.h264.decode.CoeffTransformer.quantizeDC4x4
 import org.jcodec.codecs.h264.decode.CoeffTransformer.reorderDC4x4
 import org.jcodec.codecs.h264.decode.Intra16x16PredictionBuilder.lumaPred
 import org.jcodec.codecs.h264.io.CAVLC
+import org.jcodec.codecs.h264.io.CAVLCUtil
 import org.jcodec.codecs.h264.io.model.MBType
 import org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE
 import org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUE
@@ -218,9 +219,8 @@ class MBWriterI16x16 {
                             qp: Int, leftMBType: MBType, topMBType: MBType, nc: IntArray) {
             for (i in ac.indices) {
                 quantizeAC(ac[i], qp)
-                nc[H264Const.BLK_INV_MAP[i]] = CAVLC
-                        .totalCoeff(cavlc.writeACBlock(out, mbLeftBlk + H264Const.MB_BLK_OFF_LEFT[i], mbTopBlk + H264Const.MB_BLK_OFF_TOP[i],
-                                leftMBType, topMBType, ac[i], H264Const.totalZeros16, 1, 15, CoeffTransformer.zigzag4x4))
+                nc[H264Const.BLK_INV_MAP[i]] = CAVLC.totalCoeff(cavlc.writeACBlock(out, mbLeftBlk + H264Const.MB_BLK_OFF_LEFT[i], mbTopBlk + H264Const.MB_BLK_OFF_TOP[i],
+                        leftMBType, topMBType, ac[i], H264Const.totalZeros16, 1, 15, CoeffTransformer.zigzag4x4))
             }
         }
 

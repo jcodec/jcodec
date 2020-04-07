@@ -281,7 +281,7 @@ class SliceReader(private val activePps: PictureParameterSet, private val cabac:
     }
 
     fun readChromaDC(mbX: Int, leftAvailable: Boolean, topAvailable: Boolean, dc: IntArray?, comp: Int, curMbType: MBType?) {
-        if (!activePps.isEntropyCodingModeFlag) cavlc[comp].readChromaDCBlock(reader, dc, leftAvailable, topAvailable) else {
+        if (!activePps.isEntropyCodingModeFlag) cavlc[comp].readChromaDCBlock(reader, dc!!, leftAvailable, topAvailable) else {
             if (cabac.readCodedBlockFlagChromaDC(mDecoder!!, mbX, comp, leftMBType, topMBType[mbX], leftAvailable,
                             topAvailable, leftCBPChroma, topCBPChroma[mbX], curMbType!!) == 1) cabac.readCoeffs(mDecoder, CABAC.BlockType.CHROMA_DC, dc!!, 0, 4, H264Const.identityMapping16, H264Const.identityMapping16,
                     H264Const.identityMapping16)
