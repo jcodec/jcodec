@@ -894,16 +894,12 @@ class SliceReader(private val activePps: PictureParameterSet, private val cabac:
             readMBlockIInt(mBlock, mBlock.mbType - 23)
         } else {
             mBlock.curMbType = H264Const.bMbTypes[mBlock.mbType]
-            if (mBlock.mbType == 0) {
-                readMBlockBDirect(mBlock)
-            } else if (mBlock.mbType <= 3) {
-                readInter16x16(H264Const.bPredModes[mBlock.mbType][0], mBlock)
-            } else if (mBlock.mbType == 22) {
-                readMBlock8x8(mBlock)
-            } else if (mBlock.mbType and 1 == 0) {
-                readInter16x8(H264Const.bPredModes[mBlock.mbType][0], H264Const.bPredModes[mBlock.mbType][1], mBlock)
-            } else {
-                readIntra8x16(H264Const.bPredModes[mBlock.mbType][0], H264Const.bPredModes[mBlock.mbType][1], mBlock)
+            when {
+                mBlock.mbType == 0 -> readMBlockBDirect(mBlock)
+                mBlock.mbType <= 3 -> readInter16x16(H264Const.bPredModes[mBlock.mbType]!![0], mBlock)
+                mBlock.mbType == 22 -> readMBlock8x8(mBlock)
+                mBlock.mbType and 1 == 0 -> readInter16x8(H264Const.bPredModes[mBlock.mbType]!![0], H264Const.bPredModes[mBlock.mbType]!![1], mBlock)
+                else -> readIntra8x16(H264Const.bPredModes[mBlock.mbType]!![0], H264Const.bPredModes[mBlock.mbType]!![1], mBlock)
             }
         }
     }

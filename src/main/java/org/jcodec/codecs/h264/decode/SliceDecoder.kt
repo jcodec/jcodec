@@ -134,15 +134,15 @@ class SliceDecoder(private val activeSps: SeqParameterSet, private val sRefs: Ar
             if (mBlock.curMbType == MBType.B_Direct_16x16) {
                 decoderBDirect!!.decode(mBlock, mb, references)
             } else if (mBlock.mbType <= 3) {
-                decoderInter!!.decode16x16(mBlock, mb, references, H264Const.bPredModes[mBlock.mbType][0])
+                decoderInter!!.decode16x16(mBlock, mb, references, H264Const.bPredModes[mBlock.mbType]!![0])
             } else if (mBlock.mbType == 22) {
                 decoderInter8x8!!.decode(mBlock, references, mb, SliceType.B, false)
             } else if (mBlock.mbType and 1 == 0) {
-                decoderInter!!.decode16x8(mBlock, mb, references, H264Const.bPredModes[mBlock.mbType][0],
-                        H264Const.bPredModes[mBlock.mbType][1])
+                decoderInter!!.decode16x8(mBlock, mb, references, H264Const.bPredModes[mBlock.mbType]!![0],
+                        H264Const.bPredModes[mBlock.mbType]!![1])
             } else {
-                decoderInter!!.decode8x16(mBlock, mb, references, H264Const.bPredModes[mBlock.mbType][0],
-                        H264Const.bPredModes[mBlock.mbType][1])
+                decoderInter!!.decode8x16(mBlock, mb, references, H264Const.bPredModes[mBlock.mbType]!![0],
+                        H264Const.bPredModes[mBlock.mbType]!![1])
             }
         }
     }
