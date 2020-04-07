@@ -121,7 +121,7 @@ class H264Decoder : VideoDecoder() {
             }
             di = DeblockerInput(activeSps!!)
             val result = createFrame(activeSps, buffer, firstSliceHeader!!.frameNum, firstSliceHeader!!.sliceType,
-                    di!!.mvs, di!!.refsUsed, dec.poc.calcPOC(firstSliceHeader, firstNu))
+                    di!!.mvs, di!!.refsUsed, dec.poc.calcPOC(firstSliceHeader!!, firstNu!!))
             filter = DeblockingFilter(picWidthInMbs, activeSps!!.bitDepthChromaMinus8 + 8, di!!)
             return result
         }
