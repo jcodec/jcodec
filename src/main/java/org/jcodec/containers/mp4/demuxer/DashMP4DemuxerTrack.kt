@@ -143,7 +143,7 @@ class DashMP4DemuxerTrack(mov: MovieBox?, trak: TrakBox, fragments: Array<Fragme
             val codec = Codec.codecByFourcc(trak.fourcc)
             if (codec == Codec.H264) {
                 val avcC = H264Utils.parseAVCC(sampleEntries[0] as VideoSampleEntry?)
-                val spsList = avcC.getSpsList()
+                val spsList = avcC!!.getSpsList()
                 if (spsList.size > 0) {
                     val sps = SeqParameterSet.read(spsList[0].duplicate())
                     return sps.chromaFormatIdc
@@ -181,7 +181,7 @@ class DashMP4DemuxerTrack(mov: MovieBox?, trak: TrakBox, fragments: Array<Fragme
             val codec = Codec.codecByFourcc(sampleEntries[0]!!.fourcc)
             if (codec == Codec.H264) {
                 val avcC = H264Utils.parseAVCC(sampleEntries[0] as VideoSampleEntry?)
-                return H264Utils.avcCToAnnexB(avcC)
+                return H264Utils.avcCToAnnexB(avcC!!)
             } else if (codec == Codec.AAC) {
                 return AACUtils.getCodecPrivate(sampleEntries[0])
             }

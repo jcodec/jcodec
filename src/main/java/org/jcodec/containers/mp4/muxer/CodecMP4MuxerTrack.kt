@@ -64,8 +64,8 @@ open class CodecMP4MuxerTrack(trackId: Int, type: MP4TrackType, private val code
     }
 
     // SPS/PPS lists when h.264 is stored, otherwise these lists are not used.
-    private val spsList: List<ByteBuffer>
-    private val ppsList: List<ByteBuffer>
+    private val spsList: MutableList<ByteBuffer>
+    private val ppsList: MutableList<ByteBuffer>
 
     // ADTS header used to construct audio sample entry for AAC
     private var adtsHeader: ADTSParser.Header? = null

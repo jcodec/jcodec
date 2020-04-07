@@ -39,7 +39,7 @@ public class DumpMvFilter implements Filter {
 
             System.err.println((i == 0 ? "BCK" : "FWD")
                     + " ===========================================================================");
-            for (int blkY = 0; blkY < mvs.getHeight(); ++blkY) {
+            for (int blkY = 0; blkY < mvs.height; ++blkY) {
                 StringBuilder line0 = new StringBuilder();
                 StringBuilder line1 = new StringBuilder();
                 StringBuilder line2 = new StringBuilder();
@@ -48,7 +48,7 @@ public class DumpMvFilter implements Filter {
                 line1.append("|");
                 line2.append("|");
                 line3.append("|");
-                for (int blkX = 0; blkX < mvs.getWidth(); ++blkX) {
+                for (int blkX = 0; blkX < mvs.width; ++blkX) {
                     line0.append("------+");
                     line1.append(String.format("%6d|", mvX(mvs.getMv(blkX, blkY, i))));
                     line2.append(String.format("%6d|", mvY(mvs.getMv(blkX, blkY, i))));
@@ -72,8 +72,8 @@ public class DumpMvFilter implements Filter {
         for (int i = 0; i < 2; i++) {
 
             System.err.println((i == 0 ? "backRef" : "forwardRef") + ": [");
-            for (int blkY = 0; blkY < mvs.getHeight(); ++blkY) {
-                for (int blkX = 0; blkX < mvs.getWidth(); ++blkX) {
+            for (int blkY = 0; blkY < mvs.height; ++blkY) {
+                for (int blkX = 0; blkX < mvs.width; ++blkX) {
                     System.err.println("{x: " + blkX + ", y: " + blkY + ", mx: " + mvX(mvs.getMv(blkX, blkY, i))
                             + ", my: " + mvY(mvs.getMv(blkX, blkY, i)) + ", ridx:" + mvRef(mvs.getMv(blkX, blkY, i))
                             + "},");

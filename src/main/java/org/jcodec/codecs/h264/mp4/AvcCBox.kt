@@ -142,14 +142,14 @@ class AvcCBox(header: Header) : Box(header) {
 
         @JvmStatic
         fun createAvcCBox(profile: Int, profileCompat: Int, level: Int, nalLengthSize: Int,
-                          spsList: MutableList<ByteBuffer>, ppsList: MutableList<ByteBuffer>): AvcCBox {
+                          spsList: List<ByteBuffer>, ppsList: List<ByteBuffer>): AvcCBox {
             val avcc = AvcCBox(Header(fourcc()))
             avcc.profile = profile
             avcc.profileCompat = profileCompat
             avcc.level = level
             avcc.nalLengthSize = nalLengthSize
-            avcc.spsList = spsList
-            avcc.ppsList = ppsList
+            avcc.spsList = spsList.toMutableList()
+            avcc.ppsList = ppsList.toMutableList()
             return avcc
         }
     }

@@ -144,7 +144,7 @@ object MBlockDecoderUtils {
 
     fun savePrediction8x8(sharedState: DecoderState, mbX: Int, x: MvList?) {
         sharedState.mvTopLeft.copyPair(0, sharedState.mvTop, (mbX shl 2) + 3)
-        sharedState.mvLeft.copyPair(0, x, 3)
+        sharedState.mvLeft.copyPair(0, x!!, 3)
         sharedState.mvLeft.copyPair(1, x, 7)
         sharedState.mvLeft.copyPair(2, x, 11)
         sharedState.mvLeft.copyPair(3, x, 15)

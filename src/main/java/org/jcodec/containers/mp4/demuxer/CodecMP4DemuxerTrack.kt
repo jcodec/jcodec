@@ -38,7 +38,7 @@ class CodecMP4DemuxerTrack(val other: SeekableDemuxerTrack) : SeekableDemuxerTra
     fun convertPacket(data: ByteBuffer): ByteBuffer {
         if (codecPrivate != null) {
             if (codec == Codec.H264) {
-                val annexbCoded = H264Utils.decodeMOVPacket(data, avcC)
+                val annexbCoded = H264Utils.decodeMOVPacket(data, avcC!!)
                 return if (H264Utils.isByteBufferIDRSlice(annexbCoded)) {
                     NIOUtils.combineBuffers(Arrays.asList(codecPrivate, annexbCoded))
                 } else {
