@@ -22,7 +22,6 @@ import org.jcodec.codecs.h264.decode.CoeffTransformer.quantizeDC4x4
 import org.jcodec.codecs.h264.decode.CoeffTransformer.reorderDC4x4
 import org.jcodec.codecs.h264.decode.Intra16x16PredictionBuilder.lumaPred
 import org.jcodec.codecs.h264.io.CAVLC
-import org.jcodec.codecs.h264.io.CAVLCUtil
 import org.jcodec.codecs.h264.io.model.MBType
 import org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE
 import org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUE

@@ -1,6 +1,8 @@
 package org.jcodec.codecs.h264.io
 
 import org.jcodec.codecs.h264.H264Const
+import org.jcodec.codecs.h264.decode.CAVLCReader.readU
+import org.jcodec.codecs.h264.decode.CAVLCReader.readZeroBitCount
 import org.jcodec.codecs.h264.io.model.MBType
 import org.jcodec.codecs.h264.io.model.PictureParameterSet
 import org.jcodec.codecs.h264.io.model.SeqParameterSet
@@ -8,6 +10,7 @@ import org.jcodec.common.io.BitReader
 import org.jcodec.common.io.BitWriter
 import org.jcodec.common.io.VLC
 import org.jcodec.common.model.ColorSpace
+import org.jcodec.common.tools.MathUtil
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -70,7 +73,7 @@ class CAVLC private constructor(private val color: ColorSpace?, mbWidth: Int, mb
 
     fun readChromaDCBlock(reader: BitReader?, coeff: IntArray, leftAvailable: Boolean, topAvailable: Boolean) {
         val coeffTokenTab = coeffTokenVLCForChromaDC
-        CAVLCUtil.readCoeffs(reader, coeffTokenTab, if (coeff.size == 16) H264Const.totalZeros16 else if (coeff.size == 8) H264Const.totalZeros8 else H264Const.totalZeros4, coeff, 0, coeff.size,
+        readCoeffs(reader!!, coeffTokenTab!!, if (coeff.size == 16) H264Const.totalZeros16 else if (coeff.size == 8) H264Const.totalZeros8 else H264Const.totalZeros4, coeff, 0, coeff.size,
                 NO_ZIGZAG)
     }
 
@@ -78,14 +81,14 @@ class CAVLC private constructor(private val color: ColorSpace?, mbWidth: Int, mb
                         topAvailable: Boolean, topMbType: MBType?, zigzag4x4: IntArray?) {
         val coeffTokenTab = getCoeffTokenVLCForLuma(leftAvailable, leftMbType, tokensLeft[0], topAvailable, topMbType,
                 tokensTop[mbX shl 2])
-        CAVLCUtil.readCoeffs(reader, coeffTokenTab, H264Const.totalZeros16, coeff, 0, 16, zigzag4x4)
+        readCoeffs(reader!!, coeffTokenTab!!, H264Const.totalZeros16, coeff, 0, 16, zigzag4x4)
     }
 
     fun readACBlock(reader: BitReader?, coeff: IntArray?, blkIndX: Int, blkIndY: Int, leftAvailable: Boolean,
                     leftMbType: MBType?, topAvailable: Boolean, topMbType: MBType?, firstCoeff: Int, nCoeff: Int, zigzag4x4: IntArray?): Int {
         val coeffTokenTab = getCoeffTokenVLCForLuma(leftAvailable, leftMbType, tokensLeft[blkIndY and mbMask],
                 topAvailable, topMbType, tokensTop[blkIndX])
-        val readCoeffs = CAVLCUtil.readCoeffs(reader, coeffTokenTab, H264Const.totalZeros16, coeff, firstCoeff, nCoeff, zigzag4x4)
+        val readCoeffs = readCoeffs(reader!!, coeffTokenTab!!, H264Const.totalZeros16, coeff, firstCoeff, nCoeff, zigzag4x4)
         tokensTop[blkIndX] = readCoeffs
         tokensLeft[blkIndY and mbMask] = tokensTop[blkIndX]
         return totalCoeff(readCoeffs)
@@ -184,7 +187,7 @@ class CAVLC private constructor(private val color: ColorSpace?, mbWidth: Int, mb
             coeffTokenTab!!.writeVLC(out, coeffToken)
             if (totalCoeff > 0) {
                 writeTrailingOnes(out!!, levels, totalCoeff, trailingOnes)
-                CAVLCUtil.writeLevels(out, levels, totalCoeff, trailingOnes)
+                writeLevels(out, levels, totalCoeff, trailingOnes)
                 if (totalCoeff < maxCoeff) {
                     totalZerosTab!![totalCoeff - 1]!!.writeVLC(out, totalZeros)
                     writeRuns(out, runBefore, totalCoeff, totalZeros)
@@ -193,5 +196,105 @@ class CAVLC private constructor(private val color: ColorSpace?, mbWidth: Int, mb
             return coeffToken
         }
 
+        fun writeLevels(out: BitWriter, levels: IntArray, totalCoeff: Int, trailingOnes: Int) {
+            var suffixLen = if (totalCoeff > 10 && trailingOnes < 3) 1 else 0
+            for (i in totalCoeff - trailingOnes - 1 downTo 0) {
+                var absLev = unsigned(levels[i])
+                if (i == totalCoeff - trailingOnes - 1 && trailingOnes < 3) absLev -= 2
+                val prefix = absLev shr suffixLen
+                if (suffixLen == 0 && prefix < 14 || suffixLen > 0 && prefix < 15) {
+                    out.writeNBit(1, prefix + 1)
+                    out.writeNBit(absLev, suffixLen)
+                } else if (suffixLen == 0 && absLev < 30) {
+                    out.writeNBit(1, 15)
+                    out.writeNBit(absLev - 14, 4)
+                } else {
+                    if (suffixLen == 0) absLev -= 15
+                    var len: Int
+                    var code: Int
+                    len = 12
+                    while (true) {
+                        code = absLev - (len + 3 shl suffixLen) - (1 shl len) + 4096
+                        if (code >= 1 shl len) {
+                            len++
+                        } else {
+                            break
+                        }
+                    }
+                    out.writeNBit(1, len + 4)
+                    out.writeNBit(code, len)
+                }
+                if (suffixLen == 0) suffixLen = 1
+                if (MathUtil.abs(levels[i]) > 3 shl suffixLen - 1 && suffixLen < 6) suffixLen++
+            }
+        }
+        fun readCoeffs(_in: BitReader, coeffTokenTab: VLC, totalZerosTab: Array<VLC?>?, coeffLevel: IntArray?, firstCoeff: Int,
+                       nCoeff: Int, zigzag: IntArray?): Int {
+            val coeffToken = coeffTokenTab.readVLC(_in)
+            val totalCoeff = totalCoeff(coeffToken)
+            val trailingOnes = trailingOnes(coeffToken)
+            if (totalCoeff > 0) {
+                var suffixLength = if (totalCoeff > 10 && trailingOnes < 3) 1 else 0
+                val level = IntArray(totalCoeff)
+                var i: Int
+                i = 0
+                while (i < trailingOnes) {
+                    level[i] = 1 - 2 * _in.read1Bit()
+                    i++
+                }
+                while (i < totalCoeff) {
+                    val level_prefix = readZeroBitCount(_in, "")
+                    var levelSuffixSize = suffixLength
+                    if (level_prefix == 14 && suffixLength == 0) levelSuffixSize = 4
+                    if (level_prefix >= 15) levelSuffixSize = level_prefix - 3
+                    var levelCode = Min(15, level_prefix) shl suffixLength
+                    if (levelSuffixSize > 0) {
+                        val level_suffix = readU(_in, levelSuffixSize, "RB: level_suffix")
+                        levelCode += level_suffix
+                    }
+                    if (level_prefix >= 15 && suffixLength == 0) levelCode += 15
+                    if (level_prefix >= 16) levelCode += (1 shl level_prefix - 3) - 4096
+                    if (i == trailingOnes && trailingOnes < 3) levelCode += 2
+                    if (levelCode % 2 == 0) level[i] = levelCode + 2 shr 1 else level[i] = -levelCode - 1 shr 1
+                    if (suffixLength == 0) suffixLength = 1
+                    if (Abs(level[i]) > 3 shl suffixLength - 1 && suffixLength < 6) suffixLength++
+                    i++
+                }
+                var zerosLeft: Int
+                zerosLeft = if (totalCoeff < nCoeff) {
+                    if (coeffLevel!!.size == 4) {
+                        H264Const.totalZeros4[totalCoeff - 1].readVLC(_in)
+                    } else if (coeffLevel.size == 8) {
+                        H264Const.totalZeros8[totalCoeff - 1].readVLC(_in)
+                    } else {
+                        H264Const.totalZeros16[totalCoeff - 1].readVLC(_in)
+                    }
+                } else 0
+                val runs = IntArray(totalCoeff)
+                var r: Int
+                r = 0
+                while (r < totalCoeff - 1 && zerosLeft > 0) {
+                    val run = H264Const.run[Math.min(6, zerosLeft - 1)].readVLC(_in)
+                    zerosLeft -= run
+                    runs[r] = run
+                    r++
+                }
+                runs[r] = zerosLeft
+                var j = totalCoeff - 1
+                var cn = 0
+                while (j >= 0 && cn < nCoeff) {
+                    cn += runs[j]
+                    coeffLevel!![zigzag!![cn + firstCoeff]] = level[j]
+                    j--
+                    cn++
+                }
+            }
+
+            // System.out.print("[");
+            // for (int i = 0; i < nCoeff; i++)
+            // System.out.print(coeffLevel[i + firstCoeff] + ", ");
+            // System.out.println("]");
+            return coeffToken
+        }
     }
 }
