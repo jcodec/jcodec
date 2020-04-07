@@ -39,7 +39,7 @@ class CAVLC private constructor(private val color: ColorSpace?, mbWidth: Int, mb
                      totalZerosTab: Array<VLC?>?, firstCoeff: Int, maxCoeff: Int, scan: IntArray?): Int {
         val coeffTokenTab = getCoeffTokenVLCForLuma(blkIndX != 0, leftMBType, tokensLeft[blkIndY and mbMask],
                 blkIndY != 0, topMBType, tokensTop[blkIndX])
-        val coeffToken = CAVLCUtil.writeBlockGen(out, coeff, totalZerosTab, firstCoeff, maxCoeff, scan, coeffTokenTab)
+        val coeffToken = writeBlockGen(out, coeff, totalZerosTab, firstCoeff, maxCoeff, scan, coeffTokenTab)
         tokensLeft[blkIndY and mbMask] = coeffToken
         tokensTop[blkIndX] = coeffToken
         return coeffToken
@@ -47,14 +47,14 @@ class CAVLC private constructor(private val color: ColorSpace?, mbWidth: Int, mb
 
     fun writeChrDCBlock(out: BitWriter?, coeff: IntArray?, totalZerosTab: Array<VLC?>?, firstCoeff: Int, maxCoeff: Int,
                         scan: IntArray?) {
-        CAVLCUtil.writeBlockGen(out, coeff, totalZerosTab, firstCoeff, maxCoeff, scan, coeffTokenVLCForChromaDC)
+        writeBlockGen(out, coeff, totalZerosTab, firstCoeff, maxCoeff, scan, coeffTokenVLCForChromaDC)
     }
 
     fun writeLumaDCBlock(out: BitWriter?, blkIndX: Int, blkIndY: Int, leftMBType: MBType?, topMBType: MBType?,
                          coeff: IntArray?, totalZerosTab: Array<VLC?>?, firstCoeff: Int, maxCoeff: Int, scan: IntArray?) {
         val coeffTokenTab = getCoeffTokenVLCForLuma(blkIndX != 0, leftMBType, tokensLeft[blkIndY and mbMask],
                 blkIndY != 0, topMBType, tokensTop[blkIndX])
-        CAVLCUtil.writeBlockGen(out, coeff, totalZerosTab, firstCoeff, maxCoeff, scan, coeffTokenTab)
+        writeBlockGen(out, coeff, totalZerosTab, firstCoeff, maxCoeff, scan, coeffTokenTab)
     }
 
     protected fun codeTableChromaDC(): VLC? {
@@ -158,6 +158,40 @@ class CAVLC private constructor(private val color: ColorSpace?, mbWidth: Int, mb
         }
 
         val NO_ZIGZAG = intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+
+        fun writeBlockGen(out: BitWriter?, coeff: IntArray?, totalZerosTab: Array<VLC?>?, firstCoeff: Int, maxCoeff: Int,
+                          scan: IntArray?, coeffTokenTab: VLC?): Int {
+            var trailingOnes = 0
+            var totalCoeff = 0
+            var totalZeros = 0
+            val runBefore = IntArray(maxCoeff)
+            val levels = IntArray(maxCoeff)
+            for (i in 0 until maxCoeff) {
+                val c = coeff!![scan!![i + firstCoeff]]
+                if (c == 0) {
+                    runBefore[totalCoeff]++
+                    totalZeros++
+                } else {
+                    levels[totalCoeff++] = c
+                }
+            }
+            if (totalCoeff < maxCoeff) totalZeros -= runBefore[totalCoeff]
+            trailingOnes = 0
+            while (trailingOnes < totalCoeff && trailingOnes < 3 && Math.abs(levels[totalCoeff - trailingOnes - 1]) == 1) {
+                trailingOnes++
+            }
+            val coeffToken = H264Const.coeffToken(totalCoeff, trailingOnes)
+            coeffTokenTab!!.writeVLC(out, coeffToken)
+            if (totalCoeff > 0) {
+                writeTrailingOnes(out!!, levels, totalCoeff, trailingOnes)
+                CAVLCUtil.writeLevels(out, levels, totalCoeff, trailingOnes)
+                if (totalCoeff < maxCoeff) {
+                    totalZerosTab!![totalCoeff - 1]!!.writeVLC(out, totalZeros)
+                    writeRuns(out, runBefore, totalCoeff, totalZeros)
+                }
+            }
+            return coeffToken
+        }
 
     }
 }

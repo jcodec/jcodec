@@ -125,42 +125,5 @@ public class CAVLCUtil {
     }
 
 
-    static int writeBlockGen(BitWriter out, int[] coeff, VLC[] totalZerosTab, int firstCoeff, int maxCoeff,
-                             int[] scan, VLC coeffTokenTab) {
-        int trailingOnes = 0, totalCoeff = 0, totalZeros = 0;
-        int[] runBefore = new int[maxCoeff];
-        int[] levels = new int[maxCoeff];
-        for (int i = 0; i < maxCoeff; i++) {
-            int c = coeff[scan[i + firstCoeff]];
-            if (c == 0) {
-                runBefore[totalCoeff]++;
-                totalZeros++;
-            } else {
-                levels[totalCoeff++] = c;
-            }
-        }
-        if (totalCoeff < maxCoeff)
-            totalZeros -= runBefore[totalCoeff];
-
-        for (trailingOnes = 0; trailingOnes < totalCoeff && trailingOnes < 3
-                && Math.abs(levels[totalCoeff - trailingOnes - 1]) == 1; trailingOnes++)
-            ;
-
-        int coeffToken = H264Const.coeffToken(totalCoeff, trailingOnes);
-
-        coeffTokenTab.writeVLC(out, coeffToken);
-
-        if (totalCoeff > 0) {
-            CAVLC.Companion.writeTrailingOnes(out, levels, totalCoeff, trailingOnes);
-            writeLevels(out, levels, totalCoeff, trailingOnes);
-
-            if (totalCoeff < maxCoeff) {
-                totalZerosTab[totalCoeff - 1].writeVLC(out, totalZeros);
-                CAVLC.Companion.writeRuns(out, runBefore, totalCoeff, totalZeros);
-            }
-        }
-        return coeffToken;
-    }
-
 
 }
