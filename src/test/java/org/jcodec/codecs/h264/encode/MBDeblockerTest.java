@@ -22,31 +22,31 @@ public class MBDeblockerTest {
         int[][] h = new int[4][4];
 
         // h[0][0] -> 1
-        top.getMx()[12] = 4;
+        top.mx[12] = 4;
 
         // h[2][0] -> 1
-        cur.getMx()[2] = -2;
-        top.getMx()[14] = 2;
+        cur.mx[2] = -2;
+        top.mx[14] = 2;
 
         // h[1][0] -> 0
-        cur.getMy()[1] = -1;
-        top.getMy()[13] = 2;
+        cur.my[1] = -1;
+        top.my[13] = 2;
 
         // h[3][0] -> 2
-        top.getNc()[15] = 1;
+        top.nc[15] = 1;
 
         // h[1][1] -> 2, v[1][0] -> 2, v[2][0] -> 2
-        cur.getNc()[4] = 1;
+        cur.nc[4] = 1;
 
         // h[2]
-        cur.getMx()[6] = 2;
-        cur.getMx()[10] = -2;
-        cur.getMx()[11] = 2;
-        cur.getMx()[14] = 2;
+        cur.mx[6] = 2;
+        cur.mx[10] = -2;
+        cur.mx[11] = 2;
+        cur.mx[14] = 2;
 
-        left.setType(MBType.I_16x16);
+        left.type = MBType.I_16x16;
         MBDeblocker.calcStrengthForBlocks(cur, left, v, MBDeblocker.LOOKUP_IDX_P_V, MBDeblocker.LOOKUP_IDX_Q_V);
-        top.setType(MBType.P_16x16);
+        top.type = MBType.P_16x16;
         MBDeblocker.calcStrengthForBlocks(cur, top, h, MBDeblocker.LOOKUP_IDX_P_H, MBDeblocker.LOOKUP_IDX_Q_H);
 
         Utils.assertArrayEquals(new int[][] { { 4, 0, 0, 0 }, { 4, 2, 0, 0 }, { 4, 0, 0, 1 }, { 4, 0, 0, 0 } },
@@ -99,7 +99,7 @@ public class MBDeblockerTest {
             }
 
             private String label(byte[] pels, EncodedMB curMB, EncodedMB leftMB, EncodedMB topMB) {
-                Picture cur = curMB.getPixels(), top = topMB.getPixels(), left = leftMB.getPixels();
+                Picture cur = curMB.pixels, top = topMB.pixels, left = leftMB.pixels;
                 if (cur.getPlaneData(0) == pels || cur.getPlaneData(1) == pels || cur.getPlaneData(2) == pels)
                     return "cur";
                 else if (left.getPlaneData(0) == pels || left.getPlaneData(1) == pels || left.getPlaneData(2) == pels)

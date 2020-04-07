@@ -51,15 +51,15 @@ public class MBDeblocker {
      */
     public void deblockMBGeneric(EncodedMB curMB, EncodedMB leftMB, EncodedMB topMB, int[][] vertStrength,
             int horizStrength[][]) {
-        Picture curPix = curMB.getPixels();
+        Picture curPix = curMB.pixels;
 
         int crQpOffset = 0;
-        int curChQp = calcQpChroma(curMB.getQp(), crQpOffset);
+        int curChQp = calcQpChroma(curMB.qp, crQpOffset);
         if (leftMB != null) {
-            Picture leftPix = leftMB.getPixels();
+            Picture leftPix = leftMB.pixels;
 
-            int leftChQp = calcQpChroma(leftMB.getQp(), crQpOffset);
-            int avgQp = MathUtil.clip((leftMB.getQp() + curMB.getQp() + 1) >> 1, 0, 51);
+            int leftChQp = calcQpChroma(leftMB.qp, crQpOffset);
+            int avgQp = MathUtil.clip((leftMB.qp + curMB.qp + 1) >> 1, 0, 51);
             int avgChQp = MathUtil.clip((leftChQp + curChQp + 1) >> 1, 0, 51);
 
             deblockBorder(vertStrength[0], avgQp, leftPix.getPlaneData(0), 3, curPix.getPlaneData(0), 0, P_POS_V,
@@ -70,7 +70,7 @@ public class MBDeblocker {
                     P_POS_V_CHR, Q_POS_V_CHR, false);
         }
         for (int i = 1; i < 4; i++) {
-            deblockBorder(vertStrength[i], curMB.getQp(), curPix.getPlaneData(0), i - 1, curPix.getPlaneData(0), i,
+            deblockBorder(vertStrength[i], curMB.qp, curPix.getPlaneData(0), i - 1, curPix.getPlaneData(0), i,
                     P_POS_V, Q_POS_V, false);
         }
         deblockBorderChroma(vertStrength[2], curChQp, curPix.getPlaneData(1), 1, curPix.getPlaneData(1), 2, P_POS_V_CHR,
@@ -79,10 +79,10 @@ public class MBDeblocker {
                 Q_POS_V_CHR, false);
 
         if (topMB != null) {
-            Picture topPix = topMB.getPixels();
+            Picture topPix = topMB.pixels;
 
-            int topChQp = calcQpChroma(topMB.getQp(), crQpOffset);
-            int avgQp = MathUtil.clip((topMB.getQp() + curMB.getQp() + 1) >> 1, 0, 51);
+            int topChQp = calcQpChroma(topMB.qp, crQpOffset);
+            int avgQp = MathUtil.clip((topMB.qp + curMB.qp + 1) >> 1, 0, 51);
             int avgChQp = MathUtil.clip((topChQp + curChQp + 1) >> 1, 0, 51);
 
             deblockBorder(horizStrength[0], avgQp, topPix.getPlaneData(0), 3, curPix.getPlaneData(0), 0, P_POS_H,
@@ -93,7 +93,7 @@ public class MBDeblocker {
                     P_POS_H_CHR, Q_POS_H_CHR, true);
         }
         for (int i = 1; i < 4; i++) {
-            deblockBorder(horizStrength[i], curMB.getQp(), curPix.getPlaneData(0), i - 1, curPix.getPlaneData(0), i,
+            deblockBorder(horizStrength[i], curMB.qp, curPix.getPlaneData(0), i - 1, curPix.getPlaneData(0), i,
                     P_POS_H, Q_POS_H, true);
         }
         deblockBorderChroma(horizStrength[2], curChQp, curPix.getPlaneData(1), 1, curPix.getPlaneData(1), 2,
@@ -374,13 +374,13 @@ public class MBDeblocker {
 
     static void calcStrengthForBlocks(EncodedMB cur, EncodedMB other, int[][] outStrength, int[][] LOOKUP_IDX_P,
             int[][] LOOKUP_IDX_Q) {
-        boolean thisIntra = cur.getType().isIntra;
+        boolean thisIntra = cur.type.isIntra;
         if (other != null) {
-            boolean otherIntra = other.getType().isIntra;
+            boolean otherIntra = other.type.isIntra;
             for (int i = 0; i < 4; ++i) {
-                int bsMvx = strengthMv(other.getMx()[LOOKUP_IDX_P[0][i]], cur.getMx()[LOOKUP_IDX_Q[0][i]]);
-                int bsMvy = strengthMv(other.getMy()[LOOKUP_IDX_P[0][i]], cur.getMy()[LOOKUP_IDX_Q[0][i]]);
-                int bsNc = strengthNc(other.getNc()[LOOKUP_IDX_P[0][i]], cur.getNc()[LOOKUP_IDX_Q[0][i]]);
+                int bsMvx = strengthMv(other.mx[LOOKUP_IDX_P[0][i]], cur.mx[LOOKUP_IDX_Q[0][i]]);
+                int bsMvy = strengthMv(other.my[LOOKUP_IDX_P[0][i]], cur.my[LOOKUP_IDX_Q[0][i]]);
+                int bsNc = strengthNc(other.nc[LOOKUP_IDX_P[0][i]], cur.nc[LOOKUP_IDX_Q[0][i]]);
                 int max3 = MathUtil.max3(bsMvx, bsMvy, bsNc);
                 outStrength[0][i] = (otherIntra || thisIntra) ? 4 : max3;
             }
@@ -388,9 +388,9 @@ public class MBDeblocker {
 
         for (int i = 1; i < 4; i++) {
             for (int j = 0; j < 4; ++j) {
-                int bsMvx = strengthMv(cur.getMx()[LOOKUP_IDX_P[i][j]], cur.getMx()[LOOKUP_IDX_Q[i][j]]);
-                int bsMvy = strengthMv(cur.getMy()[LOOKUP_IDX_P[i][j]], cur.getMy()[LOOKUP_IDX_Q[i][j]]);
-                int bsNc = strengthNc(cur.getNc()[LOOKUP_IDX_P[i][j]], cur.getNc()[LOOKUP_IDX_Q[i][j]]);
+                int bsMvx = strengthMv(cur.mx[LOOKUP_IDX_P[i][j]], cur.mx[LOOKUP_IDX_Q[i][j]]);
+                int bsMvy = strengthMv(cur.my[LOOKUP_IDX_P[i][j]], cur.my[LOOKUP_IDX_Q[i][j]]);
+                int bsNc = strengthNc(cur.nc[LOOKUP_IDX_P[i][j]], cur.nc[LOOKUP_IDX_Q[i][j]]);
                 int max3 = MathUtil.max3(bsMvx, bsMvy, bsNc);
                 outStrength[i][j] = thisIntra ? 3 : max3;
             }

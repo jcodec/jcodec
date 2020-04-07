@@ -92,18 +92,18 @@ public class MBWriterP16x16 {
 
         CAVLCWriter.writeSE(out, qp - ctx.prevQp);
 
-        luma(ctx, pic, mb[0], mbX, mbY, out, qp, outMB.getNc());
+        luma(ctx, pic, mb[0], mbX, mbY, out, qp, outMB.nc);
         chroma(ctx, pic, mb[1], mb[2], mbX, mbY, out, qp);
 
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(0), mb[0], mbRef.getPlaneData(0), 4, 0, 0, 16, 16);
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb[1], mbRef.getPlaneData(1), 3, 0, 0, 8, 8);
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(2), mb[2], mbRef.getPlaneData(2), 3, 0, 0, 8, 8);
+        MBEncoderHelper.putBlk(outMB.pixels.getPlaneData(0), mb[0], mbRef.getPlaneData(0), 4, 0, 0, 16, 16);
+        MBEncoderHelper.putBlk(outMB.pixels.getPlaneData(1), mb[1], mbRef.getPlaneData(1), 3, 0, 0, 8, 8);
+        MBEncoderHelper.putBlk(outMB.pixels.getPlaneData(2), mb[2], mbRef.getPlaneData(2), 3, 0, 0, 8, 8);
 
-        Arrays.fill(outMB.getMx(), params.mv[0]);
-        Arrays.fill(outMB.getMy(), params.mv[1]);
-        Arrays.fill(outMB.getMr(), refIdx);
-        outMB.setType(MBType.P_16x16);
-        outMB.setQp(qp);
+        Arrays.fill(outMB.mx, params.mv[0]);
+        Arrays.fill(outMB.my, params.mv[1]);
+        Arrays.fill(outMB.mr, refIdx);
+        outMB.type = MBType.P_16x16;
+        outMB.qp = qp;
         ctx.prevQp = qp;
     }
 

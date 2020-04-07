@@ -35,11 +35,11 @@ public class MBWriterI16x16 {
         CAVLCWriter.writeUE(out, params.chrPred);
         CAVLCWriter.writeSE(out, qp - ctx.prevQp); // MB QP delta
 
-        outMB.setType(MBType.I_16x16);
-        outMB.setQp(qp);
+        outMB.type = MBType.I_16x16;
+        outMB.qp = qp;
 
-        luma(ctx, pic, mbX, mbY, out, qp, outMB.getPixels(), params.lumaPred);
-        chroma(ctx, pic, mbX, mbY, out, qp, outMB.getPixels(), params.chrPred);
+        luma(ctx, pic, mbX, mbY, out, qp, outMB.pixels, params.lumaPred);
+        chroma(ctx, pic, mbX, mbY, out, qp, outMB.pixels, params.chrPred);
         ctx.prevQp = qp;
     }
 

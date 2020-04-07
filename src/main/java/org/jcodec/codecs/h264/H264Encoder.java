@@ -387,7 +387,7 @@ public class H264Encoder extends VideoEncoder {
     private void calcMse(Picture pic, EncodedMB out, int mbX, int mbY, long[] out_se) {
         byte[] patch = new byte[256];
         for (int p = 0; p < 3; p++) {
-            byte[] outPix = out.getPixels().getData()[p];
+            byte[] outPix = out.pixels.getData()[p];
             int luma = p == 0 ? 1 : 0;
             MBEncoderHelper.take(pic.getPlaneData(p), pic.getPlaneWidth(p), pic.getPlaneHeight(p), mbX << (3 + luma),
                     mbY << (3 + luma), patch, 8 << luma, 8 << luma);
@@ -490,7 +490,7 @@ public class H264Encoder extends VideoEncoder {
 
     private void addToReference(EncodedMB outMB, int mbX, int mbY) {
         if (mbY > 0)
-            MBEncoderHelper.putBlkPic(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbY - 1) << 4);
+            MBEncoderHelper.putBlkPic(picOut, topEncoded[mbX].pixels, mbX << 4, (mbY - 1) << 4);
         topEncoded[mbX] = outMB;
     }
 
@@ -498,7 +498,7 @@ public class H264Encoder extends VideoEncoder {
         int mbWidth = sps.picWidthInMbsMinus1 + 1;
         int mbHeight = sps.picHeightInMapUnitsMinus1 + 1;
         for (int mbX = 0; mbX < mbWidth; mbX++)
-            MBEncoderHelper.putBlkPic(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbHeight - 1) << 4);
+            MBEncoderHelper.putBlkPic(picOut, topEncoded[mbX].pixels, mbX << 4, (mbHeight - 1) << 4);
     }
 
     @Override
