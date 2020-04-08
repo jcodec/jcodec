@@ -679,8 +679,8 @@ object H264Utils {
         var w = sps.picWidthInMbsMinus1 + 1 shl 4
         var h = getPicHeightInMbs(sps) shl 4
         if (sps.isFrameCroppingFlag) {
-            w -= sps.frameCropLeftOffset + sps.frameCropRightOffset shl sps.chromaFormatIdc!!.compWidth[1]
-            h -= sps.frameCropTopOffset + sps.frameCropBottomOffset shl sps.chromaFormatIdc!!.compHeight[1]
+            w -= sps.frameCropLeftOffset + sps.frameCropRightOffset shl sps.chromaFormatIdc!!.compWidth!![1]
+            h -= sps.frameCropTopOffset + sps.frameCropBottomOffset shl sps.chromaFormatIdc!!.compHeight!![1]
         }
         return Size(w, h)
     }

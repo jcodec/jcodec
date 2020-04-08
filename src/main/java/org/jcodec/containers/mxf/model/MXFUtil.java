@@ -26,14 +26,14 @@ public class MXFUtil {
         List<MXFMetadata> copy = new ArrayList<MXFMetadata>(metadata);
         for (Iterator<MXFMetadata> iterator = copy.iterator(); iterator.hasNext();) {
             MXFMetadata next = iterator.next();
-            if (next.getUid() == null || !Platform.isAssignableFrom(class1, next.getClass()))
+            if (next.uid == null || !Platform.isAssignableFrom(class1, next.getClass()))
                 iterator.remove();
         }
 
         List result = new ArrayList();
         for (int i = 0; i < refs.length; i++) {
             for (MXFMetadata meta : copy) {
-                if (meta.getUid().equals(refs[i])) {
+                if (meta.uid.equals(refs[i])) {
                     result.add(meta);
                 }
             }

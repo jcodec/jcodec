@@ -195,7 +195,7 @@ class AudioSampleEntry(atom: Header) : SampleEntry(atom) {
         private val translationSurround: MutableMap<Label?, ChannelLabel> = HashMap()
         fun getLabelsFromSampleEntry(se: AudioSampleEntry): Array<Label?> {
             val channel = NodeBox.findFirst(se, "chan") as? ChannelBox?
-            return if (channel != null) getLabelsFromChan(channel) else {
+            return (if (channel != null) getLabelsFromChan(channel) else {
                 val channelCount = se.channelCount.toInt()
                 when (channelCount) {
                     1 -> arrayOf(Label.Mono)
@@ -205,13 +205,9 @@ class AudioSampleEntry(atom: Header) : SampleEntry(atom) {
                     5 -> arrayOf(Label.Left, Label.Right, Label.Center, Label.LeftSurround, Label.RightSurround)
                     6 -> arrayOf(Label.Left, Label.Right, Label.Center, Label.LFEScreen, Label.LeftSurround,
                             Label.RightSurround)
-                    else -> {
-                        val res = arrayOfNulls<Label>(channelCount.toInt())
-                        Arrays.fill(res, Label.Mono)
-                        res
-                    }
+                    else -> Array(channelCount) { Label.Mono }
                 }
-            }
+            }) as Array<Label?>
         }
 
         fun getLabelsFromTrack(trakBox: TrakBox): Array<Label?> {
@@ -236,7 +232,7 @@ class AudioSampleEntry(atom: Header) : SampleEntry(atom) {
         fun setLabels(labels: Array<Label?>, channel: ChannelBox?) {
             channel!!.channelLayout = ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions.code
             val list = arrayOfNulls<ChannelDescription>(labels.size)
-            for (i in labels.indices) list[i] = ChannelDescription(labels[i]!!.getVal(), 0, floatArrayOf(0f, 0f, 0f))
+            for (i in labels.indices) list[i] = ChannelDescription(labels[i]!!.`val`, 0, floatArrayOf(0f, 0f, 0f))
             channel.descriptions = list
         }
 

@@ -195,7 +195,7 @@ object MBEncoderHelper {
         if (dest.color != src.color) throw RuntimeException("Incompatible color")
         for (c in 0 until dest.color.nComp) {
             pubBlkOnePlane(dest.getPlaneData(c), dest.getPlaneWidth(c), src.getPlaneData(c), src.getPlaneWidth(c),
-                    src.getPlaneHeight(c), x shr dest.color.compWidth[c], y shr dest.color.compHeight[c])
+                    src.getPlaneHeight(c), x shr dest.color.compWidth!![c], y shr dest.color.compHeight!![c])
         }
     }
 

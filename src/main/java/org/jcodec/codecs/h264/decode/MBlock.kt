@@ -300,8 +300,8 @@ class MBlock(chromaFormat: ColorSpace) {
 
         init {
             samplesLuma = IntArray(256)
-            val MbWidthC = 16 shr chromaFormat.compWidth[1]
-            val MbHeightC = 16 shr chromaFormat.compHeight[1]
+            val MbWidthC = 16 shr chromaFormat.compWidth!![1]
+            val MbHeightC = 16 shr chromaFormat.compHeight!![1]
             samplesChroma = IntArray(2 * MbWidthC * MbHeightC)
         }
     }
@@ -348,8 +348,8 @@ class MBlock(chromaFormat: ColorSpace) {
         ac = arrayOf(Array(16) { IntArray(64) }, Array(4) { IntArray(16) }, Array(4) { IntArray(16) })
         lumaModes = IntArray(16)
         nCoeff = IntArray(16)
-        dc1 = IntArray(16 shr chromaFormat.compWidth[1] shr chromaFormat.compHeight[1])
-        dc2 = IntArray(16 shr chromaFormat.compWidth[2] shr chromaFormat.compHeight[2])
+        dc1 = IntArray(16 shr chromaFormat.compWidth!![1] shr chromaFormat.compHeight!![1])
+        dc2 = IntArray(16 shr chromaFormat.compWidth!![2] shr chromaFormat.compHeight!![2])
         ipcm = IPCM(chromaFormat)
         x = MvList(16)
         partPreds = arrayOfNulls(4)

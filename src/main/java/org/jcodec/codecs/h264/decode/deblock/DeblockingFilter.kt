@@ -110,8 +110,8 @@ class DeblockingFilter(bitDepthLuma: Int, bitDepthChroma: Int, private val di: D
         val mbY = mbAddr / mbWidth
         val topAvailable = mbY > 0 && (sh.disableDeblockingFilterIdc != 2 || di.shs[mbAddr - mbWidth] == sh)
         val curQp = di.mbQps[comp][mbAddr]
-        val cW = 2 - pic.color.compWidth[comp]
-        val cH = 2 - pic.color.compHeight[comp]
+        val cW = 2 - pic.color.compWidth!![comp]
+        val cH = 2 - pic.color.compHeight!![comp]
         if (topAvailable) {
             val topQp = di.mbQps[comp][mbAddr - mbWidth]
             val avgQp = topQp + curQp + 1 shr 1
@@ -173,8 +173,8 @@ class DeblockingFilter(bitDepthLuma: Int, bitDepthChroma: Int, private val di: D
         val mbY = mbAddr / mbWidth
         val leftAvailable = mbX > 0 && (sh.disableDeblockingFilterIdc != 2 || di.shs[mbAddr - 1] == sh)
         val curQp = di.mbQps[comp][mbAddr]
-        val cW = 2 - pic.color.compWidth[comp]
-        val cH = 2 - pic.color.compHeight[comp]
+        val cW = 2 - pic.color.compWidth!![comp]
+        val cH = 2 - pic.color.compHeight!![comp]
         if (leftAvailable) {
             val leftQp = di.mbQps[comp][mbAddr - 1]
             val avgQpV = leftQp + curQp + 1 shr 1

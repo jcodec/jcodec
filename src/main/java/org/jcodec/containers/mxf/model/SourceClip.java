@@ -10,15 +10,15 @@ import java.util.Map.Entry;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
- * 
+ *
  * @author The JCodec project
- * 
+ *
  */
 public class SourceClip extends MXFStructuralComponent {
     private long startPosition;
     private int sourceTrackId;
     private UL sourcePackageUid;
-    
+
     public SourceClip(UL ul) {
         super(ul);
     }
@@ -26,10 +26,10 @@ public class SourceClip extends MXFStructuralComponent {
     @Override
     protected void read(Map<Integer, ByteBuffer> tags) {
         super.read(tags);
-        
+
         for (Iterator<Entry<Integer, ByteBuffer>> it = tags.entrySet().iterator(); it.hasNext();) {
             Entry<Integer, ByteBuffer> entry = it.next();
-            
+
             ByteBuffer _bb = entry.getValue();
 
             switch (entry.getKey()) {
@@ -49,7 +49,7 @@ public class SourceClip extends MXFStructuralComponent {
             it.remove();
         }
     }
-    
+
     public UL getSourcePackageUid() {
         return sourcePackageUid;
     }

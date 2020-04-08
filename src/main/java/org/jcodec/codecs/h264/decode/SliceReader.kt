@@ -816,8 +816,8 @@ class SliceReader(private val activePps: PictureParameterSet, private val cabac:
         for (i in 0..255) {
             mBlock.ipcm.samplesLuma[i] = reader.readNBit(8)
         }
-        val MbWidthC = 16 shr chromaFormat!!.compWidth[1]
-        val MbHeightC = 16 shr chromaFormat!!.compHeight[1]
+        val MbWidthC = 16 shr chromaFormat!!.compWidth!![1]
+        val MbHeightC = 16 shr chromaFormat!!.compHeight!![1]
         for (i in 0 until 2 * MbWidthC * MbHeightC) {
             mBlock.ipcm.samplesChroma[i] = reader.readNBit(8)
         }
