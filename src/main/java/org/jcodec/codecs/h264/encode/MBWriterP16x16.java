@@ -69,7 +69,7 @@ public class MBWriterP16x16 {
         // Motion estimation for the current macroblock
         CAVLCWriter.writeSE(out, params.mv[0] - mvpx); // mvdx
         CAVLCWriter.writeSE(out, params.mv[1] - mvpy); // mvdy
-
+        
         Picture mbRef = Picture.create(16, 16, sps.chromaFormatIdc);
         int[][] mb = new int[][] { new int[256], new int[64], new int[64] };
 
