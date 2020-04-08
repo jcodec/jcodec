@@ -72,7 +72,7 @@ public class AudioTrackTest {
         List<? extends EbmlBase> tree = demuxer.getTree();
         if (showInterlacedBlocks) {
             MKVType[] path = { Segment, Cluster, SimpleBlock };
-            MkvBlock[] blocks = findAllTree(tree, MkvBlock.class, path);
+            MkvBlock[] blocks = findAllTree(tree, path).toArray(new MkvBlock[0]);
             for (MkvBlock be : blocks) {
                 System.out.println("\nTRACK " + be.trackNumber);
                 String pref = "";

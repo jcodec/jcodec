@@ -130,7 +130,7 @@ public class MkvBlockTest {
             MKVParser reader = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
             MKVType[] path = { Segment, Cluster, SimpleBlock };
             
-            MkvBlock[] blocks = findAllTree(reader.parse(), MkvBlock.class, path);
+            MkvBlock[] blocks = findAllTree(reader.parse(), path).toArray(new MkvBlock[0]);
             for (MkvBlock be : blocks)
                 if (be.lacingPresent){
                     Assert.assertEquals("    "+be.lacing+" Lacing block offset "+be.offset, be.dataLen+(be.dataOffset-be.offset), be.size());

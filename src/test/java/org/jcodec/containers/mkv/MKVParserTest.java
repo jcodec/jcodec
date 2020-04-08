@@ -54,10 +54,10 @@ public class MKVParserTest {
                 IOUtils.closeQuietly(stream);
             }
             MKVType[] path = { MKVType.Segment, MKVType.Cluster, MKVType.SimpleBlock };
-            MkvBlock[] simpleBlocks = MKVType.findAllTree(tree, MkvBlock.class, path);
+            MkvBlock[] simpleBlocks = MKVType.findAllTree(tree, path).toArray(new MkvBlock[0]);
             if (simpleBlocks == null || simpleBlocks.length == 0){
                 MKVType[] path1 = { MKVType.Segment, MKVType.Cluster, MKVType.BlockGroup, MKVType.Block };
-                simpleBlocks = MKVType.findAllTree(tree, MkvBlock.class, path1);
+                simpleBlocks = MKVType.findAllTree(tree, path1).toArray(new MkvBlock[0]);
                 if (simpleBlocks == null || simpleBlocks.length == 0)
                     System.err.println("No simple blocks / block groups found. Looks suspicious");
             }
@@ -77,12 +77,12 @@ public class MKVParserTest {
             List<EbmlMaster> t = reader.parse();
             MKVType[] path = { MKVType.Segment };
             // reader.printParsedTree();
-            EbmlMaster[] allSegments = MKVType.findAllTree(t, EbmlMaster.class, path);
+            EbmlMaster[] allSegments = MKVType.findAllTree(t, path).toArray(new EbmlMaster[0]);
             Assert.assertNotNull(allSegments);
             Assert.assertEquals(1, allSegments.length);
             MKVType[] path1 = { MKVType.Segment, MKVType.Cluster };
             
-            EbmlMaster[] allClusters = MKVType.findAllTree(t, EbmlMaster.class, path1);
+            EbmlMaster[] allClusters = MKVType.findAllTree(t, path1).toArray(new EbmlMaster[0]);
             Assert.assertNotNull(allClusters);
             Assert.assertEquals(25, allClusters.length);
         } finally {

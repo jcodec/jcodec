@@ -54,7 +54,7 @@ class MKVParser(private val channel: SeekableByteChannel) {
 
     private fun possibleChild(parent: EbmlMaster?, child: EbmlBase?): Boolean {
         return if (parent != null && MKVType.Cluster == parent.type && child != null && MKVType.Cluster != child.type && MKVType.Info != child.type && MKVType.SeekHead != child.type && MKVType.Tracks != child.type
-                && MKVType.Cues != child.type && MKVType.Attachments != child.type && MKVType.Tags != child.type && MKVType.Chapters != child.type) true else MKVType.possibleChild(parent, child)
+                && MKVType.Cues != child.type && MKVType.Attachments != child.type && MKVType.Tags != child.type && MKVType.Chapters != child.type) true else MKVType.possibleChild(parent, child!!)
     }
 
     private fun openElem(e: EbmlBase?) {

@@ -129,14 +129,14 @@ public class BlockOrderingTest {
 
     private void printTracks(List<EbmlMaster> tree) {
         MKVType[] path = { Segment, Tracks, TrackEntry, TrackNumber };
-        for (EbmlUint nr : findAllTree(tree, EbmlUint.class, path))
+        for (EbmlUint nr : findAllTree(tree, path).toArray(new EbmlUint[0]))
             System.out.println("Track nr:" + nr.getUint());
         
     }
 
     private void printTimecodes(List<EbmlMaster> tree) {
         MKVType[] path2 = { Segment, Cluster };
-        EbmlMaster[] clusters = findAllTree(tree, EbmlMaster.class, path2);
+        EbmlMaster[] clusters = findAllTree(tree, path2).toArray(new EbmlMaster[0]);
         for (EbmlMaster c : clusters) {
             MKVType[] path = { Cluster, Timecode };
             long ctc = ((EbmlUint) findFirst(c, path)).getUint();

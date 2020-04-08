@@ -31,7 +31,7 @@ public class CuesFactoryTest {
             IOUtils.closeQuietly(inputStream);
         }
         MKVType[] path7 = { MKVType.Segment, MKVType.Cluster };
-        EbmlMaster[] ccs = MKVType.findAllTree(t, EbmlMaster.class, path7);
+        EbmlMaster[] ccs = MKVType.findAllTree(t, path7).toArray(new EbmlMaster[0]);
         long baseOffset = 0;
         MKVType[] path = { MKVType.Segment, MKVType.SeekHead };
         
@@ -54,10 +54,10 @@ public class CuesFactoryTest {
         MKVType[] path8 = { MKVType.Cues, MKVType.CuePoint };
         MKVType[] path9 = { MKVType.Cues, MKVType.CuePoint };
 //        Assert.assertEquals(131, cues.size());
-        Assert.assertEquals("Number of CuePoints must match", MKVType.findAll(origCues, EbmlBase.class, false, path8).length, MKVType.findAll(cues, EbmlBase.class, false, path9).length);
+        Assert.assertEquals("Number of CuePoints must match", MKVType.findAll(origCues, path8).size(), MKVType.findAll(cues, path9).size());
         MKVType[] path10 = { MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition };
         MKVType[] path11 = { MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition };
-        Assert.assertEquals("Number of CueClusterPositions must match", MKVType.findAll(origCues, EbmlBase.class, false, path10).length, MKVType.findAll(cues, EbmlBase.class, false, path11).length);
+        Assert.assertEquals("Number of CueClusterPositions must match", MKVType.findAll(origCues, path10).size(), MKVType.findAll(cues, path11).size());
         Assert.assertEquals(origCues.size(), cues.size());
         MKVType[] path5 = { MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition };
         

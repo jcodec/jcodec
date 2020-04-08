@@ -32,7 +32,7 @@ public class AutoFileChannelWrapper implements SeekableByteChannel, AutoResource
     public AutoFileChannelWrapper(File file) throws IOException {
         this.file = file;
         this.curTime = currentTimeMillis();
-        AutoPool.getInstance().add(this);
+        AutoPool.instance.add(this);
         ensureOpen();
     }
 

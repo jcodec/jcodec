@@ -65,7 +65,7 @@ public class MKVMuxerTest {
             inputStream = null;
         }
         MKVType[] path = { MKVType.Segment, MKVType.Cluster };
-        EbmlMaster[] cc =  MKVType.findAllTree(tree, EbmlMaster.class, path);
+        EbmlMaster[] cc = MKVType.findAllTree(tree, path).toArray(new EbmlMaster[0]);
         inputStream = new FileInputStream(file);
         Assert.assertNotNull(cc);
         Assert.assertEquals(2, cc.length);
@@ -114,7 +114,7 @@ public class MKVMuxerTest {
             IOUtils.closeQuietly(inputStream);
         }
         MKVType[] path1 = { Segment, Cluster };
-        for (EbmlMaster c : MKVType.findAllTree(t, EbmlMaster.class, path1)) {
+        for (EbmlMaster c : MKVType.findAllTree(t, path1).toArray(new EbmlMaster[0])) {
             for (EbmlBase e : c.children) {
                 if (e.type.equals(SimpleBlock)) {
                     MkvBlock be = (MkvBlock) e;
@@ -141,7 +141,7 @@ public class MKVMuxerTest {
             inputStream = null;
         }
         MKVType[] path = { MKVType.Segment, MKVType.Cues, MKVType.CuePoint, MKVType.CueTime };
-        EbmlUint[] tcs = MKVType.findAllTree(tree, EbmlUint.class, path);
+        EbmlUint[] tcs = MKVType.findAllTree(tree, path).toArray(new EbmlUint[0]);
         for (EbmlUint tc : tcs)
             System.out.println("CueTime " + tc.getUint() + " " + tc.offset);
     }
@@ -218,7 +218,7 @@ public class MKVMuxerTest {
         try {
             FileChannel channel = remuxerInputStream.getChannel();
             MKVType[] path = { Segment, Cluster, SimpleBlock };
-            for (MkvBlock be : MKVType.findAllTree(tree, MkvBlock.class, path)) {
+            for (MkvBlock be : MKVType.findAllTree(tree, path).toArray(new MkvBlock[0])) {
                 ByteBuffer bb = ByteBuffer.allocate(be.dataLen);
                 
                 channel.position(be.dataOffset);
@@ -228,7 +228,7 @@ public class MKVMuxerTest {
             }
             MKVType[] path1 = { Segment, Cluster, BlockGroup, Block };
             
-            for (MkvBlock be : MKVType.findAllTree(tree, MkvBlock.class, path1)) {
+            for (MkvBlock be : MKVType.findAllTree(tree, path1).toArray(new MkvBlock[0])) {
                 ByteBuffer bb = ByteBuffer.allocate(be.dataLen);
                 
                 channel.position(be.dataOffset);
@@ -260,7 +260,7 @@ public class MKVMuxerTest {
             inputStream = null;
         }
         MKVType[] path = { MKVType.Segment, MKVType.Cluster };
-        EbmlMaster[] cc = MKVType.findAllTree(tree, EbmlMaster.class, path);
+        EbmlMaster[] cc = MKVType.findAllTree(tree, path).toArray(new EbmlMaster[0]);
         printCueTable(cc);
     }
 

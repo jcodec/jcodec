@@ -27,7 +27,7 @@ public class CompareFramesTest {
         MKVParser p = new MKVParser(new FileChannelWrapper(channel));
         List<EbmlMaster> tree = p.parse();
         MKVType[] path = { Segment, Cluster };
-        EbmlMaster[] me = findAllTree(tree, EbmlMaster.class, path);
+        EbmlMaster[] me = findAllTree(tree, path).toArray(new EbmlMaster[0]);
         Assert.assertNotNull(me);
         Assert.assertEquals(1, me.length);
         List<MkvBlock> bs = MKVMuxerTest.getBlocksByTrackNumber(me[0], 1);
@@ -55,7 +55,7 @@ public class CompareFramesTest {
             MKVParser p = new MKVParser(new FileChannelWrapper(c));
             List<EbmlMaster> tree = p.parse();
             MKVType[] path = { Segment, Cluster };
-            EbmlMaster[] me = findAllTree(tree, EbmlMaster.class, path);
+            EbmlMaster[] me = findAllTree(tree, path).toArray(new EbmlMaster[0]);
             Assert.assertNotNull(me);
             Assert.assertEquals(1, me.length);
             List<MkvBlock> bs = MKVMuxerTest.getBlocksByTrackNumber(me[0], 1);
