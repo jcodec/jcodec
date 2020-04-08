@@ -18,7 +18,7 @@ import java.util.*
 class SEI(var messages: Array<SEIMessage?>?) {
     class SEIMessage(var payloadType: Int, var payloadSize: Int, var payload: ByteArray)
 
-    fun write(out: ByteBuffer?) {
+    fun write(out: ByteBuffer) {
         val writer = BitWriter(out)
         // TODO Auto-generated method stub
         CAVLCWriter.writeTrailingBits(writer)

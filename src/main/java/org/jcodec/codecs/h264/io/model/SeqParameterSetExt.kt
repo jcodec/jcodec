@@ -24,13 +24,13 @@ class SeqParameterSetExt {
     var additional_extension_flag = false
     var alpha_opaque_value = 0
     var alpha_transparent_value = 0
-    fun write(out: ByteBuffer?) {
+    fun write(out: ByteBuffer) {
         val writer = BitWriter(out)
         writeTrailingBits(writer)
     }
 
     companion object {
-        fun read(`is`: ByteBuffer?): SeqParameterSetExt {
+        fun read(`is`: ByteBuffer): SeqParameterSetExt {
             val _in = BitReader.createBitReader(`is`)
             val spse = SeqParameterSetExt()
             spse.seq_parameter_set_id = CAVLCReader.readUEtrace(_in, "SPSE: seq_parameter_set_id")

@@ -53,7 +53,7 @@ class FrameReader {
         return result
     }
 
-    private fun createSliceReader(segment: ByteBuffer?, nalUnit: NALUnit): SliceReader {
+    private fun createSliceReader(segment: ByteBuffer, nalUnit: NALUnit): SliceReader {
         val _in = BitReader.createBitReader(segment)
         val sh = readPart1(_in)
         sh.pps = pps[sh.picParameterSetId]

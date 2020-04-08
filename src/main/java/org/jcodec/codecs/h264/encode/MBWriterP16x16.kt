@@ -16,6 +16,7 @@ import org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE
 import org.jcodec.codecs.h264.io.write.CAVLCWriter.writeTE
 import org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUE
 import org.jcodec.common.io.BitWriter
+import org.jcodec.common.io.VLC
 import org.jcodec.common.model.Picture
 import java.util.*
 
@@ -140,7 +141,7 @@ class MBWriterP16x16(private val sps: SeqParameterSet, private val ref: Picture?
             val blkI = H264Const.BLK_INV_MAP[i]
             quantizeAC(ac[blkI], qp)
             val coeffToken = ctx.cavlc!![comp]!!.writeACBlock(out, mbLeftBlk + H264Const.MB_BLK_OFF_LEFT[i], mbTopBlk + H264Const.MB_BLK_OFF_TOP[i], MBType.P_16x16,
-                    MBType.P_16x16, ac[blkI], H264Const.totalZeros16, 0, 16, CoeffTransformer.zigzag4x4)
+                    MBType.P_16x16, ac[blkI], H264Const.totalZeros16 as Array<VLC?>, 0, 16, CoeffTransformer.zigzag4x4)
             nc[blkI] = coeffToken shr 4 // total coeff
         }
     }

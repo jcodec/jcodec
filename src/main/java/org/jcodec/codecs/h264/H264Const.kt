@@ -293,7 +293,7 @@ object H264Const {
         vbl.set(coeffToken(16, 1), "0000000000000110")
         vbl.set(coeffToken(16, 2), "0000000000000101")
         vbl.set(coeffToken(16, 3), "0000000000001000")
-        CoeffToken[1] = vbl.getVLC()
+        CoeffToken[1] = vbl.vlc
         CoeffToken[0] = CoeffToken[1]
     }
 
@@ -361,7 +361,7 @@ object H264Const {
         vbl.set(coeffToken(16, 1), "00000000000110")
         vbl.set(coeffToken(16, 2), "00000000000101")
         vbl.set(coeffToken(16, 3), "00000000000100")
-        CoeffToken[3] = vbl.getVLC()
+        CoeffToken[3] = vbl.vlc
         CoeffToken[2] = CoeffToken[3]
     }
 
@@ -429,7 +429,7 @@ object H264Const {
         vbl.set(coeffToken(16, 1), "0000000100")
         vbl.set(coeffToken(16, 2), "0000000011")
         vbl.set(coeffToken(16, 3), "0000000010")
-        CoeffToken[7] = vbl.getVLC()
+        CoeffToken[7] = vbl.vlc
         CoeffToken[6] = CoeffToken[7]
         CoeffToken[5] = CoeffToken[6]
         CoeffToken[4] = CoeffToken[5]
@@ -499,7 +499,7 @@ object H264Const {
         vbl.set(coeffToken(16, 1), "111101")
         vbl.set(coeffToken(16, 2), "111110")
         vbl.set(coeffToken(16, 3), "111111")
-        CoeffToken[8] = vbl.getVLC()
+        CoeffToken[8] = vbl.vlc
     }
 
     init {
@@ -518,7 +518,7 @@ object H264Const {
         vbl.set(coeffToken(4, 1), "00000011")
         vbl.set(coeffToken(4, 2), "00000010")
         vbl.set(coeffToken(4, 3), "0000000")
-        coeffTokenChromaDCY420 = vbl.getVLC()
+        coeffTokenChromaDCY420 = vbl.vlc
     }
 
     init {
@@ -553,7 +553,7 @@ object H264Const {
         vbl.set(coeffToken(8, 1), "000000000101")
         vbl.set(coeffToken(8, 2), "000000000100")
         vbl.set(coeffToken(8, 3), "00000000100")
-        coeffTokenChromaDCY422 = vbl.getVLC()
+        coeffTokenChromaDCY422 = vbl.vlc
     }
 
     init {

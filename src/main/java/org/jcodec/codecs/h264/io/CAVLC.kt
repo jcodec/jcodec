@@ -73,7 +73,12 @@ class CAVLC private constructor(private val color: ColorSpace?, mbWidth: Int, mb
 
     fun readChromaDCBlock(reader: BitReader?, coeff: IntArray, leftAvailable: Boolean, topAvailable: Boolean) {
         val coeffTokenTab = coeffTokenVLCForChromaDC
-        readCoeffs(reader!!, coeffTokenTab!!, if (coeff.size == 16) H264Const.totalZeros16 else if (coeff.size == 8) H264Const.totalZeros8 else H264Const.totalZeros4, coeff, 0, coeff.size,
+        val totalZerosTab = when (coeff.size) {
+            16 -> H264Const.totalZeros16
+            8 -> H264Const.totalZeros8
+            else -> H264Const.totalZeros4
+        }
+        readCoeffs(reader!!, coeffTokenTab!!, totalZerosTab as Array<VLC?>, coeff, 0, coeff.size,
                 NO_ZIGZAG)
     }
 
@@ -81,14 +86,14 @@ class CAVLC private constructor(private val color: ColorSpace?, mbWidth: Int, mb
                         topAvailable: Boolean, topMbType: MBType?, zigzag4x4: IntArray?) {
         val coeffTokenTab = getCoeffTokenVLCForLuma(leftAvailable, leftMbType, tokensLeft[0], topAvailable, topMbType,
                 tokensTop[mbX shl 2])
-        readCoeffs(reader!!, coeffTokenTab!!, H264Const.totalZeros16, coeff, 0, 16, zigzag4x4)
+        readCoeffs(reader!!, coeffTokenTab!!, H264Const.totalZeros16 as Array<VLC?>, coeff, 0, 16, zigzag4x4)
     }
 
     fun readACBlock(reader: BitReader?, coeff: IntArray?, blkIndX: Int, blkIndY: Int, leftAvailable: Boolean,
                     leftMbType: MBType?, topAvailable: Boolean, topMbType: MBType?, firstCoeff: Int, nCoeff: Int, zigzag4x4: IntArray?): Int {
         val coeffTokenTab = getCoeffTokenVLCForLuma(leftAvailable, leftMbType, tokensLeft[blkIndY and mbMask],
                 topAvailable, topMbType, tokensTop[blkIndX])
-        val readCoeffs = readCoeffs(reader!!, coeffTokenTab!!, H264Const.totalZeros16, coeff, firstCoeff, nCoeff, zigzag4x4)
+        val readCoeffs = readCoeffs(reader!!, coeffTokenTab!!, H264Const.totalZeros16 as Array<VLC?>, coeff, firstCoeff, nCoeff, zigzag4x4)
         tokensTop[blkIndX] = readCoeffs
         tokensLeft[blkIndY and mbMask] = tokensTop[blkIndX]
         return totalCoeff(readCoeffs)
@@ -228,6 +233,7 @@ class CAVLC private constructor(private val color: ColorSpace?, mbWidth: Int, mb
                 if (MathUtil.abs(levels[i]) > 3 shl suffixLen - 1 && suffixLen < 6) suffixLen++
             }
         }
+
         fun readCoeffs(_in: BitReader, coeffTokenTab: VLC, totalZerosTab: Array<VLC?>?, coeffLevel: IntArray?, firstCoeff: Int,
                        nCoeff: Int, zigzag: IntArray?): Int {
             val coeffToken = coeffTokenTab.readVLC(_in)

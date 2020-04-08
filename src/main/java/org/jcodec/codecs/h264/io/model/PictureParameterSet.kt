@@ -117,7 +117,7 @@ class PictureParameterSet {
     var sliceGroupId: IntArray? = null
     @JvmField
     var extended: PPSExt? = null
-    fun write(out: ByteBuffer?) {
+    fun write(out: ByteBuffer) {
         val writer = BitWriter(out)
         CAVLCWriter.writeUEtrace(writer, picParameterSetId, "PPS: pic_parameter_set_id")
         CAVLCWriter.writeUEtrace(writer, seqParameterSetId, "PPS: seq_parameter_set_id")
@@ -243,7 +243,7 @@ class PictureParameterSet {
 
     companion object {
         @JvmStatic
-        fun read(`is`: ByteBuffer?): PictureParameterSet {
+        fun read(`is`: ByteBuffer): PictureParameterSet {
             val _in = BitReader.createBitReader(`is`)
             val pps = PictureParameterSet()
             pps.picParameterSetId = CAVLCReader.readUEtrace(_in, "PPS: pic_parameter_set_id")

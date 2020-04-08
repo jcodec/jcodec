@@ -192,7 +192,7 @@ class SeqParameterSet {
     // num_ref_frames_in_pic_order_cnt_cycle
     @JvmField
     var numRefFramesInPicOrderCntCycle = 0
-    fun write(out: ByteBuffer?) {
+    fun write(out: ByteBuffer) {
         val writer = BitWriter(out)
         CAVLCWriter.writeNBit(writer, profileIdc.toLong(), 8, "SPS: profile_idc")
         CAVLCWriter.writeBool(writer, isConstraintSet0Flag, "SPS: constraint_set_0_flag")
@@ -358,7 +358,7 @@ class SeqParameterSet {
         }
 
         @JvmStatic
-        fun read(`is`: ByteBuffer?): SeqParameterSet {
+        fun read(`is`: ByteBuffer): SeqParameterSet {
             val _in = BitReader.createBitReader(`is`)
             val sps = SeqParameterSet()
             sps.profileIdc = CAVLCReader.readNBit(_in, 8, "SPS: profile_idc")

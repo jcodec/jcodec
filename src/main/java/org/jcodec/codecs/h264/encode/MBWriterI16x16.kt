@@ -26,6 +26,7 @@ import org.jcodec.codecs.h264.io.model.MBType
 import org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE
 import org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUE
 import org.jcodec.common.io.BitWriter
+import org.jcodec.common.io.VLC
 import org.jcodec.common.model.Picture
 import org.jcodec.common.tools.MathUtil
 
@@ -219,7 +220,7 @@ class MBWriterI16x16 {
             for (i in ac.indices) {
                 quantizeAC(ac[i], qp)
                 nc[H264Const.BLK_INV_MAP[i]] = CAVLC.totalCoeff(cavlc.writeACBlock(out, mbLeftBlk + H264Const.MB_BLK_OFF_LEFT[i], mbTopBlk + H264Const.MB_BLK_OFF_TOP[i],
-                        leftMBType, topMBType, ac[i], H264Const.totalZeros16, 1, 15, CoeffTransformer.zigzag4x4))
+                        leftMBType, topMBType, ac[i], H264Const.totalZeros16 as Array<VLC?>, 1, 15, CoeffTransformer.zigzag4x4))
             }
         }
 
@@ -228,17 +229,17 @@ class MBWriterI16x16 {
             if (dc.size == 4) {
                 quantizeDC2x2(dc, qp)
                 fvdDC2x2(dc)
-                cavlc.writeChrDCBlock(out, dc, H264Const.totalZeros4, 0, dc.size, intArrayOf(0, 1, 2, 3))
+                cavlc.writeChrDCBlock(out, dc, H264Const.totalZeros4 as Array<VLC?>, 0, dc.size, intArrayOf(0, 1, 2, 3))
             } else if (dc.size == 8) {
                 quantizeDC4x2(dc, qp)
                 fvdDC4x2(dc)
-                cavlc.writeChrDCBlock(out, dc, H264Const.totalZeros8, 0, dc.size, intArrayOf(0, 1, 2, 3, 4, 5, 6, 7))
+                cavlc.writeChrDCBlock(out, dc, H264Const.totalZeros8 as Array<VLC?>, 0, dc.size, intArrayOf(0, 1, 2, 3, 4, 5, 6, 7))
             } else {
                 reorderDC4x4(dc)
                 quantizeDC4x4(dc, qp)
                 fvdDC4x4(dc)
                 // TODO: calc here
-                cavlc.writeLumaDCBlock(out, mbLeftBlk, mbTopBlk, leftMBType, topMBType, dc, H264Const.totalZeros16, 0, 16,
+                cavlc.writeLumaDCBlock(out, mbLeftBlk, mbTopBlk, leftMBType, topMBType, dc, H264Const.totalZeros16 as Array<VLC?>, 0, 16,
                         CoeffTransformer.zigzag4x4)
             }
         }
