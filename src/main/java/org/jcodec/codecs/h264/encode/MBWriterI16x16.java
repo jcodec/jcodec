@@ -29,7 +29,7 @@ import org.jcodec.common.tools.MathUtil;
  * @author Stanislav Vitvitskyy
  */
 public class MBWriterI16x16 {
-    public void encodeMacroblock(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
+    public boolean encodeMacroblock(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
             int qp, NonRdVector params) {
         CAVLCWriter.writeUE(out, params.chrPred);
         CAVLCWriter.writeSE(out, qp - ctx.prevQp); // MB QP delta
@@ -37,9 +37,15 @@ public class MBWriterI16x16 {
         outMB.setType(MBType.I_16x16);
         outMB.setQp(qp);
 
-        luma(ctx, pic, mbX, mbY, out, qp, outMB.getPixels(), params.lumaPred16x16);
+        boolean cbp = false;
+        int[] nc = new int[16];
+        luma(ctx, pic, mbX, mbY, out, qp, outMB.getPixels(), params.lumaPred16x16, nc);
+        for (int dInd = 0; dInd < 16; dInd++) {
+            cbp |= nc[dInd] != 0;
+        }
         chroma(ctx, pic, mbX, mbY, I_16x16, out, qp, outMB.getPixels(), params.chrPred);
         ctx.prevQp = qp;
+        return cbp;
     }
 
     private static int DUMMY[] = new int[16];
@@ -89,7 +95,7 @@ public class MBWriterI16x16 {
     }
 
     private void luma(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB,
-            int predType) {
+            int predType, int[] nc) {
         int x = mbX << 4;
         int y = mbY << 4;
         int[][] ac = new int[16][16];
@@ -101,8 +107,8 @@ public class MBWriterI16x16 {
         transform(pic, 0, ac, pred, x, y);
         int[] dc = extractDC(ac);
         writeDC(ctx.cavlc[0], mbX, mbY, out, qp, mbX << 2, mbY << 2, dc, ctx.leftMBType, ctx.topMBType[mbX]);
-        writeAC(ctx.cavlc[0], mbX, mbY, out, mbX << 2, mbY << 2, ac, qp, ctx.leftMBType, ctx.topMBType[mbX], I_16x16,
-                DUMMY);
+        writeACLum(ctx.cavlc[0], mbX, mbY, out, mbX << 2, mbY << 2, ac, qp, ctx.leftMBType, ctx.topMBType[mbX], I_16x16,
+                nc);
 
         restorePlane(dc, ac, qp);
 
@@ -160,6 +166,38 @@ public class MBWriterI16x16 {
                             blkOffLeft == 0 ? leftMBType : curMBType, blkOffTop == 0 ? topMBType : curMBType, ac[bInd],
                             H264Const.totalZeros16, 1, 15, CoeffTransformer.zigzag4x4));
         }
+    }
+
+    private static void writeACLum(CAVLC cavlc, int mbX, int mbY, BitWriter out, int mbLeftBlk, int mbTopBlk,
+            int[][] ac, int qp, MBType leftMBType, MBType topMBType, MBType curMBType, int[] nc) {
+        boolean code = false;
+        for (int bInd = 0; bInd < 16; bInd++) {
+            CoeffTransformer.quantizeAC(ac[bInd], qp);
+            code |= hasNz(ac[bInd]);
+        }
+        if (code) {
+            for (int bInd = 0; bInd < 16; bInd++) {
+                int blkOffLeft = MB_DISP_OFF_LEFT[bInd];
+                int blkOffTop = MB_DISP_OFF_TOP[bInd];
+                nc[BLK_DISP_MAP[bInd]] = CAVLC
+                        .totalCoeff(cavlc.writeACBlock(out, mbLeftBlk + blkOffLeft, mbTopBlk + blkOffTop,
+                                blkOffLeft == 0 ? leftMBType : curMBType, blkOffTop == 0 ? topMBType : curMBType,
+                                ac[bInd], H264Const.totalZeros16, 1, 15, CoeffTransformer.zigzag4x4));
+            }
+        } else {
+            for (int bInd = 0; bInd < 16; bInd++) {
+                int blkOffLeft = MB_DISP_OFF_LEFT[bInd];
+                int blkOffTop = MB_DISP_OFF_TOP[bInd];
+                cavlc.setZeroCoeff(mbLeftBlk + blkOffLeft, mbTopBlk + blkOffTop);
+            }
+        }
+    }
+
+    private static boolean hasNz(int[] ac) {
+        int val = 0;
+        for (int i = 0; i < 16; i++)
+            val |= ac[i];
+        return val != 0;
     }
 
     private static void writeDC(CAVLC cavlc, int mbX, int mbY, BitWriter out, int qp, int mbLeftBlk, int mbTopBlk,
@@ -280,9 +318,5 @@ public class MBWriterI16x16 {
 
     public int getCbpChroma(Picture pic, int mbX, int mbY) {
         return 2;
-    }
-
-    public int getCbpLuma(Picture pic, int mbX, int mbY) {
-        return 15;
     }
 }

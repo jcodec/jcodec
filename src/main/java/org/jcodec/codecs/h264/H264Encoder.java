@@ -38,7 +38,6 @@ import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.png.PNGEncoder;
-import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.Tuple._3;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
@@ -586,24 +585,20 @@ public class H264Encoder extends VideoEncoder {
     private void encodeCand(EncodingContext ctx, EncodedMB outMB, SliceType sliceType, Picture pic, int mbX, int mbY,
             BitWriter candidate, int sliceQp, NonRdVector params, RdVector vector) {
         if (vector.mbType == MBType.I_16x16) {
+            BitWriter tmp = new BitWriter(ByteBuffer.allocate(1024));
+            boolean cbpLuma = mbEncoderI16x16.encodeMacroblock(ctx, pic, mbX, mbY, tmp, outMB, vector.qp, params);
             int cbpChroma = mbEncoderI16x16.getCbpChroma(pic, mbX, mbY);
-            int cbpLuma = mbEncoderI16x16.getCbpLuma(pic, mbX, mbY);
 
-            int i16x16TypeOffset = (cbpLuma / 15) * 12 + cbpChroma * 4 + params.lumaPred16x16;
+            int i16x16TypeOffset = (cbpLuma ? 12 : 0) + cbpChroma * 4 + params.lumaPred16x16;
             int mbTypeOffset = sliceType == SliceType.P ? 5 : 0;
 
             CAVLCWriter.writeUE(candidate, mbTypeOffset + vector.mbType.code() + i16x16TypeOffset);
-        } else if (vector.mbType == MBType.I_NxN) {
-            CAVLCWriter.writeUE(candidate, sliceType == SliceType.P ? 5 : 0);
-        } else {
-            CAVLCWriter.writeUE(candidate, vector.mbType.code());
-        }
-
-        if (vector.mbType == MBType.I_16x16) {
-            mbEncoderI16x16.encodeMacroblock(ctx, pic, mbX, mbY, candidate, outMB, vector.qp, params);
+            candidate.writeOther(tmp);
         } else if (vector.mbType == MBType.P_16x16) {
+            CAVLCWriter.writeUE(candidate, vector.mbType.code());
             mbEncoderP16x16.encodeMacroblock(ctx, pic, mbX, mbY, candidate, outMB, vector.qp, params);
         } else if (vector.mbType == MBType.I_NxN) {
+            CAVLCWriter.writeUE(candidate, sliceType == SliceType.P ? 5 : 0);
             mbEncoderINxN.encodeMacroblock(ctx, pic, mbX, mbY, candidate, outMB, vector.qp, params);
         } else
             throw new RuntimeException("Macroblock of type " + vector.mbType + " is not supported.");

@@ -30,6 +30,25 @@ public class BitWriter {
         fork.initPos = this.initPos;
         return fork;
     }
+    
+    public void writeOther(BitWriter bw) {
+        if (_curBit >= 8) {
+            int shift = 32 - _curBit;
+            for (int i = initPos; i < bw.buf.position(); i++) {
+                buf.put((byte)(curInt >> 24));
+                curInt <<= 8;
+                curInt |= (bw.buf.get(i) & 0xff) << shift;
+            }
+        } else {
+            int shift = 24 - _curBit;
+            for (int i = initPos; i < bw.buf.position(); i++) {
+                curInt |= (bw.buf.get(i) & 0xff) << shift;
+                buf.put((byte)(curInt >> 24));
+                curInt <<= 8;
+            }
+        }
+        writeNBit(bw.curInt >> (32 - bw._curBit), bw._curBit);
+    }
 
     public void flush() {
         int toWrite = (_curBit + 7) >> 3;

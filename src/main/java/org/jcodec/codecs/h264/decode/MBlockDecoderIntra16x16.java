@@ -52,12 +52,14 @@ public class MBlockDecoderIntra16x16 extends MBlockDecoderBase {
         CoeffTransformer.dequantizeDC4x4(mBlock.dc, s.qp, scalingList);
         reorderDC4x4(mBlock.dc);
 
-        for (int i = 0; i < 16; i++) {
-            if ((mBlock.cbpLuma() & (1 << (i >> 2))) != 0) {
-                CoeffTransformer.dequantizeAC(mBlock.ac[0][i], s.qp, scalingList);
+        for (int bInd = 0; bInd < 16; bInd++) {
+            int ind8x8 = bInd >> 2;
+            int mask = 1 << ind8x8;
+            if ((mBlock.cbpLuma() & mask) != 0) {
+                CoeffTransformer.dequantizeAC(mBlock.ac[0][bInd], s.qp, scalingList);
             }
-            mBlock.ac[0][i][0] = mBlock.dc[i];
-            CoeffTransformer.idct4x4(mBlock.ac[0][i]);
+            mBlock.ac[0][bInd][0] = mBlock.dc[bInd];
+            CoeffTransformer.idct4x4(mBlock.ac[0][bInd]);
         }
     }
 }
