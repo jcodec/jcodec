@@ -69,9 +69,9 @@ public class MkvBlockTest {
         MkvBlock be = new MkvBlock(SimpleBlock.id);
         be.offset = 0x112;
         be.dataOffset = 0x115;
-        be.dataLen = 0x1390;
+        be._dataLen = 0x1390;
         int[] sizes = new int[bb.get(4)+1];
-        be.headerSize = MkvBlock.readEBMLLaceSizes(bb, sizes, (int) be.dataLen, startPosition);
+        be.headerSize = MkvBlock.readEBMLLaceSizes(bb, sizes, (int) be._dataLen, startPosition);
         Assert.assertNotNull(sizes);
         Assert.assertEquals(bb.capacity(), be.headerSize);
         Assert.assertEquals(480, sizes[0]);
@@ -81,7 +81,7 @@ public class MkvBlockTest {
         Assert.assertEquals(480+96+96+0+0, sizes[4]);
         Assert.assertEquals(480+96+96+0+0+0, sizes[5]);
         Assert.assertEquals(480+96+96+0+0+0-96, sizes[6]);
-        Assert.assertEquals(be.dataLen-((480+96+96+0+0+0-96)+(480+96+96+0+0+0)+(480+96+96+0+0)+(480+96+96+0)+(480+96+96)+(480+96)+480+be.headerSize), sizes[7]);
+        Assert.assertEquals(be._dataLen -((480+96+96+0+0+0-96)+(480+96+96+0+0+0)+(480+96+96+0+0)+(480+96+96+0)+(480+96+96)+(480+96)+480+be.headerSize), sizes[7]);
     }
     
     @Test
@@ -92,13 +92,13 @@ public class MkvBlockTest {
         MkvBlock be = new MkvBlock(Block.id);
         be.offset = 0x149B0;
         be.dataOffset = 0x149B3;
-        be.dataLen = 0x353;
+        be._dataLen = 0x353;
         int[] sizes = new int[bb.get(4)+1];
-        be.headerSize = MkvBlock.readXiphLaceSizes(bb, sizes, (int)be.dataLen, startPosition);
+        be.headerSize = MkvBlock.readXiphLaceSizes(bb, sizes, (int)be._dataLen, startPosition);
         Assert.assertEquals(12, be.headerSize);
         int third = bb.get(7) & 0xFF;
         int second = bb.get(6) & 0xFF;
-        int eightth = (int)(be.dataLen) - (bb.get(5) + second + third + bb.get(8) + bb.get(9) + bb.get(10) + bb.get(11) + be.headerSize);
+        int eightth = (int)(be._dataLen) - (bb.get(5) + second + third + bb.get(8) + bb.get(9) + bb.get(10) + bb.get(11) + be.headerSize);
         Assert.assertArrayEquals(new int[]{bb.get(5), second, third, bb.get(8), bb.get(9), bb.get(10), bb.get(11), eightth }, sizes);
     }
 
@@ -110,11 +110,11 @@ public class MkvBlockTest {
         MkvBlock be = new MkvBlock(Block.id);
         be.offset = 0x149B0;
         be.dataOffset = 0x149B3;
-        be.dataLen = 0x353;
+        be._dataLen = 0x353;
         int[] sizes = new int[bb.get(4)+1];
-        be.headerSize = MkvBlock.readXiphLaceSizes(bb, sizes, (int)be.dataLen, startPosition);
+        be.headerSize = MkvBlock.readXiphLaceSizes(bb, sizes, (int)be._dataLen, startPosition);
         Assert.assertEquals(12, be.headerSize);
-        Assert.assertArrayEquals(new int[]{187, 630, 255, 60, (int)(be.dataLen) - (187 + 630 + 255 + 60 + be.headerSize) }, sizes);
+        Assert.assertArrayEquals(new int[]{187, 630, 255, 60, (int)(be._dataLen) - (187 + 630 + 255 + 60 + be.headerSize) }, sizes);
     }
     
     @Ignore @Test
@@ -133,7 +133,7 @@ public class MkvBlockTest {
             MkvBlock[] blocks = findAllTree(reader.parse(), path).toArray(new MkvBlock[0]);
             for (MkvBlock be : blocks)
                 if (be.lacingPresent){
-                    Assert.assertEquals("    "+be.lacing+" Lacing block offset "+be.offset, be.dataLen+(be.dataOffset-be.offset), be.size());
+                    Assert.assertEquals("    "+be.lacing+" Lacing block offset "+be.offset, be._dataLen +(be.dataOffset-be.offset), be.size());
                 }
         } finally {
             IOUtils.closeQuietly(inputStream);

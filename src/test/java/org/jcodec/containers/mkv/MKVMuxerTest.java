@@ -32,7 +32,6 @@ import java.lang.System;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class MKVMuxerTest {
@@ -77,7 +76,7 @@ public class MKVMuxerTest {
             Assert.assertEquals(5, bs.size());
             for (int i = 0; i < 5; i++) {
                 FileChannel channel = frameReadingChannel;
-                ByteBuffer bb = ByteBuffer.allocate(bs.get(i).dataLen);
+                ByteBuffer bb = ByteBuffer.allocate(bs.get(i)._dataLen);
                 frameReadingChannel.position(bs.get(i).dataOffset);
                 frameReadingChannel.read(bb);
                 ByteBuffer[] frames = bs.get(i).getFrames(bb);
@@ -90,7 +89,7 @@ public class MKVMuxerTest {
             Assert.assertNotNull(bs);
             Assert.assertEquals(5, bs.size());
             for (int i = 5; i < 10; i++) {
-                ByteBuffer bb = ByteBuffer.allocate(bs.get(i-5).dataLen);
+                ByteBuffer bb = ByteBuffer.allocate(bs.get(i-5)._dataLen);
                 frameReadingChannel.position(bs.get(i-5).dataOffset);
                 frameReadingChannel.read(bb);
                 ByteBuffer[] frames = bs.get(i - 5).getFrames(bb);
@@ -219,7 +218,7 @@ public class MKVMuxerTest {
             FileChannel channel = remuxerInputStream.getChannel();
             MKVType[] path = { Segment, Cluster, SimpleBlock };
             for (MkvBlock be : MKVType.findAllTree(tree, path).toArray(new MkvBlock[0])) {
-                ByteBuffer bb = ByteBuffer.allocate(be.dataLen);
+                ByteBuffer bb = ByteBuffer.allocate(be._dataLen);
                 
                 channel.position(be.dataOffset);
                 int read = channel.read(bb);
@@ -229,7 +228,7 @@ public class MKVMuxerTest {
             MKVType[] path1 = { Segment, Cluster, BlockGroup, Block };
             
             for (MkvBlock be : MKVType.findAllTree(tree, path1).toArray(new MkvBlock[0])) {
-                ByteBuffer bb = ByteBuffer.allocate(be.dataLen);
+                ByteBuffer bb = ByteBuffer.allocate(be._dataLen);
                 
                 channel.position(be.dataOffset);
                 int read = channel.read(bb);

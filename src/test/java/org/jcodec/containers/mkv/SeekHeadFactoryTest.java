@@ -199,7 +199,7 @@ public class SeekHeadFactoryTest {
     
     public static EbmlBase createFakeElement(byte[] id, int size){
         EbmlBase e = new EbmlBin(id);
-        e.dataLen = size;
+        e._dataLen = size;
         return e;
     }
     

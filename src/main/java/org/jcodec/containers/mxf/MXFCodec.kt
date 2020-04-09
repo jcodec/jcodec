@@ -6,7 +6,7 @@ import org.jcodec.containers.mxf.model.UL
 class MXFCodec internal constructor(val ul: UL, val codec: Codec?) {
 
     companion object {
-        fun mxfCodec(ul: String?, codec: Codec?): MXFCodec {
+        fun mxfCodec(ul: String, codec: Codec?): MXFCodec {
             return MXFCodec(UL.newUL(ul), codec)
         }
 

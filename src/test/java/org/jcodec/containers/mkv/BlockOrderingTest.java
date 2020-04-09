@@ -30,7 +30,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.System;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.List;
 public class BlockOrderingTest {
 
@@ -40,7 +39,7 @@ public class BlockOrderingTest {
         byte[] rawFrame = IOUtils.readFileToByteArray(file);
         MkvBlock be = new MkvBlock(SimpleBlock.id);
         be.offset = 0x00;
-        be.dataLen = 0xC05;
+        be._dataLen = 0xC05;
         be.dataOffset = 0x03;
         ByteBuffer source = readFileFromOffset(file, be.dataOffset);
         be.read(source);
@@ -64,7 +63,7 @@ public class BlockOrderingTest {
         ByteBuffer rawFrame = NIOUtils.fetchFromFile(file);
         MkvBlock be = new MkvBlock(Block.id);
         be.offset = 0x00;
-        be.dataLen = 0xF22;
+        be._dataLen = 0xF22;
         be.dataOffset = 0x03;
         ByteBuffer source = readFileFromOffset(file, be.dataOffset);
         be.read(source);
@@ -85,7 +84,7 @@ public class BlockOrderingTest {
         byte[] rawFrame = readFileToByteArray(file);
         MkvBlock be = new MkvBlock(Block.id);
         be.offset = 0x00;
-        be.dataLen = 0x353;
+        be._dataLen = 0x353;
         be.dataOffset = 0x03;
         ByteBuffer source = readFileFromOffset(file, be.dataOffset);
         be.read(source);
@@ -100,12 +99,12 @@ public class BlockOrderingTest {
         byte[] rawFrame = readFileToByteArray(file);
         MkvBlock be = new MkvBlock(SimpleBlock.id);
         be.offset = 0x00;
-        be.dataLen = 0x304;
+        be._dataLen = 0x304;
         be.dataOffset = 0x03;
         ByteBuffer source = readFileFromOffset(file, be.dataOffset);
         be.read(source);
         be.readFrames(source);
-        Assert.assertEquals(be.dataLen, be.getDataSize());
+        Assert.assertEquals(be._dataLen, be.getDataSize());
         Assert.assertEquals(rawFrame.length, be.size());
         Assert.assertArrayEquals(rawFrame, be.getData().array());
     }

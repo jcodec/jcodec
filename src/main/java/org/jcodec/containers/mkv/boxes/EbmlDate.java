@@ -36,9 +36,9 @@ public class EbmlDate extends EbmlSint {
 
     @Override
     public void setLong(long value) {
-        this.data = ByteBuffer.allocate(8);
-        this.data.putLong(value);
-        this.data.flip();
+        this._data = ByteBuffer.allocate(8);
+        this._data.putLong(value);
+        this._data.flip();
     }
 
 }

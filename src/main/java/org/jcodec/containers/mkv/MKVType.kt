@@ -603,7 +603,7 @@ class MKVType private constructor(private val _name: String, @JvmField val id: B
             // 1. since Void/CRC32 can occur anywhere in the tree,
             //     look if they violate size-offset  contract of the parent.
             //     Violated size-offset contract implies the global EbmlBase actually belongs to parent
-            if (Platform.arrayEqualsByte(child.id, Void.id) || Platform.arrayEqualsByte(child.id, CRC32.id)) return child.offset != parent.dataOffset + parent.dataLen
+            if (Platform.arrayEqualsByte(child.id, Void.id) || Platform.arrayEqualsByte(child.id, CRC32.id)) return child.offset != parent.dataOffset + parent._dataLen
 
             // 2. In case Void/CRC32 type is assigned, child EbmlBase is assumed as global,
             //    thus it can appear anywhere in the tree
@@ -651,7 +651,7 @@ class MKVType private constructor(private val _name: String, @JvmField val id: B
             val head: MKVType = path.removeAt(0)
             var result: EbmlBase? = null
             if (elem is EbmlMaster) {
-                val iter: Iterator<EbmlBase> = elem.children.iterator()
+                val iter: Iterator<EbmlBase> = elem.children!!.iterator()
                 while (iter.hasNext() && result == null) result = findFirstSub(iter.next(), path)
             }
             path.add(0, head)
@@ -677,7 +677,7 @@ class MKVType private constructor(private val _name: String, @JvmField val id: B
             if (path.size > 0) {
                 val head: MKVType = path.removeAt(0)
                 if (element is EbmlMaster) {
-                    for (candidate in element.children) {
+                    for (candidate in element.children!!) {
                         if (head == null || head == candidate.type) {
                             findSubList(candidate, path, result)
                         }
@@ -718,7 +718,7 @@ class MKVType private constructor(private val _name: String, @JvmField val id: B
                 val path = path.toMutableList()
                 val head: MKVType = path.removeAt(0)
                 if (master is EbmlMaster) {
-                    for (candidate in master.children) {
+                    for (candidate in master.children!!) {
                         if (head == null || head == candidate.type) {
                             findSub(candidate, path, result)
                         }

@@ -34,12 +34,12 @@ class MKVParser(private val channel: SeekableByteChannel) {
             } else if (e is EbmlBin) {
                 val bin = e as EbmlBin
                 val traceTop = trace.peekFirst()
-                if (traceTop!!.dataOffset + traceTop.dataLen < bin.dataOffset + bin.dataLen) {
-                    channel.setPosition(traceTop.dataOffset + traceTop.dataLen)
+                if (traceTop!!.dataOffset + traceTop._dataLen < bin.dataOffset + bin._dataLen) {
+                    channel.setPosition(traceTop.dataOffset + traceTop._dataLen)
                 } else try {
                     bin.readChannel(channel)
                 } catch (oome: OutOfMemoryError) {
-                    throw RuntimeException(bin.type.toString() + " 0x" + EbmlUtil.toHexString(bin.id) + " size: " + java.lang.Long.toHexString(bin.dataLen.toLong()) + " offset: 0x" + java.lang.Long.toHexString(bin.offset), oome)
+                    throw RuntimeException(bin.type.toString() + " 0x" + EbmlUtil.toHexString(bin.id) + " size: " + java.lang.Long.toHexString(bin._dataLen.toLong()) + " offset: 0x" + java.lang.Long.toHexString(bin.offset), oome)
                 }
                 trace.peekFirst()!!.add(e)
             } else if (e is EbmlVoid) {
@@ -88,7 +88,7 @@ class MKVParser(private val channel: SeekableByteChannel) {
         elem.offset = offset
         elem.typeSizeLength = (channel.position() - offset).toInt()
         elem.dataOffset = channel.position()
-        elem.dataLen = dataLen.toInt()
+        elem._dataLen = dataLen.toInt()
         return elem
     }
 

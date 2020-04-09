@@ -25,7 +25,7 @@ public class EbmlString extends EbmlBin {
     
     public String getString() {
         try {
-            return new String(data.array(), charset);
+            return new String(_data.array(), charset);
         } catch (java.io.UnsupportedEncodingException ex) {
             ex.printStackTrace();
             return "";
@@ -34,7 +34,7 @@ public class EbmlString extends EbmlBin {
     
     public void setString(String value){
         try {
-            this.data = ByteBuffer.wrap(value.getBytes(charset));
+            this._data = ByteBuffer.wrap(value.getBytes(charset));
         } catch (java.io.UnsupportedEncodingException ex) {
             ex.printStackTrace();
         }

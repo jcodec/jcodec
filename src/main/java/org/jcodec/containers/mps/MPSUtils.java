@@ -1,4 +1,5 @@
 package org.jcodec.containers.mps;
+
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Rational;
@@ -10,11 +11,10 @@ import java.util.List;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
- * 
+ * <p>
  * Demuxer for MPEG Program Stream format
- * 
+ *
  * @author The JCodec project
- * 
  */
 public class MPSUtils {
 
@@ -71,11 +71,11 @@ public class MPSUtils {
         private int pesLeft;
 
         private ByteBuffer pesBuffer;
-            
+
         public PESReader() {
             this.pesBuffer = ByteBuffer.allocate(1 << 21);
         }
-        
+
         protected abstract void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream);
 
         public void analyseBuffer(ByteBuffer buf, long pos) {
@@ -210,8 +210,10 @@ public class MPSUtils {
         } else
             NIOUtils.skip(is, header_len);
 
-        return new PESPacket(null, pts, streamId, len, pos, dts);
+        return new PESPacket(EMPTY, pts, streamId, len, pos, dts);
     }
+
+    private final static ByteBuffer EMPTY = ByteBuffer.allocate(0);
 
     public static long readTs(ByteBuffer is) {
         return (((long) is.get() & 0x0e) << 29) | ((is.get() & 0xff) << 22) | (((is.get() & 0xff) >> 1) << 15)
@@ -257,11 +259,11 @@ public class MPSUtils {
         Rational[] frameRates;
 
         public VideoStreamDescriptor() {
-            this.frameRates = new Rational[] { null, new Rational(24000, 1001), new Rational(24, 1),
+            this.frameRates = new Rational[]{null, new Rational(24000, 1001), new Rational(24, 1),
                     new Rational(25, 1), new Rational(30000, 1001), new Rational(30, 1), new Rational(50, 1),
                     new Rational(60000, 1001), new Rational(60, 1), null, null, null, null, null, null, null};
         }
-            
+
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
@@ -351,12 +353,12 @@ public class MPSUtils {
 
     public static class ISO639LanguageDescriptor extends MPEGMediaDescriptor {
         private IntArrayList languageCodes;
-        
+
         public ISO639LanguageDescriptor() {
             super();
             this.languageCodes = IntArrayList.createIntArrayList();
         }
-        
+
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
@@ -450,7 +452,7 @@ public class MPSUtils {
 
     public static class DataStreamAlignmentDescriptor extends MPEGMediaDescriptor {
         private int alignmentType;
-        
+
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
@@ -461,21 +463,21 @@ public class MPSUtils {
             return alignmentType;
         }
     }
-    
+
     public static class RegistrationDescriptor extends MPEGMediaDescriptor {
         private int formatIdentifier;
         private IntArrayList additionalFormatIdentifiers;
-        
+
         public RegistrationDescriptor() {
             super();
             this.additionalFormatIdentifiers = IntArrayList.createIntArrayList();
         }
-        
+
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
             formatIdentifier = buf.getInt();
-            while(buf.hasRemaining()) {
+            while (buf.hasRemaining()) {
                 additionalFormatIdentifiers.add(buf.get() & 0xff);
             }
         }

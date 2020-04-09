@@ -84,7 +84,7 @@ public class MkvBlock extends EbmlBin {
         is.read(bb);
         bb.flip();
         this.read(bb);
-        is.setPosition(this.dataOffset+this.dataLen);
+        is.setPosition(this.dataOffset+this._dataLen);
     }
 
     @Override
@@ -108,18 +108,18 @@ public class MkvBlock extends EbmlBin {
             if (laceFlags == 0x02) {
                 /* Xiph */
                 lacing = XIPH;
-                headerSize = readXiphLaceSizes(bb, frameSizes, (int) this.dataLen, bb.position());
+                headerSize = readXiphLaceSizes(bb, frameSizes, (int) this._dataLen, bb.position());
 
             } else if (laceFlags == 0x06) {
                 /* EBML */
                 lacing = EBML;
-                headerSize = readEBMLLaceSizes(bb, frameSizes, (int) this.dataLen, bb.position());
+                headerSize = readEBMLLaceSizes(bb, frameSizes, (int) this._dataLen, bb.position());
 
             } else if (laceFlags == 0x04) {
                 /* Fixed Size Lacing */
                 this.lacing = FIXED;
                 this.headerSize = bb.position();
-                int aLaceSize = (int) ((this.dataLen - this.headerSize) / (lacesCount + 1));
+                int aLaceSize = (int) ((this._dataLen - this.headerSize) / (lacesCount + 1));
                 Arrays.fill(frameSizes, aLaceSize);
                 
             } else {
@@ -136,7 +136,7 @@ public class MkvBlock extends EbmlBin {
             headerSize = bb.position();
 
             frameSizes = new int[1];
-            frameSizes[0] = (int) (this.dataLen - headerSize);
+            frameSizes[0] = (int) (this._dataLen - headerSize);
         }
     }
 
@@ -272,10 +272,10 @@ public class MkvBlock extends EbmlBin {
     }
 
     public void seekAndReadContent(FileChannel source) throws IOException {
-        data = ByteBuffer.allocate((int) dataLen);
+        _data = ByteBuffer.allocate((int) _dataLen);
         source.position(dataOffset);
-        source.read(data);
-        this.data.flip();
+        source.read(_data);
+        this._data.flip();
     }
 
     /**

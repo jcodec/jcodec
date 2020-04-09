@@ -107,7 +107,7 @@ public final class MKVDemuxer implements Demuxer {
                 EbmlBin videoCodecState = (EbmlBin) findFirst(aTrack, path3);
                 ByteBuffer state = null;
                 if (videoCodecState != null)
-                    state = videoCodecState.data;
+                    state = videoCodecState._data;
 
                 MKVType[] path4 = { TrackEntry, Video, PixelWidth };
 
@@ -228,7 +228,7 @@ public final class MKVDemuxer implements Demuxer {
              * Packet.getData() is executed.
              */
             demuxer.channel.setPosition(b.dataOffset);
-            ByteBuffer data = ByteBuffer.allocate(b.dataLen);
+            ByteBuffer data = ByteBuffer.allocate(b._dataLen);
             demuxer.channel.read(data);
             data.flip();
             b.readFrames(data.duplicate());
@@ -354,7 +354,7 @@ public final class MKVDemuxer implements Demuxer {
                  * Packet.getData() is executed.
                  */
                 demuxer.channel.setPosition(b.dataOffset);
-                ByteBuffer data = ByteBuffer.allocate(b.dataLen);
+                ByteBuffer data = ByteBuffer.allocate(b._dataLen);
                 demuxer.channel.read(data);
                 b.readFrames(data);
             }
@@ -440,7 +440,7 @@ public final class MKVDemuxer implements Demuxer {
                      */
                     try {
                         demuxer.channel.setPosition(b.dataOffset);
-                        ByteBuffer data = ByteBuffer.allocate(b.dataLen);
+                        ByteBuffer data = ByteBuffer.allocate(b._dataLen);
                         demuxer.channel.read(data);
                         b.readFrames(data);
                     } catch (IOException ioe) {

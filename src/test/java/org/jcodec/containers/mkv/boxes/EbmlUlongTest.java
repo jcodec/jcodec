@@ -12,7 +12,7 @@ public class EbmlUlongTest {
     public void test() {
         EbmlUlong z = new EbmlUlong(CueClusterPosition.id);
         z.setUlong(2);
-        Assert.assertArrayEquals("THIS IS PARTA!!!", new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02}, z.data.array());
+        Assert.assertArrayEquals("THIS IS PARTA!!!", new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02}, z._data.array());
     }
     
     @Test

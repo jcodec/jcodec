@@ -21,24 +21,24 @@ public class EbmlFloat extends EbmlBin {
             ByteBuffer bb = ByteBuffer.allocate(4);
             bb.putFloat((float) value);
             bb.flip();
-            this.data = bb;
+            this._data = bb;
 
         } else if (value < Double.MAX_VALUE) {
             ByteBuffer bb = ByteBuffer.allocate(8);
             bb.putDouble(value);
             bb.flip();
-            this.data = bb;
+            this._data = bb;
 
         }
     }
 
     public double getDouble() {
 
-        if (data.limit() == 4)
-            return data.duplicate().getFloat();
+        if (_data.limit() == 4)
+            return _data.duplicate().getFloat();
         
 
-        return data.duplicate().getDouble();
+        return _data.duplicate().getDouble();
 
     }
 

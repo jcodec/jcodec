@@ -14,7 +14,7 @@ public class EbmlUlong extends EbmlBin {
 
     public EbmlUlong(byte[] id) {
         super(id);
-        data = ByteBuffer.allocate(8);
+        _data = ByteBuffer.allocate(8);
     }
     
     public static EbmlUlong createEbmlUlong(byte[] id, long value) {
@@ -24,12 +24,12 @@ public class EbmlUlong extends EbmlBin {
     }
     
     public void setUlong(long value){
-        data.putLong(value);
-        data.flip();
+        _data.putLong(value);
+        _data.flip();
     }
 
     public long getUlong() {
-        return data.duplicate().getLong();
+        return _data.duplicate().getLong();
     }
 
 }

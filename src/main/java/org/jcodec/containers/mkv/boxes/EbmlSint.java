@@ -18,14 +18,14 @@ public class EbmlSint extends EbmlBin {
     }
 
     public void setLong(long value) {
-        this.data = ByteBuffer.wrap(convertToBytes(value));
+        this._data = ByteBuffer.wrap(convertToBytes(value));
     }
 
     public long getLong() {
-        if ((data.limit()-data.position()) == 8)
-            return data.duplicate().getLong();
+        if ((_data.limit()- _data.position()) == 8)
+            return _data.duplicate().getLong();
         
-        byte[] b = data.array();
+        byte[] b = _data.array();
         long l = 0;
         for (int i = b.length-1; i >=0 ; i--)
           l |= (b[i] & 0xFFL) << (8*(b.length-1-i));

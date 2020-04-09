@@ -72,7 +72,7 @@ public class CuesFactory {
             
             EbmlUint cueClusterPosition = createByType(CueClusterPosition);
             cueClusterPosition.setUint(cpm.elementOffset+estimatedSize);
-            if (cueClusterPosition.data.limit() != cpm.cueClusterPositionSize)
+            if (cueClusterPosition._data.limit() != cpm.cueClusterPositionSize)
                 System.err.println("estimated size of CueClusterPosition differs from the one actually used. ElementId: "+EbmlUtil.toHexString(cpm.id)+" "+cueClusterPosition.getData().limit()+" vs "+cpm.cueClusterPositionSize);
             cueTrackPositions.add(cueClusterPosition);
             
