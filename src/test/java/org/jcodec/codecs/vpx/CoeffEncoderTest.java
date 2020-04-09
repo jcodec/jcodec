@@ -2,6 +2,8 @@ package org.jcodec.codecs.vpx;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
+
 public class CoeffEncoderTest {
 
     public static int[][][][] cloneProb() {
@@ -202,7 +204,7 @@ public class CoeffEncoderTest {
         private int cur;
 
         public MockVpxBooleanEncoder(int[] probs, int[] bits) {
-            super(null);
+            super(ByteBuffer.allocate(0));
             this.probs = probs;
             this.bits = bits;
         }
