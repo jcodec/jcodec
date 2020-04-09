@@ -5,9 +5,8 @@ import org.jcodec.common.tools.MathUtil;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
- * 
+ *
  * @author The JCodec project
- * 
  */
 public class MPEG4DCT {
     private final static int W1 = 2841;
@@ -50,37 +49,37 @@ public class MPEG4DCT {
         idctRows(block);
 
         switch (index) {
-        case 0:
-            idctColumnsAdd(block, p[0], 0, 16);
-            break;
+            case 0:
+                idctColumnsAdd(block, p[0], 0, 16);
+                break;
 
-        case 1:
-            idctColumnsAdd(block, p[0], 8, 16);
-            break;
+            case 1:
+                idctColumnsAdd(block, p[0], 8, 16);
+                break;
 
-        case 2:
-            if (interlacing) {
-                idctColumnsAdd(block, p[0], 16, 32);
-            } else {
-                idctColumnsAdd(block, p[0], 128, 16);
-            }
-            break;
+            case 2:
+                if (interlacing) {
+                    idctColumnsAdd(block, p[0], 16, 32);
+                } else {
+                    idctColumnsAdd(block, p[0], 128, 16);
+                }
+                break;
 
-        case 3:
-            if (interlacing) {
-                idctColumnsAdd(block, p[0], 24, 32);
-            } else {
-                idctColumnsAdd(block, p[0], 136, 16);
-            }
-            break;
+            case 3:
+                if (interlacing) {
+                    idctColumnsAdd(block, p[0], 24, 32);
+                } else {
+                    idctColumnsAdd(block, p[0], 136, 16);
+                }
+                break;
 
-        case 4:
-            idctColumnsAdd(block, p[1], 0, 8);
-            break;
+            case 4:
+                idctColumnsAdd(block, p[1], 0, 8);
+                break;
 
-        case 5:
-            idctColumnsAdd(block, p[2], 0, 8);
-            break;
+            case 5:
+                idctColumnsAdd(block, p[2], 0, 8);
+                break;
         }
     }
 
@@ -91,24 +90,33 @@ public class MPEG4DCT {
     }
 
     public static void idctColumnsPut(short[] block, byte[] dst, int dstOffset, int stride) {
-        int X0, X1, X2, X3, X4, X5, X6, X7, X8;
-
         for (int i = 0; i < 8; i++) {
             int offset = dstOffset + i;
 
-            if (((X1 = (block[i + 8 * 4] << 8)) | (X2 = block[i + 8 * 6]) | (X3 = block[i + 8 * 2])
-                    | (X4 = block[i + 8 * 1]) | (X5 = block[i + 8 * 7]) | (X6 = block[i + 8 * 5])
-                    | (X7 = block[i + 8 * 3])) == 0) {
-                dst[offset + stride * 0] = dst[offset + stride * 1] = dst[offset + stride * 2] = dst[offset
-                        + stride * 3] = dst[offset + stride * 4] = dst[offset + stride * 5] = dst[offset
-                                + stride * 6] = dst[offset + stride * 7] = clamp255(((block[i + 8 * 0] + 32) >> 6));
+            int X1 = block[i + 8 * 4] << 8;
+            int X2 = block[i + 8 * 6];
+            int X3 = block[i + 8 * 2];
+            int X4 = block[i + 8 * 1];
+            int X5 = block[i + 8 * 7];
+            int X6 = block[i + 8 * 5];
+            int X7 = block[i + 8 * 3];
+            if (((X1) | (X2) | (X3) | (X4) | (X5) | (X6) | (X7)) == 0) {
+                byte v = clamp255(((block[i + 8 * 0] + 32) >> 6));
+                dst[offset + stride * 0] = v;
+                dst[offset + stride * 1] = v;
+                dst[offset + stride * 2] = v;
+                dst[offset + stride * 3] = v;
+                dst[offset + stride * 4] = v;
+                dst[offset + stride * 5] = v;
+                dst[offset + stride * 6] = v;
+                dst[offset + stride * 7] = v;
 
                 continue;
             }
 
-            X0 = (block[i + 8 * 0] << 8) + 8192;
+            int X0 = (block[i + 8 * 0] << 8) + 8192;
 
-            X8 = W7 * (X4 + X5) + 4;
+            int X8 = W7 * (X4 + X5) + 4;
             X4 = (X8 + (W1 - W7) * X4) >> 3;
             X5 = (X8 - (W1 + W7) * X5) >> 3;
             X8 = W3 * (X6 + X7) + 4;
@@ -144,16 +152,18 @@ public class MPEG4DCT {
     }
 
     public static void idctColumnsAdd(short[] block, byte[] dst, int dstOffset, int stride) {
-        int X0, X1, X2, X3, X4, X5, X6, X7, X8;
-
         for (int i = 0; i < 8; i++) {
             int offset = dstOffset + i;
 
-            if (((X1 = (block[i + 8 * 4] << 8)) | (X2 = block[i + 8 * 6]) | (X3 = block[i + 8 * 2])
-                    | (X4 = block[i + 8 * 1]) | (X5 = block[i + 8 * 7]) | (X6 = block[i + 8 * 5])
-                    | (X7 = block[i + 8 * 3])) == 0) {
+            int X1 = block[i + 8 * 4] << 8;
+            int X2 = block[i + 8 * 6];
+            int X3 = block[i + 8 * 2];
+            int X4 = block[i + 8 * 1];
+            int X5 = block[i + 8 * 7];
+            int X6 = block[i + 8 * 5];
+            int X7 = block[i + 8 * 3];
+            if (((X1) | (X2) | (X3) | (X4) | (X5) | (X6) | (X7)) == 0) {
                 int pixel = (block[i + 8 * 0] + 32) >> 6;
-
                 dst[offset + stride * 0] = (byte) MathUtil.clip(dst[offset + stride * 0] + pixel, -128, 127);
                 dst[offset + stride * 1] = (byte) MathUtil.clip(dst[offset + stride * 1] + pixel, -128, 127);
                 dst[offset + stride * 2] = (byte) MathUtil.clip(dst[offset + stride * 2] + pixel, -128, 127);
@@ -166,9 +176,9 @@ public class MPEG4DCT {
                 continue;
             }
 
-            X0 = (block[i + 8 * 0] << 8) + 8192;
+            int X0 = (block[i + 8 * 0] << 8) + 8192;
 
-            X8 = W7 * (X4 + X5) + 4;
+            int X8 = W7 * (X4 + X5) + 4;
             X4 = (X8 + (W1 - W7) * X4) >> 3;
             X5 = (X8 - (W1 + W7) * X5) >> 3;
             X8 = W3 * (X6 + X7) + 4;
@@ -204,22 +214,32 @@ public class MPEG4DCT {
     }
 
     public static void idctRows(short[] block) {
-        int X0, X1, X2, X3, X4, X5, X6, X7, X8;
-
         for (int i = 0; i < 8; i++) {
             int offset = i << 3;
 
-            if (((X1 = block[offset + 4] << 11) | (X2 = block[offset + 6]) | (X3 = block[offset + 2])
-                    | (X4 = block[offset + 1]) | (X5 = block[offset + 7]) | (X6 = block[offset + 5])
-                    | (X7 = block[offset + 3])) == 0) {
-                block[offset] = block[offset + 1] = block[offset + 2] = block[offset + 3] = block[offset
-                        + 4] = block[offset + 5] = block[offset + 6] = block[offset + 7] = (short) (block[offset] << 3);
+            int X1 = block[offset + 4] << 11;
+            int X2 = block[offset + 6];
+            int X3 = block[offset + 2];
+            int X4 = block[offset + 1];
+            int X5 = block[offset + 7];
+            int X6 = block[offset + 5];
+            int X7 = block[offset + 3];
+            if (((X1) | (X2) | (X3) | (X4) | (X5) | (X6) | (X7)) == 0) {
+                short v = (short) (block[offset] << 3);
+                block[offset] = v;
+                block[offset + 1] = v;
+                block[offset + 2] = v;
+                block[offset + 3] = v;
+                block[offset + 4] = v;
+                block[offset + 5] = v;
+                block[offset + 6] = v;
+                block[offset + 7] = v;
                 continue;
             }
 
-            X0 = (block[offset] << 11) + 128;
+            int X0 = (block[offset] << 11) + 128;
 
-            X8 = W7 * (X4 + X5);
+            int X8 = W7 * (X4 + X5);
             X4 = X8 + (W1 - W7) * X4;
             X5 = X8 - (W1 + W7) * X5;
             X8 = W3 * (X6 + X7);
