@@ -104,6 +104,7 @@ public class CodedSuperBlockTest {
         private int pos;
 
         public CodedSuperBlockMock(int[] expectedMiCol, int[] expectedMiRow, int[] expectedBlSz) {
+            super(new CodedBlock[0]);
             this.expectedMiCol = expectedMiCol;
             this.expectedMiRow = expectedMiRow;
             this.expectedBlSz = expectedBlSz;
