@@ -17,8 +17,6 @@ object MPEG4BiRenderer {
             MPEG4Consts.MODE_INTERPOLATE -> renderBiDir(ctx, refs, mb, false)
             MPEG4Consts.MODE_BACKWARD -> MPEG4Renderer.renderInter(ctx, refs, mb, fcodeBackward, 0, true)
             MPEG4Consts.MODE_FORWARD -> MPEG4Renderer.renderInter(ctx, refs, mb, fcodeForward, 1, true)
-            else -> {
-            }
         }
     }
 
