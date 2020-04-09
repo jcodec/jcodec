@@ -61,8 +61,8 @@ public class MotionEstimator {
         return estimateQPix(ref, patch, fullPix, mbX, mbY);
     }
 
-    private static final int[] SUB_X_OFF = { 0, -2, 2, 0, 0, -2, -2, 2, 2 };
-    private static final int[] SUB_Y_OFF = { 0, 0, 0, -2, 2, -2, 2, -2, 2 };
+    private static final int[] SUB_X_OFF = { 0,   -2,  2,  0,  0, -2, -2,  2,  2,   -1, 1,  0,  0,   -1, -2, -1, -2,  1,  2,  1,  2, -1,  1, -1,  1 };
+    private static final int[] SUB_Y_OFF = { 0,    0,  0, -2,  2, -2,  2, -2,  2,    0, 0, -1,  1,   -2, -1,  2,  1, -2, -1,  2,  1, -1, -1,  1,  1 };
 
     public static int[] estimateQPix(Picture ref, byte[] patch, int[] fullPix, int mbX, int mbY) {
         int fullX = (mbX << 4) + (fullPix[0] >> 2);
@@ -75,7 +75,7 @@ public class MotionEstimator {
         // Calculating half pen
         int[] pp = new int[352];
         int[] pn = new int[352];
-        int scores[] = new int[9];
+        int scores[] = new int[25];
         for (int j = 0, dOff = 0, sOff = 0; j < 22; j++) {
             for (int i = 0; i < 16; i++, dOff++, sOff++) {
                 {
@@ -97,32 +97,61 @@ public class MotionEstimator {
         for (int j = 0, sof = 0, off = 0; j < 16; j++) {
             for (int i = 0; i < 16; i++, off++, sof++) {
                 scores[0] += MathUtil.abs(patch[off] - sp[sof + 69]);
-                scores[1] += MathUtil.abs(patch[off] - clip((pn[off + 48] + 16) >> 5, -128, 127));
-                scores[2] += MathUtil.abs(patch[off] - clip((pp[off + 48] + 16) >> 5, -128, 127));
+                int horN20 = clip((pn[off + 48] + 16) >> 5, -128, 127);
+                int horP20 = clip((pp[off + 48] + 16) >> 5, -128, 127);
+                scores[1] += MathUtil.abs(patch[off] - horN20);
+                scores[2] += MathUtil.abs(patch[off] - horP20);
+                int horN10 = (horN20 + sp[sof + 69] + 1) >> 1;
+                int horP10 = (horP20 + sp[sof + 69] + 1) >> 1;
+                scores[9] += MathUtil.abs(patch[off] - horN10);
+                scores[10] += MathUtil.abs(patch[off] - horP10);
+                int verN20;
                 {
-                    int a = sp[3 + sof + 0] + sp[3 + sof + 110];
+                    int a = sp[3 + sof + 0]  + sp[3 + sof + 110];
                     int b = sp[3 + sof + 22] + sp[3 + sof + 88];
                     int c = sp[3 + sof + 44] + sp[3 + sof + 66];
 
                     int verNeg = a + 5 * ((c << 2) - b);
-                    scores[3] += MathUtil.abs(patch[off] - clip((verNeg + 16) >> 5, -128, 127));
-                    //1 -5 20 20 -5 1
+                    verN20 = clip((verNeg + 16) >> 5, -128, 127);
+                    int verN10 = (verN20 + sp[sof + 69] + 1) >> 1;
+                    int dnn = (verN20 + horN20 + 1) >> 1;
+                    int dpn = (verN20 + horP20 + 1) >> 1;
+                    scores[3] += MathUtil.abs(patch[off] - verN20);
+                    scores[11] += MathUtil.abs(patch[off] - verN10);
+                    scores[21] += MathUtil.abs(patch[off] - dnn);
+                    scores[22] += MathUtil.abs(patch[off] - dpn);
                 }
+                int verP20;
                 {
                     int a = sp[3 + sof + 22] + sp[3 + sof + 132];
                     int b = sp[3 + sof + 44] + sp[3 + sof + 110];
                     int c = sp[3 + sof + 66] + sp[3 + sof + 88];
                     int verPos = a + 5 * ((c << 2) - b);
 
-                    scores[4] += MathUtil.abs(patch[off] - clip((verPos + 16) >> 5, -128, 127));
+                    verP20 = clip((verPos + 16) >> 5, -128, 127);
+                    int verP10 = (verP20 + sp[sof + 69] + 1) >> 1;
+                    int dnp = (verP20 + horN20 + 1) >> 1;
+                    int dpp = (verP20 + horP20 + 1) >> 1;
+
+                    scores[4] += MathUtil.abs(patch[off] - verP20);
+                    scores[12] += MathUtil.abs(patch[off] - verP10);
+                    scores[23] += MathUtil.abs(patch[off] - dnp);
+                    scores[24] += MathUtil.abs(patch[off] - dpp);
                 }
+                
                 {
                     int a = pn[off + 0] + pn[off + 80];
                     int b = pn[off + 16] + pn[off + 64];
                     int c = pn[off + 32] + pn[off + 48];
 
                     int interpNeg = a + 5 * ((c << 2) - b);
-                    scores[5] += MathUtil.abs(patch[off] - clip((interpNeg + 512) >> 10, -128, 127));
+                    int diagNN = clip((interpNeg + 512) >> 10, -128, 127);
+                    int ver = (diagNN + verN20 + 1) >> 1;
+                    int hor = (diagNN + horN20 + 1) >> 1;
+                    
+                    scores[5] += MathUtil.abs(patch[off] - diagNN);
+                    scores[13] += MathUtil.abs(patch[off] - ver);
+                    scores[14] += MathUtil.abs(patch[off] - hor);
                 }
                 {
                     int a = pn[off + 16] + pn[off + 96];
@@ -130,15 +159,25 @@ public class MotionEstimator {
                     int c = pn[off + 48] + pn[off + 64];
                     int interpPos = a + 5 * ((c << 2) - b);
 
-                    scores[6] += MathUtil.abs(patch[off] - clip((interpPos + 512) >> 10, -128, 127));
+                    int diagNP = clip((interpPos + 512) >> 10, -128, 127);
+                    int ver = (diagNP + verP20 + 1) >> 1;
+                    int hor = (diagNP + horN20 + 1) >> 1;
+                    scores[6] += MathUtil.abs(patch[off] - diagNP);
+                    scores[15] += MathUtil.abs(patch[off] - ver);
+                    scores[16] += MathUtil.abs(patch[off] - hor);
                 }
                 {
-                    int a = pp[off + 0] + pp[off + 80];
+                    int a = pp[off + 0]  + pp[off + 80];
                     int b = pp[off + 16] + pp[off + 64];
                     int c = pp[off + 32] + pp[off + 48];
 
                     int interpNeg = a + 5 * ((c << 2) - b);
-                    scores[7] += MathUtil.abs(patch[off] - clip((interpNeg + 512) >> 10, -128, 127));
+                    int diagPN = clip((interpNeg + 512) >> 10, -128, 127);
+                    int ver = (diagPN + verN20 + 1) >> 1;
+                    int hor = (diagPN + horP20 + 1) >> 1;
+                    scores[7] += MathUtil.abs(patch[off] - diagPN);
+                    scores[17] += MathUtil.abs(patch[off] - ver);
+                    scores[18] += MathUtil.abs(patch[off] - hor);
                 }
                 {
                     int a = pp[off + 16] + pp[off + 96];
@@ -146,24 +185,52 @@ public class MotionEstimator {
                     int c = pp[off + 48] + pp[off + 64];
                     int interpPos = a + 5 * ((c << 2) - b);
 
-                    scores[8] += MathUtil.abs(patch[off] - clip((interpPos + 512) >> 10, -128, 127));
+                    int diagPP = clip((interpPos + 512) >> 10, -128, 127);
+                    int ver = (diagPP + verP20 + 1) >> 1;
+                    int hor = (diagPP + horP20 + 1) >> 1;
+                    scores[8] += MathUtil.abs(patch[off] - diagPP);
+                    scores[19] += MathUtil.abs(patch[off] - ver);
+                    scores[20] += MathUtil.abs(patch[off] - hor);
                 }
             }
             sof += 6;
         }
 
+        
         int m0 = Math.min(scores[1], scores[2]);
         int m1 = Math.min(scores[3], scores[4]);
         int m2 = Math.min(scores[5], scores[6]);
+        
         int m3 = Math.min(scores[7], scores[8]);
-        int m4 = Math.min(m0, m1);
-        int m5 = Math.min(m2, m3);
-        int m6 = Math.min(m4, m5);
-        int mf = Math.min(m6, scores[0]);
+        int m4 = Math.min(scores[9], scores[10]);
+        int m5 = Math.min(scores[11], scores[12]);
+        
+        int m6 = Math.min(scores[13], scores[14]);
+        int m7 = Math.min(scores[15], scores[16]);
+        int m8 = Math.min(scores[17], scores[18]);
+        
+        int m9 = Math.min(scores[19], scores[20]);
+        int m10 = Math.min(scores[21], scores[22]);
+        int m11 = Math.min(scores[23], scores[24]);
+        
+        m0 = Math.min(m0, m1);
+        m2 = Math.min(m2, m3);
+        m4 = Math.min(m4, m5);
+        m6 = Math.min(m6, m7);
+        m8 = Math.min(m8, m9);
+        m10 = Math.min(m10, m11);
+        
+        m0 = Math.min(m0, m2);
+        m4 = Math.min(m4, m6);
+        m8 = Math.min(m8, m10);
+        
+        int mf0 = Math.min(scores[0], m0);
+        int mf1 = Math.min(m4, m8);
+        int mf2 = Math.min(mf0, mf1);
 
         int sel = 0;
-        for (int i = 0; i < 9; i++) {
-            if (mf == scores[i]) {
+        for (int i = 0; i < 25; i++) {
+            if (mf2 == scores[i]) {
                 sel = i;
                 break;
             }
