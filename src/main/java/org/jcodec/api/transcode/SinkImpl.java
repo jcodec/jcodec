@@ -348,7 +348,7 @@ public class SinkImpl implements Sink, PacketSink {
             throw new IllegalStateException(
                     "Video encoder has not been initialized, init() must be called before using this class.");
         ColorSpace[] colorSpaces = videoEncoder.getSupportedColorSpaces();
-        return colorSpaces == null ? null : colorSpaces[0];
+        return (colorSpaces == null || colorSpaces.length == 0) ? null : colorSpaces[0];
     }
 
     @Override
