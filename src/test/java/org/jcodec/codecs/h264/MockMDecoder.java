@@ -2,6 +2,8 @@ package org.jcodec.codecs.h264;
 import org.jcodec.codecs.common.biari.MDecoder;
 import org.junit.Assert;
 
+import java.nio.ByteBuffer;
+
 public class MockMDecoder extends MDecoder {
 
     private int[] out;
@@ -9,7 +11,7 @@ public class MockMDecoder extends MDecoder {
     private int pos;
 
     public MockMDecoder(int[] out, int[] m) {
-        super(null, null);
+        super(ByteBuffer.allocate(0), new int[0][0]);
         this.out = out;
         this.m = m;
     }
