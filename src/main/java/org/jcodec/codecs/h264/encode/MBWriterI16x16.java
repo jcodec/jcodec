@@ -193,7 +193,7 @@ public class MBWriterI16x16 {
         }
     }
 
-    private static boolean hasNz(int[] ac) {
+    public static boolean hasNz(int[] ac) {
         int val = 0;
         for (int i = 0; i < 16; i++)
             val |= ac[i];

@@ -31,7 +31,8 @@ public class MBWriterINxN {
                     ctx.i4x4PredTop, ctx.i4x4PredLeft, params.lumaPred4x4[bInd]);
         }
 
-        int cbpLuma = 15;
+        int[][] coeff = new int[16][16];
+        int cbpLuma = lumaAnal(ctx, pic, mbX, mbY, out, qp, outMB, params.lumaPred4x4, coeff);
         int cbpChroma = 2;
         int cbp = cbpLuma | (cbpChroma << 4);
         CAVLCWriter.writeUE(out, params.chrPred);
@@ -42,7 +43,7 @@ public class MBWriterINxN {
         outMB.setType(MBType.I_NxN);
         outMB.setQp(qp);
 
-        luma(ctx, pic, mbX, mbY, out, qp, outMB, params.lumaPred4x4);
+        lumaCode(ctx, pic, mbX, mbY, out, qp, outMB, params.lumaPred4x4, coeff, cbpLuma);
         MBWriterI16x16.chroma(ctx, pic, mbX, mbY, MBType.I_NxN, out, qp, outMB.getPixels(), params.chrPred);
         ctx.prevQp = qp;
     }
@@ -64,42 +65,84 @@ public class MBWriterINxN {
         i4x4PredTop[(mbX << 2) + blkX] = i4x4PredLeft[blkY] = mode;
     }
 
-    private void luma(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, int qp, EncodedMB outMB,
-            int predType[]) {
+    private int lumaAnal(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, int qp, EncodedMB outMB,
+            int predType[], int[][] _coeff) {
+        int cbp = 0;
         byte[] pred = new byte[16];
         int[] coeff = new int[16];
         byte[] tl = new byte[] { ctx.topLeft[0], ctx.leftRow[0][3], ctx.leftRow[0][7], ctx.leftRow[0][11] };
-        for (int bIdx = 0; bIdx < 16; bIdx++) {
-            int blkOffLeft = H264Const.MB_DISP_OFF_LEFT[bIdx];
-            int blkOffTop = H264Const.MB_DISP_OFF_TOP[bIdx];
-            int blkX = (mbX << 2) + blkOffLeft;
-            int blkY = (mbY << 2) + blkOffTop;
+        for (int i8x8 = 0; i8x8 < 4; i8x8++) {
+            boolean hasNz = false;
+            for (int i4x4 = 0; i4x4 < 4; i4x4++) {
+                int bIdx = (i8x8 << 2) + i4x4;
+                int blkOffLeft = H264Const.MB_DISP_OFF_LEFT[bIdx];
+                int blkOffTop = H264Const.MB_DISP_OFF_TOP[bIdx];
+                int blkX = (mbX << 2) + blkOffLeft;
+                int blkY = (mbY << 2) + blkOffTop;
 
-            int dIdx = BLK_DISP_MAP[bIdx];
-            boolean hasLeft = (dIdx & 0x3) != 0 || mbX != 0;
-            boolean hasTop = dIdx >= 4 || mbY != 0;
-            boolean hasTr = ((bIdx == 0 || bIdx == 1 || bIdx == 4) && mbY != 0) || (bIdx == 5 && mbX < ctx.mbWidth - 1)
-                    || bIdx == 2 || bIdx == 6 || bIdx == 8 || bIdx == 9 || bIdx == 10 || bIdx == 12 || bIdx == 14;
+                int dIdx = BLK_DISP_MAP[bIdx];
+                boolean hasLeft = (dIdx & 0x3) != 0 || mbX != 0;
+                boolean hasTop = dIdx >= 4 || mbY != 0;
+                boolean hasTr = ((bIdx == 0 || bIdx == 1 || bIdx == 4) && mbY != 0)
+                        || (bIdx == 5 && mbX < ctx.mbWidth - 1) || bIdx == 2 || bIdx == 6 || bIdx == 8 || bIdx == 9
+                        || bIdx == 10 || bIdx == 12 || bIdx == 14;
 
-            Intra4x4PredictionBuilder.lumaPred(predType[bIdx], hasLeft, hasTop, hasTr, ctx.leftRow[0], ctx.topLine[0],
-                    tl[blkOffTop], blkX << 2, blkOffTop << 2, pred);
-            MBEncoderHelper.takeSubtract(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), blkX << 2,
-                    blkY << 2, coeff, pred, 4, 4);
-            CoeffTransformer.fdct4x4(coeff);
-            CoeffTransformer.quantizeAC(coeff, qp);
-            outMB.nc[dIdx] = CAVLC.totalCoeff(ctx.cavlc[0].writeACBlock(out, blkX, blkY,
-                    blkOffLeft == 0 ? ctx.leftMBType : MBType.I_NxN, blkOffTop == 0 ? ctx.topMBType[mbX] : MBType.I_NxN,
-                    coeff, H264Const.totalZeros16, 0, 16, CoeffTransformer.zigzag4x4));
-            CoeffTransformer.dequantizeAC(coeff, qp, null);
-            CoeffTransformer.idct4x4(coeff);
-            MBEncoderHelper.putBlk(outMB.pixels.getPlaneData(0), coeff, pred, 4, blkOffLeft << 2, blkOffTop << 2, 4, 4);
+                Intra4x4PredictionBuilder.lumaPred(predType[bIdx], hasLeft, hasTop, hasTr, ctx.leftRow[0],
+                        ctx.topLine[0], tl[blkOffTop], blkX << 2, blkOffTop << 2, pred);
+                MBEncoderHelper.takeSubtract(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0),
+                        blkX << 2, blkY << 2, coeff, pred, 4, 4);
+                CoeffTransformer.fdct4x4(coeff);
+                CoeffTransformer.quantizeAC(coeff, qp);
+                System.arraycopy(coeff, 0, _coeff[bIdx], 0, 16);
+                hasNz |= MBWriterI16x16.hasNz(coeff);
+                CoeffTransformer.dequantizeAC(coeff, qp, null);
+                CoeffTransformer.idct4x4(coeff);
+                MBEncoderHelper.putBlk(outMB.pixels.getPlaneData(0), coeff, pred, 4, blkOffLeft << 2, blkOffTop << 2, 4,
+                        4);
 
-            tl[blkOffTop] = ctx.topLine[0][(blkX << 2) + 3];
-            for (int p = 0; p < 4; p++) {
-                ctx.leftRow[0][(blkOffTop << 2) + p] = (byte) clip(coeff[3 + (p << 2)] + pred[3 + (p << 2)], -128, 127);
-                ctx.topLine[0][(blkX << 2) + p]      = (byte) clip(coeff[12 + p] + pred[12 + p], -128, 127);
+                tl[blkOffTop] = ctx.topLine[0][(blkX << 2) + 3];
+                for (int p = 0; p < 4; p++) {
+                    ctx.leftRow[0][(blkOffTop << 2) + p] = (byte) clip(coeff[3 + (p << 2)] + pred[3 + (p << 2)], -128,
+                            127);
+                    ctx.topLine[0][(blkX << 2) + p] = (byte) clip(coeff[12 + p] + pred[12 + p], -128, 127);
+                }
             }
+            cbp |= ((hasNz ? 1 : 0) << i8x8);
         }
         ctx.topLeft[0] = tl[0];
+        return cbp;
+    }
+    
+    private void lumaCode(EncodingContext ctx, Picture pic, int mbX, int mbY, BitWriter out, int qp, EncodedMB outMB,
+            int predType[], int[][] _coeff, int cbpLuma) {
+        int cbp = 0;
+        for (int i8x8 = 0; i8x8 < 4; i8x8++) {
+            int bx = (mbX << 2) | ((i8x8 << 1) & 2);
+            int by = (mbY << 2) | (i8x8 & 2);
+
+            if ((cbpLuma & (1 << i8x8)) != 0) {
+                cbp |= (1 << i8x8);
+                for (int i4x4 = 0; i4x4 < 4; i4x4++) {
+                    int blkX = bx | (i4x4 & 1);
+                    int blkY = by | ((i4x4 >> 1) & 1);
+                    int blkOffLeft = blkX & 0x3;
+                    int blkOffTop = blkY & 0x3;
+                    int bIdx = (i8x8 << 2) + i4x4;
+                    int dIdx = BLK_DISP_MAP[bIdx];
+    
+                    outMB.nc[dIdx] = CAVLC.totalCoeff(
+                            ctx.cavlc[0].writeACBlock(out, blkX, blkY, blkOffLeft == 0 ? ctx.leftMBType : MBType.I_NxN,
+                                    blkOffTop == 0 ? ctx.topMBType[mbX] : MBType.I_NxN, _coeff[bIdx], H264Const.totalZeros16, 0,
+                                    16, CoeffTransformer.zigzag4x4));
+                    
+                }
+            } else {
+                for (int i4x4 = 0; i4x4 < 4; i4x4++) {
+                    int blkX = bx | (i4x4 & 1);
+                    int blkY = by | ((i4x4 >> 1) & 1);
+                    ctx.cavlc[0].setZeroCoeff(blkX, blkY);
+                }
+            }
+        }
     }
 }
