@@ -19,8 +19,7 @@ import org.jcodec.common.model.Packet.FrameType;
 
 /**
  * A demuxer for a wav file.
- * 
- * 
+ *
  * @author Stan Vitvitskiy
  */
 public class WavDemuxer implements Demuxer, DemuxerTrack {
@@ -41,8 +40,9 @@ public class WavDemuxer implements Demuxer, DemuxerTrack {
     public WavDemuxer(SeekableByteChannel ch) throws IOException {
         this.ch = ch;
         header = WavHeader.readChannel(ch);
-        dataSize = ch.size() - ch.position();
+        dataSize = ch.size() - header.dataOffset;
         frameSize = header.getFormat().getFrameSize();
+        ch.setPosition(header.dataOffset);
     }
 
     @Override

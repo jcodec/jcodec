@@ -117,18 +117,6 @@ public class Packet {
         this.pts = pts;
     }
 
-    public static final Comparator<Packet> FRAME_ASC = new Comparator<Packet>() {
-        public int compare(Packet o1, Packet o2) {
-            if (o1 == null && o2 == null)
-                return 0;
-            if (o1 == null)
-                return -1;
-            if (o2 == null)
-                return 1;
-            return o1.frameNo < o2.frameNo ? -1 : (o1.frameNo == o2.frameNo ? 0 : 1);
-        }
-    };
-
     public void setDuration(long duration) {
         this.duration = duration;
     }
