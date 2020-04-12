@@ -9,6 +9,12 @@ import static org.junit.Assert.assertEquals;
 
 public class MD5Test {
     @Test
+    public void testmd5sumBytes() throws Exception {
+        String s = MD5.md5sumBytes(new byte[]{42, 42, 42});
+        assertEquals("8a7ab20ec0ab3262ce329c7dcb399a4e", s);
+    }
+
+    @Test
     public void testmd5sum() throws Exception {
         byte[] b1 = new byte[] { 0, 0, 0, 85, -1, -1, -1, -1, -1, -1, -1, -1,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
