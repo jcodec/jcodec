@@ -22,7 +22,7 @@ class WavMuxerTest {
         track.addFrame(Packet.createPacket(data.asByteBuffer(), 0, 0, 0, 0, Packet.FrameType.UNKNOWN, null))
         wavMuxer.close()
         outbuf.clear()
-        val expected = "524946464e00057415645666d7420100001010-80-45000771020100646174612a0002a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a"
+        val expected = "524946464e00057415645666d742010000101080bb000771020100646174612a0002a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a"
         assertEquals(expected, outbuf.toByteArray().toHex())
     }
 }
