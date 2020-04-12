@@ -3,13 +3,12 @@ package org.jcodec.codecs.mpa;
 import java.io.File;
 import java.nio.ByteBuffer;
 
-import org.jcodec.codecs.mjpeg.tools.Asserts;
+import org.jcodec.Asserts;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp3.MPEGAudioDemuxer;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class Mp3DecoderTest {

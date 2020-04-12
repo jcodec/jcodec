@@ -1,4 +1,4 @@
-package org.jcodec.codecs.mjpeg.tools;
+package org.jcodec;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

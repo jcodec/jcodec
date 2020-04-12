@@ -1,4 +1,4 @@
-package org.jcodec.codecs.mjpeg.tools;
+package org.jcodec;
 
 public class AssertionException extends RuntimeException {
 

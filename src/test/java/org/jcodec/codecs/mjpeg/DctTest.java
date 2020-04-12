@@ -1,7 +1,7 @@
 package org.jcodec.codecs.mjpeg;
 import static org.junit.Assert.assertTrue;
 
-import org.jcodec.codecs.mjpeg.tools.Asserts;
+import org.jcodec.Asserts;
 import org.jcodec.common.dct.DCT;
 import org.jcodec.common.dct.IntDCT;
 import org.jcodec.common.dct.SlowDCT;
