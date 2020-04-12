@@ -5,6 +5,7 @@ import org.jcodec.common.and
 import org.jcodec.common.io.FileChannelWrapper
 import org.jcodec.common.io.NIOUtils
 import org.jcodec.common.model.Packet
+import org.jcodec.common.tools.MD5
 import java.io.File
 import java.lang.StringBuilder
 import java.nio.ByteBuffer
@@ -29,6 +30,7 @@ fun Collection<ByteBuffer>.toByteArray(): ByteArray {
     }.second
 }
 
+fun ByteArray.md5(): String = MD5.md5sumBytes(this)
 
 //toByteBuffer would make a copy of data vs asByteBuffer represents the same data as ByteBuffer
 fun ByteArray.asByteBuffer(): ByteBuffer = ByteBuffer.wrap(this)
