@@ -21,16 +21,16 @@ import java.util.*
  * @author The JCodec project
  */
 class MTSDemuxer(private val channel: SeekableByteChannel) {
-    private val programs: MutableMap<Int, ProgramChannel> = HashMap()
+    private val _programs: MutableMap<Int, ProgramChannel> = HashMap()
 
     init {
         for (pid in findPrograms(channel)) {
-            programs[pid] = ProgramChannel(this)
+            _programs[pid] = ProgramChannel(this)
         }
         channel.setPosition(0)
     }
 
-    fun getPrograms(): Set<Int> = programs.keys
+    fun getPrograms(): Set<Int> = _programs.keys
 
     @Throws(IOException::class)
     fun findPrograms(src: SeekableByteChannel): Set<Int> {
@@ -54,7 +54,7 @@ class MTSDemuxer(private val channel: SeekableByteChannel) {
     }
 
     fun getProgram(pid: Int): ReadableByteChannel? {
-        return programs[pid]
+        return _programs[pid]
     }
 
     //In Javascript you cannot access a field from the outer type. You should define a variable var that=this outside your function definition and use the property of this object.
@@ -101,7 +101,7 @@ class MTSDemuxer(private val channel: SeekableByteChannel) {
     @Throws(IOException::class)
     private fun readAndDispatchNextTSPacket(): Boolean {
         val pkt = readPacket(channel) ?: return false
-        val program = programs[pkt.pid]
+        val program = _programs[pkt.pid]
         program?.storePacket(pkt)
         return true
     }

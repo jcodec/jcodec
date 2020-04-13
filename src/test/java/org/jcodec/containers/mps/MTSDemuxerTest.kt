@@ -24,9 +24,9 @@ class MTSDemuxerTest {
     @Test
     fun demux() {
         val demuxer = MTSDemuxer(NIOUtils.readableChannel(File("src/test/resources/test.ts")))
-        val programs = demuxer.programs
+        val programs = demuxer.getPrograms()
         assertEquals(2, programs.size)
-        Assert.assertArrayEquals(intArrayOf(65, 66), demuxer.programs.toIntArray().sortedArray())
+        Assert.assertArrayEquals(intArrayOf(65, 66), demuxer.getPrograms().toIntArray().sortedArray())
         demuxer.getProgram(65).use { program ->
             val pesbytes = Channels.newInputStream(program).readAllBytes()
             val mpsDemuxer = MPSDemuxer(ByteBufferSeekableByteChannel.readFromByteBuffer(pesbytes.asByteBuffer()))
