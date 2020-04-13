@@ -364,10 +364,12 @@ public class H264Encoder extends VideoEncoder {
         MotionEstimator estimator = new MotionEstimator(ref, sps, motionSearchRange);
         context.prevQp = sliceQp;
 
+//        System.out.println("\n\n");
         int mbWidth = sps.picWidthInMbsMinus1 + 1;
         int mbHeight = sps.picHeightInMapUnitsMinus1 + 1;
         int oldQp = sliceQp;
         for (int mbY = 0, mbAddr = 0; mbY < mbHeight; mbY++) {
+//            System.out.println();
             for (int mbX = 0; mbX < mbWidth; mbX++, mbAddr++) {
                 if (sliceType == SliceType.P) {
                     CAVLCWriter.writeUE(sliceData, 0); // number of skipped mbs
@@ -463,6 +465,7 @@ public class H264Encoder extends VideoEncoder {
             encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, params, vector);
             return;
         }
+//        System.out.print(String.format("%d ", mbQp));
 
         List<RdVector> cands = new LinkedList<RdVector>();
         cands.add(new RdVector(MBType.I_16x16, mbQp));
@@ -482,6 +485,7 @@ public class H264Encoder extends VideoEncoder {
                 bestVector = rdVector;
             }
         }
+//        System.out.println(String.format("mode: %d", params.lumaPred16x16));
         encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, params, bestVector);
     }
 

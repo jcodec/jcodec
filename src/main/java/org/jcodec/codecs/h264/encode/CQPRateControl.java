@@ -12,9 +12,8 @@ import org.jcodec.common.tools.MathUtil;
  *
  */
 public class CQPRateControl implements RateControl {
-    
+
     private static final int MINQP = 12;
-    private static final int VAR_THRESH = 16;
     private int qp;
     private int initialQp;
     private int oldQp;
@@ -25,7 +24,7 @@ public class CQPRateControl implements RateControl {
 
     @Override
     public int startPicture(Size sz, int maxSize, SliceType sliceType) {
-        this.qp = initialQp;   
+        this.qp = initialQp;
         this.oldQp = initialQp;
         return qp;
     }
@@ -46,31 +45,46 @@ public class CQPRateControl implements RateControl {
         int avg = calcAvg(patch);
         double var = calcVar(patch, avg);
         double bright = calcBright(avg);
+        int newQp = initialQp;
+        int range = (initialQp - MINQP) / 2;
+        // Brightness
         double delta = var * 0.1 * Math.max(0, bright - 2);
-        var -= delta;
-        var = Math.round(Math.max(1, Math.min(VAR_THRESH, var)));
-        int newQp = MINQP + (int)(((initialQp - MINQP) * var) / VAR_THRESH);
+        var += delta;
+
+        // Variance
+        if (var < 4) {
+            newQp = Math.max(initialQp / 2, 12);
+        } else if (var < 8) {
+            newQp = initialQp - range / 2;
+        } else if (var < 16) {
+            newQp = initialQp - range / 4;
+        } else if (var < 32) {
+            newQp = initialQp - range / 8;
+        } else if (var < 64) {
+            newQp = initialQp - range / 16;
+        }
         int qpDelta = newQp - oldQp;
         oldQp = newQp;
         return qpDelta;
     }
-    
+
     private int calcAvg(byte[] patch) {
         int sum = 0;
         for (int i = 0; i < 256; i++)
             sum += patch[i];
         return sum >> 8;
     }
+
     private double calcVar(byte[] patch, int avg) {
         long sum1 = 0;
         for (int i = 0; i < 256; i++) {
             int diff = patch[i] - avg;
             sum1 += diff * diff;
         }
-        
+
         return Math.sqrt(sum1 >> 8);
     }
-    
+
     private double calcBright(int avg) {
         return MathUtil.log2(avg + 128);
     }
