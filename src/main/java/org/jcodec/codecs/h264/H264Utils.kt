@@ -321,7 +321,7 @@ object H264Utils {
         val dup = _in.duplicate()
         while (dup.hasRemaining()) {
             val buf = nextNALUnit(dup) ?: break
-            val nu = read(buf.duplicate())
+            val nu = read(buf.duplicate())!!
             if (nu.type == NALUnitType.PPS) {
                 ppsList?.add(NIOUtils.duplicate(buf))
             } else if (nu.type == NALUnitType.SPS) {
@@ -351,7 +351,7 @@ object H264Utils {
         val dup = _in.duplicate()
         while (dup.hasRemaining()) {
             val buf = nextNALUnit(dup) ?: break
-            val nu = read(buf)
+            val nu = read(buf)!!
             if (nu.type == NALUnitType.PPS) {
                 ppsList?.add(NIOUtils.duplicate(buf))
                 _in.position(dup.position())
@@ -483,7 +483,7 @@ object H264Utils {
         val data = _data.duplicate()
         var segment: ByteBuffer
         while (nextNALUnit(data).also { segment = it!! } != null) {
-            val type = read(segment).type
+            val type = read(segment)!!.type
             if (type == NALUnitType.IDR_SLICE || type == NALUnitType.NON_IDR_SLICE) {
                 unescapeNAL(segment)
                 val reader = BitReader.createBitReader(segment)
@@ -499,7 +499,7 @@ object H264Utils {
         val data = _data.duplicate()
         var segment: ByteBuffer?
         while (nextNALUnit(data).also { segment = it } != null) {
-            if (read(segment!!).type == NALUnitType.IDR_SLICE) return true
+            if (read(segment!!)!!.type == NALUnitType.IDR_SLICE) return true
         }
         return false
     }
@@ -507,7 +507,7 @@ object H264Utils {
     @JvmStatic
     fun idrSlice(_data: List<ByteBuffer>): Boolean {
         for (segment in _data) {
-            if (read(segment.duplicate()).type == NALUnitType.IDR_SLICE) return true
+            if (read(segment.duplicate())!!.type == NALUnitType.IDR_SLICE) return true
         }
         return false
     }
@@ -790,7 +790,7 @@ object H264Utils {
     fun getRawNALUnitsOfType(codecPrivate: ByteBuffer, type: NALUnitType): List<ByteBuffer> {
         val result: MutableList<ByteBuffer> = ArrayList()
         for (bb in splitFrame(codecPrivate.duplicate())) {
-            val nu = read(bb)
+            val nu = read(bb)!!
             if (nu.type == type) {
                 result.add(bb)
             }

@@ -43,7 +43,7 @@ class BufferH264ES(bb: ByteBuffer) : DemuxerTrack, Demuxer {
             bb.mark()
             val buf = H264Utils.nextNALUnit(bb) ?: break
             // NIOUtils.skip(buf, 4);
-            val nu = read(buf)
+            val nu = read(buf)!!
             if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
                 val sh = readSliceHeader(buf, nu)
                 if (prevNu != null && prevSh != null && !sameFrame(prevNu, nu, prevSh, sh)) {

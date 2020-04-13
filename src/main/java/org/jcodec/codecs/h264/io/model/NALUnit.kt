@@ -18,12 +18,12 @@ class NALUnit(@JvmField var type: NALUnitType, @JvmField var nal_ref_idc: Int) {
 
     companion object {
         @JvmStatic
-        fun read(_in: ByteBuffer): NALUnit {
+        fun read(_in: ByteBuffer): NALUnit? {
             val nalu: Int = _in.get().toInt() and 0xff
             val nal_ref_idc = nalu shr 5 and 0x3
             val nb = nalu and 0x1f
-            val type = NALUnitType.fromValue(nb)!!
-            return NALUnit(type, nal_ref_idc)
+            val type = NALUnitType.fromValue(nb)
+            return if (type != null) NALUnit(type, nal_ref_idc) else null
         }
     }
 

@@ -36,7 +36,7 @@ class AVCMP4Adaptor(private val meta: DemuxerTrackMeta) : ContainerAdaptor {
         val bb = meta.codecPrivate!!.duplicate()
         var b: ByteBuffer?
         while (nextNALUnit(bb).also { b = it } != null) {
-            val nu = read(b!!)
+            val nu = read(b!!)!!
             if (nu.type != NALUnitType.SPS) continue
             val sps = readSPS(b)
             val ww = sps.picWidthInMbsMinus1 + 1

@@ -296,7 +296,7 @@ class H264Decoder : VideoDecoder() {
         fun createH264DecoderFromCodecPrivate(codecPrivate: ByteBuffer): H264Decoder {
             val d = H264Decoder()
             for (bb in H264Utils.splitFrame(codecPrivate.duplicate())) {
-                val nu = NALUnit.read(bb!!)
+                val nu = NALUnit.read(bb)!!
                 if (nu.type == NALUnitType.SPS) {
                     d.reader.addSps(bb)
                 } else if (nu.type == NALUnitType.PPS) {
@@ -327,7 +327,7 @@ class H264Decoder : VideoDecoder() {
             var validPps = false
             var validSh = false
             for (nalUnit in H264Utils.splitFrame(data.duplicate())) {
-                val marker = NALUnit.read(nalUnit!!)
+                val marker = NALUnit.read(nalUnit!!)!!
                 if (marker.type == NALUnitType.IDR_SLICE || marker.type == NALUnitType.NON_IDR_SLICE) {
                     val reader = BitReader.createBitReader(nalUnit)
                     validSh = validSh(readPart1(reader))

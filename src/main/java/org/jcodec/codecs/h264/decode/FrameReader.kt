@@ -34,7 +34,7 @@ class FrameReader {
     fun readFrame(nalUnits: List<ByteBuffer?>): List<SliceReader>? {
         val result: MutableList<SliceReader> = ArrayList()
         for (nalData in nalUnits) {
-            val nalUnit = NALUnit.read(nalData!!)
+            val nalUnit = NALUnit.read(nalData!!)!!
             H264Utils.unescapeNAL(nalData)
             if (NALUnitType.SPS == nalUnit.type) {
                 val _sps = SeqParameterSet.read(nalData)
