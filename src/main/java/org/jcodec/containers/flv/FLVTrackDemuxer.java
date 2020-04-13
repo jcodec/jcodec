@@ -19,11 +19,10 @@ import org.jcodec.containers.flv.FLVTag.Type;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
- * 
+ * <p>
  * Demuxer frontend for FLV, track based wrapper
- * 
+ *
  * @author The JCodec project
- * 
  */
 public class FLVTrackDemuxer {
 
@@ -57,8 +56,11 @@ public class FLVTrackDemuxer {
         @Override
         public Packet nextFrame() throws IOException {
             FLVTag frame = demuxer.nextFrameI(type, true);
-            framePositions.add(frame.getPosition());
-            return toPacket(frame);
+            if (frame != null) {
+                framePositions.add(frame.getPosition());
+                return toPacket(frame);
+            }
+            return null;
         }
 
         public Packet prevFrame() throws IOException {
@@ -74,7 +76,7 @@ public class FLVTrackDemuxer {
         }
 
         private Packet toPacket(FLVTag frame) {
-            return null;
+            return Packet.createPacket(frame.getData().duplicate(), frame.getPts(), 1000, 0, frame.getFrameNo(), Packet.FrameType.UNKNOWN, null);
         }
 
         @Override
@@ -127,7 +129,7 @@ public class FLVTrackDemuxer {
         FLVTag base;
         while ((base = demuxer.readNextPacket()) != null && base.getPtsD() == 0)
             ;
-        
+
         if (base == null) {
             //cant seek if base not found
             return;
@@ -166,7 +168,7 @@ public class FLVTrackDemuxer {
     }
 
     private FLVTag nextFrameI(Type type, boolean remove) throws IOException {
-        for (Iterator<FLVTag> it = packets.iterator(); it.hasNext();) {
+        for (Iterator<FLVTag> it = packets.iterator(); it.hasNext(); ) {
             FLVTag pkt = it.next();
             if (pkt.getType() == type) {
                 if (remove)
@@ -184,7 +186,7 @@ public class FLVTrackDemuxer {
     }
 
     private FLVTag prevFrameI(Type type, boolean remove) throws IOException {
-        for (ListIterator<FLVTag> it = packets.listIterator(); it.hasPrevious();) {
+        for (ListIterator<FLVTag> it = packets.listIterator(); it.hasPrevious(); ) {
             FLVTag pkt = it.previous();
             if (pkt.getType() == type) {
                 if (remove)
@@ -203,7 +205,7 @@ public class FLVTrackDemuxer {
     }
 
     public DemuxerTrack[] getTracks() {
-        return new DemuxerTrack[] { video, audio };
+        return new DemuxerTrack[]{video, audio};
     }
 
     public DemuxerTrack getVideoTrack() {
