@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264.encode;
 
 import org.jcodec.codecs.h264.io.model.SliceType;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 
 /**
@@ -47,7 +48,7 @@ public class DumbRateControl implements RateControl {
     }
 
     @Override
-    public int initialQpDelta() {
+    public int initialQpDelta(Picture pic, int mbX, int mbY) {
         return 0;
     }
 }

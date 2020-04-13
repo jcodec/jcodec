@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264.encode;
 
 import org.jcodec.codecs.h264.io.model.SliceType;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 
 /**
@@ -16,7 +17,7 @@ public interface RateControl {
 
     int startPicture(Size sz, int maxSize, SliceType sliceType);
 
-    int initialQpDelta(); 
+    int initialQpDelta(Picture pic, int mbX, int mbY); 
     
     int accept(int bits);
 }

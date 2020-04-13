@@ -1,20 +1,13 @@
 package org.jcodec.codecs.h264;
 
-import static org.jcodec.codecs.h264.H264Const.BLK_DISP_MAP;
 import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
-import static org.jcodec.common.tools.MathUtil.clip;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jcodec.codecs.h264.decode.CoeffTransformer;
-import org.jcodec.codecs.h264.decode.Intra16x16PredictionBuilder;
-import org.jcodec.codecs.h264.decode.Intra4x4PredictionBuilder;
 import org.jcodec.codecs.h264.encode.CQPRateControl;
 import org.jcodec.codecs.h264.encode.EncodedMB;
 import org.jcodec.codecs.h264.encode.EncodingContext;
@@ -373,37 +366,39 @@ public class H264Encoder extends VideoEncoder {
 
         int mbWidth = sps.picWidthInMbsMinus1 + 1;
         int mbHeight = sps.picHeightInMapUnitsMinus1 + 1;
+        int oldQp = sliceQp;
         for (int mbY = 0, mbAddr = 0; mbY < mbHeight; mbY++) {
             for (int mbX = 0; mbX < mbWidth; mbX++, mbAddr++) {
                 if (sliceType == SliceType.P) {
                     CAVLCWriter.writeUE(sliceData, 0); // number of skipped mbs
                 }
 
+                int qpDelta = rc.initialQpDelta(pic, mbX, mbY);
+                int mbQp = oldQp + qpDelta;
+
                 int[] mv = null;
                 if (ref != null)
                     mv = estimator.mvEstimate(pic, mbX, mbY);
+
                 NonRdVector params = new NonRdVector(mv, IntraPredEstimator.getLumaMode(pic, context, mbX, mbY),
-                        IntraPredEstimator.getLumaPred4x4(pic, context, mbX, mbY, Math.max(sliceQp - 8, 12)), 0);
+                        IntraPredEstimator.getLumaPred4x4(pic, context, mbX, mbY, mbQp), 0);
 
                 EncodedMB outMB = new EncodedMB();
                 outMB.setPos(mbX, mbY);
                 BitWriter candidate;
                 EncodingContext fork;
-                int totalQpDelta = 0;
-                int qpDelta = rc.initialQpDelta();
                 do {
                     candidate = sliceData.fork();
                     fork = context.fork();
-                    totalQpDelta += qpDelta;
-                    rdMacroblock(fork, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, sliceQp + totalQpDelta,
-                            params);
+                    rdMacroblock(fork, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, mbQp, params);
                     qpDelta = rc.accept(candidate.position() - sliceData.position());
+                    if (qpDelta != 0)
+                        mbQp += qpDelta;
                 } while (qpDelta != 0);
-
                 estimator.mvSave(mbX, mbY, new int[] { outMB.mx[0], outMB.my[0], outMB.mr[0] });
                 sliceData = candidate;
                 context = fork;
-                sliceQp += totalQpDelta;
+                oldQp = mbQp;
 
                 context.update(outMB);
                 if (psnrEn)
@@ -463,17 +458,17 @@ public class H264Encoder extends VideoEncoder {
     private void rdMacroblock(EncodingContext ctx, EncodedMB outMB, SliceType sliceType, Picture pic, int mbX, int mbY,
             BitWriter candidate, int sliceQp, int mbQp, NonRdVector params) {
         if (!enableRdo) {
-            RdVector vector = sliceType == SliceType.P ? new RdVector(MBType.P_16x16, sliceQp)
-                    : new RdVector(MBType.I_16x16, Math.max(sliceQp - 8, 12));
-            encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, params, vector);
+            RdVector vector = sliceType == SliceType.P ? new RdVector(MBType.P_16x16, mbQp)
+                    : new RdVector(MBType.I_16x16, mbQp);
+            encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, params, vector);
             return;
         }
 
         List<RdVector> cands = new LinkedList<RdVector>();
-        cands.add(new RdVector(MBType.I_16x16, Math.max(sliceQp - 8, 12)));
-        cands.add(new RdVector(MBType.I_NxN, Math.max(sliceQp - 8, 12)));
+        cands.add(new RdVector(MBType.I_16x16, mbQp));
+        cands.add(new RdVector(MBType.I_NxN, mbQp));
         if (sliceType == SliceType.P) {
-            cands.add(new RdVector(MBType.P_16x16, sliceQp));
+            cands.add(new RdVector(MBType.P_16x16, mbQp));
         }
         long bestRd = Long.MAX_VALUE;
         RdVector bestVector = null;
@@ -487,7 +482,7 @@ public class H264Encoder extends VideoEncoder {
                 bestVector = rdVector;
             }
         }
-        encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, params, bestVector);
+        encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, params, bestVector);
     }
 
     private long tryVector(EncodingContext ctx, SliceType sliceType, Picture pic, int mbX, int mbY, BitWriter candidate,
@@ -495,7 +490,7 @@ public class H264Encoder extends VideoEncoder {
         int start = candidate.position();
         EncodedMB outMB = new EncodedMB();
         outMB.setPos(mbX, mbY);
-        encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, sliceQp, params, vector);
+        encodeCand(ctx, outMB, sliceType, pic, mbX, mbY, candidate, params, vector);
 
         long[] se = new long[3];
         calcMse(pic, outMB, mbX, mbY, se);
@@ -509,7 +504,7 @@ public class H264Encoder extends VideoEncoder {
     }
 
     private void encodeCand(EncodingContext ctx, EncodedMB outMB, SliceType sliceType, Picture pic, int mbX, int mbY,
-            BitWriter candidate, int sliceQp, NonRdVector params, RdVector vector) {
+            BitWriter candidate, NonRdVector params, RdVector vector) {
         if (vector.mbType == MBType.I_16x16) {
             BitWriter tmp = new BitWriter(ByteBuffer.allocate(1024));
             boolean cbpLuma = mbEncoderI16x16.encodeMacroblock(ctx, pic, mbX, mbY, tmp, outMB, vector.qp, params);

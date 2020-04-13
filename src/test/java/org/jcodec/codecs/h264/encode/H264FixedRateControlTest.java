@@ -22,7 +22,7 @@ public class H264FixedRateControlTest {
             Assert.assertEquals(initQp[i],
                     rc.startPicture(new Size(0, 0), 0, i == 0 ? SliceType.I : (i == 1 ? SliceType.P : SliceType.B)));
             for (int j = 0; j < qpDelta[i].length; j++) {
-                Assert.assertEquals(qpDelta[i][j], rc.initialQpDelta());
+                Assert.assertEquals(qpDelta[i][j], rc.initialQpDelta(null, 0, 0));
                 Assert.assertEquals(0, rc.accept(bits[i][j]));
             }
         }
