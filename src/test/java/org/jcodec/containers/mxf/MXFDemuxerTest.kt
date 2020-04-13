@@ -9,6 +9,7 @@ import org.junit.Test
 import java.io.File
 import java.io.IOException
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class MXFDemuxerTest {
     @Test
@@ -36,6 +37,7 @@ class MXFDemuxerTest {
     fun testAudio() {
         val file = File("src/test/resources/mxf/mono_sine.mxf")
         val mxfDemuxer = MXFDemuxer(NIOUtils.readableChannel(file))
+        assertTrue(mxfDemuxer.tracks.first().isAudio)
         assertEquals(1, mxfDemuxer.audioTracks.size)
         val track = mxfDemuxer.audioTracks.first()
         val asSequence = track.asSequence()
@@ -49,6 +51,8 @@ class MXFDemuxerTest {
     fun testVideo() {
         val file = File("src/test/resources/mxf/LTD16562_SYN16562-PUNCH.mxf")
         val mxfDemuxer = MXFDemuxer(NIOUtils.readableChannel(file))
+        assertTrue(mxfDemuxer.tracks.first().isVideo)
+
         val track = mxfDemuxer.videoTrack
         val asSequence = track.asSequence()
         val toList = asSequence.map { println(it); it }.toList()
