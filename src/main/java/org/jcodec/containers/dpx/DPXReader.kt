@@ -182,17 +182,16 @@ class DPXReader(ch: SeekableByteChannel) {
         }
 
         private fun readImageInfoHeader(r: ByteBuffer): ImageHeader {
-            val h = ImageHeader()
             // offset = 768
-            h.orientation = r.short
-            h.numberOfImageElements = r.short
-            h.pixelsPerLine = r.int
-            h.linesPerImageElement = r.int
-            h.imageElement1 = ImageElement()
-
+            val orientation = r.short
+            val numberOfImageElements = r.short
+            val pixelsPerLine = r.int
+            val linesPerImageElement = r.int
             // offset = 780
-            h.imageElement1.dataSign = r.int
-            return h
+            val dataSign = r.int
+            val imageElement1 = ImageElement(dataSign)
+
+            return ImageHeader(orientation, numberOfImageElements, linesPerImageElement, pixelsPerLine, imageElement1)
         }
     }
 
