@@ -123,4 +123,10 @@ public class ChunkWriter {
             sampleCount += chunk.getSampleCount();
         }
     }
+
+    public void close() throws IOException {
+        for (SeekableByteChannel input : inputs) {
+            input.close();
+        }
+    }
 }

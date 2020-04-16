@@ -155,6 +155,7 @@ public class Flatten {
 
         for (int i = 0; i < tracks.length; i++) {
             writers[i].apply();
+            writers[i].close();
         }
         long mdatSize = out.position() - mdatOff;
 
