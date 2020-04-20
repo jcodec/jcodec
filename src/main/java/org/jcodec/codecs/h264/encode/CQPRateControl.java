@@ -17,6 +17,7 @@ public class CQPRateControl implements RateControl {
     private int qp;
     private int initialQp;
     private int oldQp;
+    private SliceType sliceType;
 
     public CQPRateControl(int qp) {
         this.initialQp = qp;
@@ -26,6 +27,7 @@ public class CQPRateControl implements RateControl {
     public int startPicture(Size sz, int maxSize, SliceType sliceType) {
         this.qp = initialQp;
         this.oldQp = initialQp;
+        this.sliceType = sliceType;
         return qp;
     }
 
@@ -53,7 +55,7 @@ public class CQPRateControl implements RateControl {
 
         // Variance
         if (var < 4) {
-            newQp = Math.max(initialQp / 2, 12);
+            newQp = sliceType == SliceType.I ? Math.max(initialQp / 2, 12) : Math.max(2 * initialQp / 3, 18);
         } else if (var < 8) {
             newQp = initialQp - range / 2;
         } else if (var < 16) {
