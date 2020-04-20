@@ -5,6 +5,7 @@ import static org.jcodec.common.tools.MathUtil.clip;
 
 import java.util.Arrays;
 
+import org.jcodec.codecs.h264.decode.ChromaPredictionBuilder;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.codecs.h264.decode.Intra16x16PredictionBuilder;
 import org.jcodec.codecs.h264.decode.Intra4x4PredictionBuilder;
@@ -44,11 +45,11 @@ public class IntraPredEstimator {
             predModes[bInd] = 2;
             int blkX = (dInd & 0x3) << 2;
             int blkY = (dInd >> 2) << 2;
-            
+
             for (int predType = 0; predType < 9; predType++) {
                 boolean available = Intra4x4PredictionBuilder.lumaPred(predType, hasLeft, hasTop, hasTr, predLeft,
                         predTop, predTopLeft[dInd >> 2], blkX, blkY, pred);
-                
+
                 if (available) {
                     int sad = 0;
                     for (int i = 0; i < 16; i++) {
@@ -92,6 +93,28 @@ public class IntraPredEstimator {
                     ctx.topLine[0], ctx.topLeft[0], mbX << 4, patch);
             if (sad < minSad) {
                 minSad = sad;
+                predMode = predType;
+            }
+        }
+        return predMode;
+    }
+
+    public static int getChromaMode(Picture pic, EncodingContext ctx, int mbX, int mbY) {
+        byte[] patch0 = new byte[64];
+        byte[] patch1 = new byte[64];
+        MBEncoderHelper.take(pic.getPlaneData(1), pic.getPlaneWidth(1), pic.getPlaneHeight(1), mbX << 3, mbY << 3,
+                patch0, 8, 8);
+        MBEncoderHelper.take(pic.getPlaneData(2), pic.getPlaneWidth(2), pic.getPlaneHeight(2), mbX << 3, mbY << 3,
+                patch1, 8, 8);
+        int minSad = Integer.MAX_VALUE;
+        int predMode = -1;
+        for (int predType = 0; predType < 4; predType++) {
+            int sad0 = ChromaPredictionBuilder.predSAD(predType, mbX, mbX != 0, mbY != 0, ctx.leftRow[1],
+                    ctx.topLine[1], ctx.topLeft[1], patch0);
+            int sad1 = ChromaPredictionBuilder.predSAD(predType, mbX, mbX != 0, mbY != 0, ctx.leftRow[2],
+                    ctx.topLine[2], ctx.topLeft[2], patch1);
+            if (sad0 + sad1 < minSad) {
+                minSad = sad0 + sad1;
                 predMode = predType;
             }
         }
