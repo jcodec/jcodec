@@ -4,6 +4,7 @@ import static org.jcodec.codecs.h264.H264Const.CHROMA_BLOCK_LUT;
 import static org.jcodec.codecs.h264.H264Const.CHROMA_POS_LUT;
 import static org.jcodec.common.tools.MathUtil.clip;
 
+import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -38,7 +39,7 @@ public class ChromaPredictionBuilder {
     }
     
     public static void buildPred(int chromaMode, int mbX, boolean leftAvailable,
-            boolean topAvailable, byte[] leftRow, byte[] topLine, byte topLeft, byte[] pixOut) {
+            boolean topAvailable, byte[] leftRow, byte[] topLine, byte topLeft, byte[][] pixOut) {
 
         switch (chromaMode) {
         case 0:
@@ -60,15 +61,29 @@ public class ChromaPredictionBuilder {
     public static int predSAD(int chromaMode, int mbX, boolean leftAvailable, boolean topAvailable, byte[] leftRow,
             byte[] topLine, byte topLeft, byte[] pix) {
         switch (chromaMode) {
+        default:
         case 0:
             return predDCSAD(mbX, leftAvailable, topAvailable, leftRow, topLine, pix);
         case 1:
             return predHorizontalSAD(mbX, leftAvailable, leftRow, pix);
-        default:
         case 2:
             return predVerticalSAD(mbX, topAvailable, topLine, pix);
         case 3:
             return predPlaneSAD(mbX, leftAvailable, topAvailable, leftRow, topLine, topLeft, pix);
+        }
+    }
+    
+    public static boolean predAvb(int chromaMode, boolean leftAvailable, boolean topAvailable) {
+        switch (chromaMode) {
+        default:
+        case 0:
+            return true;
+        case 1:
+            return leftAvailable;
+        case 2:
+            return topAvailable;
+        case 3:
+            return leftAvailable && topAvailable;
         }
     }
 
@@ -89,11 +104,11 @@ public class ChromaPredictionBuilder {
     }
     
     public static void buildPredDC(int mbX, boolean leftAvailable, boolean topAvailable, byte[] leftRow, byte[] topLine,
-            byte[] pixOut) {
-        buildPredDCIns(0, 0, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut);
-        buildPredDCTop(1, 0, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut);
-        buildPredDCLft(0, 1, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut);
-        buildPredDCIns(1, 1, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut);
+            byte[][] pixOut) {
+        buildPredDCIns(0, 0, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut[0]);
+        buildPredDCTop(1, 0, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut[1]);
+        buildPredDCLft(0, 1, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut[2]);
+        buildPredDCIns(1, 1, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut[3]);
     }
 
     public static void predictVertical(int[][] residual, int mbX, boolean topAvailable, byte[] topLine, byte[] pixOut) {
@@ -113,10 +128,10 @@ public class ChromaPredictionBuilder {
         return sad;
     }
     
-    public static void buildPredVert(int mbX, boolean topAvailable, byte[] topLine, byte[] pixOut) {
+    public static void buildPredVert(int mbX, boolean topAvailable, byte[] topLine, byte[][] pixOut) {
         for (int off = 0, j = 0; j < 8; j++) {
             for (int i = 0; i < 8; i++, off++)
-                pixOut[off] = topLine[(mbX << 3) + i];
+                pixOut[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] = topLine[(mbX << 3) + i];
         }
     }
 
@@ -137,10 +152,10 @@ public class ChromaPredictionBuilder {
         return sad;
     }
     
-    public static void buildPredHorz(int mbX, boolean leftAvailable, byte[] leftRow, byte[] pixOut) {
+    public static void buildPredHorz(int mbX, boolean leftAvailable, byte[] leftRow, byte[][] pixOut) {
         for (int off = 0, j = 0; j < 8; j++) {
             for (int i = 0; i < 8; i++, off++)
-                pixOut[off] = leftRow[j];
+                pixOut[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] = leftRow[j];
         }
     }
 
@@ -240,12 +255,8 @@ public class ChromaPredictionBuilder {
         } else {
             s0 = 0;
         }
-        int sad = 0;
-        for (int off = (blkY << 5) + (blkX << 2), j = 0; j < 4; j++, off += 8) {
-            pixOut[off + 0] = (byte)s0;
-            pixOut[off + 1] = (byte)s0;
-            pixOut[off + 2] = (byte)s0;
-            pixOut[off + 3] = (byte)s0;
+        for (int j = 0; j < 16; j++) {
+            pixOut[j] = (byte)s0;
         }
     }
 
@@ -321,11 +332,8 @@ public class ChromaPredictionBuilder {
         } else {
             s1 = 0;
         }
-        for (int off = (blkY << 5) + (blkX << 2), j = 0; j < 4; j++, off += 8) {
-            pixOut[off + 0] = (byte)s1;
-            pixOut[off + 1] = (byte)s1;
-            pixOut[off + 2] = (byte)s1;
-            pixOut[off + 3] = (byte)s1;
+        for (int j = 0; j < 16; j++) {
+            pixOut[j] = (byte)s1;
         }
     }
 
@@ -398,11 +406,8 @@ public class ChromaPredictionBuilder {
         } else {
             s2 = 0;
         }
-        for (int off = (blkY << 5) + (blkX << 2), j = 0; j < 4; j++, off += 8) {
-            pixOut[off + 0] = (byte)s2;
-            pixOut[off + 1] = (byte)s2;
-            pixOut[off + 2] = (byte)s2;
-            pixOut[off + 3] = (byte)s2;
+        for (int j = 0; j < 16; j++) {
+            pixOut[j] = (byte)s2;
         }
     }
 
@@ -464,7 +469,7 @@ public class ChromaPredictionBuilder {
     }
 
     public static void buildPredPlane(int mbX, boolean leftAvailable, boolean topAvailable, byte[] leftRow, byte[] topLine,
-            byte topLeft, byte[] pixOut) {
+            byte topLeft, byte[][] pixOut) {
         int H = 0, blkOffX = (mbX << 3);
 
         for (int i = 0; i < 3; i++) {
@@ -485,7 +490,7 @@ public class ChromaPredictionBuilder {
         for (int off = 0, j = 0; j < 8; j++) {
             for (int i = 0; i < 8; i++, off++) {
                 int val = (a + b * (i - 3) + c * (j - 3) + 16) >> 5;
-                pixOut[off] = (byte)clip(val, -128, 127);
+                pixOut[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] = (byte)clip(val, -128, 127);
             }
         }
     }

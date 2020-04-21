@@ -109,6 +109,8 @@ public class IntraPredEstimator {
         int minSad = Integer.MAX_VALUE;
         int predMode = -1;
         for (int predType = 0; predType < 4; predType++) {
+            if(!ChromaPredictionBuilder.predAvb(predType, mbX != 0, mbY != 0))
+                continue;
             int sad0 = ChromaPredictionBuilder.predSAD(predType, mbX, mbX != 0, mbY != 0, ctx.leftRow[1],
                     ctx.topLine[1], ctx.topLeft[1], patch0);
             int sad1 = ChromaPredictionBuilder.predSAD(predType, mbX, mbX != 0, mbY != 0, ctx.leftRow[2],
