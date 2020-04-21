@@ -39,8 +39,9 @@ fun ByteArray.asByteBuffer(): ByteBuffer = ByteBuffer.wrap(this)
 fun ByteBuffer.toByteArray(): ByteArray = NIOUtils.toArray(this)
 
 fun ByteBuffer.hexDump(): String = HexDump.hexdump(this)
+val _hexLUT = (0..256).map { String.format("%02x", it) }.toTypedArray()
 fun ByteArray.toHex(): String {
-    return fold(StringBuilder()) { sb, b -> sb.append((b and 0xff).toString(16)) }.toString()
+    return fold(StringBuilder()) { sb, b -> sb.append(_hexLUT[(b and 0xff)]) }.toString()
 }
 
 fun String.parseHex(): ByteArray {

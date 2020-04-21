@@ -81,7 +81,7 @@ class AVCMP4Adaptor(private val meta: DemuxerTrackMeta) : ContainerAdaptor {
     }
 
     override fun getMediaInfo(): MediaInfo {
-        return MediaInfo(size)
+        return MediaInfo(size!!)
     }
 
     init {
