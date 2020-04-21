@@ -8,7 +8,7 @@ import java.nio.IntBuffer
  *
  * @author Alex Zhukov
  */
-class IntDCT : DCT() {
+class IntDCT : DCT {
     override fun decode(orig: IntArray): IntArray {
         val inptr = IntBuffer.wrap(orig)
         val workspace = IntBuffer.allocate(64)
