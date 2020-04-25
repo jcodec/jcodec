@@ -36,10 +36,10 @@ public class ChunkReader {
     private SampleSizesBox stsz;
     private TimeToSampleEntry[] tts;
     private SampleDescriptionBox stsd;
-	private SeekableByteChannel[] inputs;
-	private SampleEntry[] entries;
+    private SeekableByteChannel input;
+    private SampleEntry[] entries;
 
-    public ChunkReader(TrakBox trakBox, SeekableByteChannel[] inputs) {
+    public ChunkReader(TrakBox trakBox, SeekableByteChannel inputs) {
         TimeToSampleBox stts = trakBox.getStts();
         tts = stts.getEntries();
         ChunkOffsetsBox stco = trakBox.getStco();
@@ -54,7 +54,7 @@ public class ChunkReader {
         sampleToChunk = stsc.getSampleToChunk();
         stsd = trakBox.getStsd();
         entries = trakBox.getSampleEntries();
-        this.inputs = inputs;
+        this.input = inputs;
     }
 
     public boolean hasNext() {
@@ -101,7 +101,7 @@ public class ChunkReader {
         sampleNo += sampleCount;
         ++curChunk;
         
-        if (inputs != null) {
+        if (input != null) {
         	SeekableByteChannel input = getInput(chunk);
         	input.setPosition(chunk.getOffset());
         	chunk.setData(NIOUtils.fetchFromChannel(input, (int) chunk.getSize()));
@@ -111,7 +111,9 @@ public class ChunkReader {
     
     private SeekableByteChannel getInput(Chunk chunk) {
         SampleEntry se = entries[chunk.getEntry() - 1];
-        return inputs[se.getDrefInd() - 1];
+        if (se.getDrefInd() != 1)
+            throw new RuntimeException("Multiple sample entries");
+        return input;
     }
 
     private int getFrameSize() {

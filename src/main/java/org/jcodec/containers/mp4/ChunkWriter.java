@@ -27,7 +27,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 public class ChunkWriter {
     private long[] offsets;
     private SampleEntry[] entries;
-    private SeekableByteChannel[] inputs;
+    private SeekableByteChannel input;
     private int curChunk;
     private SeekableByteChannel out;
     byte[] buf;
@@ -36,7 +36,7 @@ public class ChunkWriter {
     private int sampleSize;
     private int sampleCount;
 
-    public ChunkWriter(TrakBox trak, SeekableByteChannel[] inputs, SeekableByteChannel out) {
+    public ChunkWriter(TrakBox trak, SeekableByteChannel input, SeekableByteChannel out) {
         this.buf = new byte[8092];
         entries = trak.getSampleEntries();
         ChunkOffsetsBox stco = trak.getStco();
@@ -46,7 +46,7 @@ public class ChunkWriter {
             size = stco.getChunkOffsets().length;
         else
             size = co64.getChunkOffsets().length;
-        this.inputs = inputs;
+        this.input = input;
 
         offsets = new long[size];
         this.out = out;
@@ -92,7 +92,9 @@ public class ChunkWriter {
 
     private SeekableByteChannel getInput(Chunk chunk) {
         SampleEntry se = entries[chunk.getEntry() - 1];
-        return inputs[se.getDrefInd() - 1];
+        if (se.getDrefInd() != 1)
+            throw new RuntimeException("Multiple sample entries not supported");
+        return input;
     }
 
     public void write(Chunk chunk) throws IOException {

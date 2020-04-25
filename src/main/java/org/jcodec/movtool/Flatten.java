@@ -12,18 +12,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.ChunkWriter;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.AliasBox;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
-import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
@@ -87,7 +88,6 @@ public class Flatten {
     }
 
     public void flattenChannel(Movie movie, SeekableByteChannel out) throws IOException {
-        FileTypeBox ftyp = movie.getFtyp();
         MovieBox moov = movie.getMoov();
 
         if (!moov.isPureRefMovie())
@@ -100,9 +100,64 @@ public class Flatten {
         out.write(buf);
 
         long mdatOff = out.position();
-        writeHeader(Header.createHeader("mdat", 0x100000001L), out);
+        File[] inputFiles = getInputs(moov);
+        SeekableByteChannel[] inputs = new SeekableByteChannel[inputFiles.length];
+        for (int i = 0; i < inputFiles.length; i++) {
+            inputs[i] = NIOUtils.readableChannel(inputFiles[i]);
+        }
+        flattenInt(out, moov, inputs);
+        long mdatSize = out.position() - mdatOff;
 
-        SeekableByteChannel[][] inputs = getInputs(moov);
+        out.setPosition(0);
+        MP4Util.writeFullMovie(out, movie);
+
+        long extra = mdatOff - out.position();
+        if (extra < 0)
+            throw new RuntimeException("Not enough space to write the header");
+        writeHeader(Header.createHeader("free", extra), out);
+
+        out.setPosition(mdatOff);
+        writeHeader(Header.createHeader("mdat", mdatSize), out);
+    }
+
+    public void flattenOnTop(Movie movie, File outF) throws IOException {
+        MovieBox moov = movie.getMoov();
+        if (!moov.isPureRefMovie())
+            throw new IllegalArgumentException("movie should be reference");
+        
+        FileChannelWrapper out = null;
+        try {
+            out = NIOUtils.rwChannel(outF);
+            out.setPosition(0);
+            Atom atom = MP4Util.getMoov(MP4Util.getRootAtoms(out));
+            long pos = atom.getOffset() + atom.getHeader().headerSize() - 4;
+            out.setPosition(pos);
+            out.write(ByteBuffer.wrap(new byte[] { 'f', 'r', 'e', 'e' }));
+
+            // Go to the end
+            out.setPosition(out.size());
+            long mdatOff = out.position();
+            File[] inputFiles = getInputs(moov);
+            SeekableByteChannel[] inputs = new SeekableByteChannel[inputFiles.length];
+            for (int i = 0; i < inputFiles.length; i++) {
+                if (!inputFiles[i].getCanonicalPath().contentEquals(outF.getCanonicalPath())) {
+                    inputs[i] = NIOUtils.readableChannel(inputFiles[i]);
+                }
+            }
+            flattenInt(out, moov, inputs);
+            long mdatSize = out.position() - mdatOff;
+
+            MP4Util.writeMovie(out, movie.getMoov());
+
+            out.setPosition(mdatOff);
+            writeHeader(Header.createHeader("mdat", mdatSize), out);
+        } finally {
+            NIOUtils.closeQuietly(out);
+        }
+    }
+
+    private void flattenInt(SeekableByteChannel out, MovieBox moov, SeekableByteChannel[] inputs) throws IOException {
+        writeHeader(Header.createHeader("mdat", 0x100000001L), out);
 
         TrakBox[] tracks = moov.getTracks();
         ChunkReader[] readers = new ChunkReader[tracks.length];
@@ -111,6 +166,9 @@ public class Flatten {
         int totalChunks = 0, writtenChunks = 0, lastProgress = 0;
         long[] off = new long[tracks.length];
         for (int i = 0; i < tracks.length; i++) {
+            if (inputs[i] == null)
+                continue;
+
             readers[i] = new ChunkReader(tracks[i], inputs[i]);
             totalChunks += readers[i].size();
 
@@ -154,20 +212,10 @@ public class Flatten {
         }
 
         for (int i = 0; i < tracks.length; i++) {
+            if (writers[i] == null)
+                continue;
             writers[i].apply();
         }
-        long mdatSize = out.position() - mdatOff;
-
-        out.setPosition(0);
-        MP4Util.writeFullMovie(out, movie);
-
-        long extra = mdatOff - out.position();
-        if (extra < 0)
-            throw new RuntimeException("Not enough space to write the header");
-        writeHeader(Header.createHeader("free", extra), out);
-
-        out.setPosition(mdatOff);
-        writeHeader(Header.createHeader("mdat", mdatSize), out);
     }
 
     private Chunk processChunk(SampleProcessor processor, Chunk orig, TrakBox track, MovieBox moov) throws IOException {
@@ -214,21 +262,18 @@ public class Flatten {
         return lastProgress;
     }
 
-    protected SeekableByteChannel[][] getInputs(MovieBox movie) throws IOException {
+    protected File[] getInputs(MovieBox movie) throws IOException {
         TrakBox[] tracks = movie.getTracks();
-        SeekableByteChannel[][] result = new SeekableByteChannel[tracks.length][];
+        File[] result = new File[tracks.length];
         for (int i = 0; i < tracks.length; i++) {
             DataRefBox drefs = NodeBox.findFirstPath(tracks[i], DataRefBox.class, Box.path("mdia.minf.dinf.dref"));
             if (drefs == null) {
                 throw new RuntimeException("No data references");
             }
             List<Box> entries = drefs.getBoxes();
-            SeekableByteChannel[] e = new SeekableByteChannel[entries.size()];
-            SeekableByteChannel[] inputs = new SeekableByteChannel[entries.size()];
-            for (int j = 0; j < e.length; j++) {
-                inputs[j] = resolveDataRef(entries.get(j));
-            }
-            result[i] = inputs;
+            if (entries.size() != 1)
+                throw new RuntimeException("Concat tracks not supported");
+            result[i] = resolveDataRef(entries.get(0));
         }
         return result;
     }
@@ -245,17 +290,17 @@ public class Flatten {
         return sum;
     }
 
-    public SeekableByteChannel resolveDataRef(Box box) throws IOException {
+    public File resolveDataRef(Box box) throws IOException {
         if (box instanceof UrlBox) {
             String url = ((UrlBox) box).getUrl();
             if (!url.startsWith("file://"))
                 throw new RuntimeException("Only file:// urls are supported in data reference");
-            return readableChannel(new File(url.substring(7)));
+            return new File(url.substring(7));
         } else if (box instanceof AliasBox) {
             String uxPath = ((AliasBox) box).getUnixPath();
             if (uxPath == null)
                 throw new RuntimeException("Could not resolve alias");
-            return readableChannel(new File(uxPath));
+            return new File(uxPath);
         } else {
             throw new RuntimeException(box.getHeader().getFourcc() + " dataref type is not supported");
         }

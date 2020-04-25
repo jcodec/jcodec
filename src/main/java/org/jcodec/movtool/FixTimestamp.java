@@ -26,8 +26,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  */
 public abstract class FixTimestamp {
     public void fixTimestamp(TrakBox trakBox, SeekableByteChannel ch) throws IOException {
-        SeekableByteChannel[] inputs = new SeekableByteChannel[] { ch };
-        ChunkReader chr = new ChunkReader(trakBox, inputs);
+        ChunkReader chr = new ChunkReader(trakBox, ch);
         long prevPts = -1;
         long oldPts = 0;
         int oldDur = -1;
