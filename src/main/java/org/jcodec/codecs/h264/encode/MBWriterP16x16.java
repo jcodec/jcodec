@@ -63,6 +63,7 @@ public class MBWriterP16x16 {
         int dx = tlAvb ? ctx.mvTopLeftX : 0;
         int dy = tlAvb ? ctx.mvTopLeftY : 0;
         boolean dr = tlAvb ? (ctx.mvTopLeftR == refIdx) : false;
+        
         int mvpx = median(ax, ar, bx, br, cx, cr, dx, dr, mbX > 0, mbY > 0, trAvb, tlAvb);
         int mvpy = median(ay, ar, by, br, cy, cr, dy, dr, mbX > 0, mbY > 0, trAvb, tlAvb);
 
