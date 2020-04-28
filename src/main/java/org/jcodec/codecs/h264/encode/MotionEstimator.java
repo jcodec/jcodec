@@ -274,6 +274,8 @@ public class MotionEstimator {
     
             int inPatchX = startX - patchTlX;
             int inPatchY = startY - patchTlY;
+            if (inPatchX < 0 || inPatchY < 0)
+                continue;
             int patchW = patchBrX - patchTlX;
             int patchH = patchBrY - patchTlY;
             // TODO: border fill?
@@ -308,17 +310,14 @@ public class MotionEstimator {
               mvX0 = ((bestMvX - inPatchX) << 2);
               mvY0 = ((bestMvY - inPatchY) << 2);
               mvS0 = bestScore;
+              // Search area 1: mb predictor
+              startX = (mbX << 4) + (mvpx >> 2);
+              startY = (mbY << 4) + (mvpy >> 2);
             } else {
-              mvX1 = ((bestMvX - inPatchX) << 2) + startX - (mbX << 4);
-              mvY1 = ((bestMvY - inPatchY) << 2) + startY - (mbY << 4);
+              mvX1 = (bestMvX - inPatchX + startX - (mbX << 4)) << 2;
+              mvY1 = (bestMvY - inPatchY + startY - (mbY << 4)) << 2;
               mvS1 = bestScore;
             }
-            
-            // Search area 1: mb predictor
-            startX = (mbX << 4) + (mvpx >> 2);
-            startY = (mbY << 4) + (mvpy >> 2);
-            // for now
-            break;
         }
 
         return new int[] { mvS0 < mvS1 ? mvX0 : mvX1, mvS0 < mvS1 ? mvY0 : mvY1};
