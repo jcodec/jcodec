@@ -262,7 +262,7 @@ public class MotionEstimator {
     private int[] estimateFullPix(Picture ref, byte[] patch, int mbX, int mbY, int mvpx, int mvpy) {
         byte[] searchPatch = new byte[(maxSearchRange * 2 + 16) * (maxSearchRange * 2 + 16)];
 
-        int mvX0 = 0, mvX1 = 0, mvY0 = 0, mvY1 = 0, mvS0 = 0, mvS1 = 0;
+        int mvX0 = 0, mvX1 = 0, mvY0 = 0, mvY1 = 0, mvS0 = Integer.MAX_VALUE, mvS1 = Integer.MAX_VALUE;
         // Search area 0: mb position
         int startX = (mbX << 4);
         int startY = (mbY << 4);
@@ -309,8 +309,8 @@ public class MotionEstimator {
               mvY0 = ((bestMvY - inPatchY) << 2);
               mvS0 = bestScore;
             } else {
-              mvX1 = ((bestMvX - inPatchX) << 2) + mvpx;
-              mvY1 = ((bestMvY - inPatchY) << 2) + mvpy;
+              mvX1 = ((bestMvX - inPatchX) << 2) + startX - (mbX << 4);
+              mvY1 = ((bestMvY - inPatchY) << 2) + startY - (mbY << 4);
               mvS1 = bestScore;
             }
             

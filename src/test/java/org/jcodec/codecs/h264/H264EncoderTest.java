@@ -93,9 +93,9 @@ public class H264EncoderTest {
             assertNotNull(encodedFrame);
             Frame decodeFrame = decoder.decodeFrame(encodedFrame.getData(), out.getData());
 
-            assertByteArrayApproximatelyEquals(picture.getData()[0], decodeFrame.getData()[0], 15);
-            assertByteArrayApproximatelyEquals(picture.getData()[1], decodeFrame.getData()[1], 15);
-            assertByteArrayApproximatelyEquals(picture.getData()[2], decodeFrame.getData()[2], 15);
+            assertByteArrayApproximatelyEquals(picture.getData()[0], decodeFrame.getData()[0], 10);
+            assertByteArrayApproximatelyEquals(picture.getData()[1], decodeFrame.getData()[1], 10);
+            assertByteArrayApproximatelyEquals(picture.getData()[2], decodeFrame.getData()[2], 10);
         }
     }
 
