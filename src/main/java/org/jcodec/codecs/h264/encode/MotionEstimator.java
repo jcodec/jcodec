@@ -317,6 +317,8 @@ public class MotionEstimator {
             // Search area 1: mb predictor
             startX = (mbX << 4) + (mvpx >> 2);
             startY = (mbY << 4) + (mvpy >> 2);
+            // for now
+            break;
         }
 
         return new int[] { mvS0 < mvS1 ? mvX0 : mvX1, mvS0 < mvS1 ? mvY0 : mvY1};
