@@ -297,6 +297,7 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     public void addMetaSampleEntry(String contentEncoding, String contentType) {
         TextMetaDataSampleEntry se = new TextMetaDataSampleEntry(contentEncoding, contentType);
+        se.setDrefInd((short)1);
         addSampleEntry(se);
     }
 }

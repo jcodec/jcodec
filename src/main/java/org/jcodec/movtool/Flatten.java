@@ -43,7 +43,7 @@ import org.jcodec.platform.Platform;
  */
 public class Flatten {
     public static interface SampleProcessor {
-        ByteBuffer processSample(ByteBuffer src) throws IOException;
+        ByteBuffer processSample(ByteBuffer src, double pts, double duration) throws IOException;
     }
 
     public static void main1(String[] args) throws Exception {
@@ -221,11 +221,19 @@ public class Flatten {
     private Chunk processChunk(SampleProcessor processor, Chunk orig, TrakBox track, MovieBox moov) throws IOException {
         ByteBuffer src = NIOUtils.duplicate(orig.getData());
         int[] sampleSizes = orig.getSampleSizes();
+        int[] sampleDurs = orig.getSampleDurs();
+        boolean uneqDur = orig.getSampleDur() == Chunk.UNEQUAL_DUR;
         List<ByteBuffer> modSamples = new LinkedList<ByteBuffer>();
         int totalSize = 0;
+        int totalDur = 0;
         for (int ss = 0; ss < sampleSizes.length; ss++) {
             ByteBuffer sample = NIOUtils.read(src, sampleSizes[ss]);
-            ByteBuffer modSample = processor.processSample(sample);
+            int sampleDur = uneqDur ? sampleDurs[ss] : orig.getSampleDur();
+
+            ByteBuffer modSample = processor.processSample(sample,
+                    ((double) (totalDur + orig.getStartTv())) / track.getTimescale(),
+                    ((double) sampleDur) / track.getTimescale());
+            totalDur += sampleDur;
             modSamples.add(modSample);
             totalSize += modSample.remaining();
         }

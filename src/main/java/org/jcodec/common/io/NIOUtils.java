@@ -515,12 +515,12 @@ public class NIOUtils {
         return true;
     }
 
-    public static void copyFile(File file, File file1) throws IOException {
+    public static void copyFile(File src, File dst) throws IOException {
         FileChannelWrapper in = null;
         FileChannelWrapper out = null;
         try {
-            in = readableChannel(file);
-            out = writableChannel(file1);
+            in = readableChannel(src);
+            out = writableChannel(dst);
             copyAll(in, out);
         } finally {
             closeQuietly(in);

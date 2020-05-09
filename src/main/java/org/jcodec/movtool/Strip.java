@@ -284,7 +284,17 @@ public class Strip {
         return SampleToChunkBox.createSampleToChunkBox(result.toArray(new SampleToChunkEntry[0]));
     }
 
-    private boolean intersects(long a, long b, long c, long d) {
-        return (a >= c && a < d) || (b >= c && b < d) || (c >= a && c < b) || (d >= a && d < b);
+    /**
+     * Checks if two intervals intersect
+     * @param as Interval a start
+     * @param ae Interval a end (exclusive)
+     * @param bs Interval b start
+     * @param be Interval b end (exclusive)
+     * @return True if intersect
+     */
+    private boolean intersects(long as, long ae, long bs, long be) {
+        be -= 1;
+        ae -= 1;
+        return (as >= bs && as <= be) || (ae >= bs && ae <= be) || (bs >= as && bs <= ae) || (be >= as && be <= ae);
     }
 }
