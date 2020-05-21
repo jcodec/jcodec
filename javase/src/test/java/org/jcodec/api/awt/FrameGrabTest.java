@@ -24,6 +24,7 @@ import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
+import org.jcodec.javase.api.awt.AWTFrameGrab;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.InOrder;

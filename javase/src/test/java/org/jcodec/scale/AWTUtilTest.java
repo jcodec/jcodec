@@ -2,6 +2,7 @@ package org.jcodec.scale;
 
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.javase.scale.AWTUtil;
 import org.junit.Assert;
 import org.junit.Test;
 

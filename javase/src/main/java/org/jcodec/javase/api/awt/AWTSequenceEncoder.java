@@ -1,4 +1,4 @@
-package org.jcodec.api.awt;
+package org.jcodec.javase.api.awt;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -10,7 +10,7 @@ import org.jcodec.common.Format;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Rational;
-import org.jcodec.scale.AWTUtil;
+import org.jcodec.javase.scale.AWTUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

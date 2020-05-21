@@ -1,20 +1,20 @@
-package org.jcodec.scale;
+package org.jcodec.javase.scale;
 
-import org.jcodec.codecs.png.PNGEncoder;
-import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.VideoEncoder;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
+import static org.jcodec.common.model.ColorSpace.RGB;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
-import static org.jcodec.common.model.ColorSpace.RGB;
+import javax.imageio.ImageIO;
+
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Picture;
+import org.jcodec.scale.ColorUtil;
+import org.jcodec.scale.RgbToBgr;
+import org.jcodec.scale.Transform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

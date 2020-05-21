@@ -1,4 +1,4 @@
-package org.jcodec.api.awt;
+package org.jcodec.javase.api.awt;
 
 import java.awt.image.BufferedImage;
 import java.io.File;

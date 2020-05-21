@@ -1,12 +1,12 @@
 package org.jcodec.samples.api;
 
-import org.jcodec.api.awt.AWTSequenceEncoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
+import org.jcodec.javase.api.awt.AWTSequenceEncoder;
 
 import java.awt.image.BufferedImage;
 import java.io.File;

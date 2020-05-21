@@ -1,4 +1,4 @@
-package org.jcodec.api.awt;
+package org.jcodec.javase.api.awt;
 
 import org.jcodec.api.FrameGrab;
 import org.jcodec.api.JCodecException;
@@ -10,7 +10,7 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Picture;
-import org.jcodec.scale.AWTUtil;
+import org.jcodec.javase.scale.AWTUtil;
 
 import java.awt.image.BufferedImage;
 import java.io.File;

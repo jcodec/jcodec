@@ -1,6 +1,6 @@
 package org.jcodec.player;
 
-import static org.jcodec.common.SoundUtil.toJavax;
+import static org.jcodec.javase.common.SoundUtil.toJavax;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -12,8 +12,8 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
 import org.jcodec.common.AudioFormat;
-import org.jcodec.common.SoundUtil;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.javase.common.SoundUtil;
 import org.jcodec.player.filters.AudioOut;
 import org.jcodec.player.filters.JSoundAudioOut;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;

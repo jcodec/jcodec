@@ -1,6 +1,6 @@
 package org.jcodec.player;
 
-import static org.jcodec.common.SoundUtil.toJavax;
+import static org.jcodec.javase.common.SoundUtil.toJavax;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

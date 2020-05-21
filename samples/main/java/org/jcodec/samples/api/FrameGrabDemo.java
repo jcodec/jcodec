@@ -7,12 +7,12 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import org.jcodec.api.JCodecException;
-import org.jcodec.api.awt.AWTFrameGrab;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
+import org.jcodec.javase.api.awt.AWTFrameGrab;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

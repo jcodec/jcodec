@@ -1,4 +1,4 @@
-package org.jcodec.api.transcode.filter;
+package org.jcodec.javase.api.transcode.filter;
 
 import static org.jcodec.common.model.ColorSpace.RGB;
 
@@ -9,7 +9,7 @@ import org.jcodec.api.transcode.PixelStore;
 import org.jcodec.api.transcode.PixelStore.LoanerPicture;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
-import org.jcodec.scale.AWTUtil;
+import org.jcodec.javase.scale.AWTUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
