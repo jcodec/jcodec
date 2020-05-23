@@ -57,10 +57,10 @@ public class Util {
     }
 
     public static Pair<List<Edit>> splitEdits(List<Edit> edits, Rational trackByMv, long tvMv) {
-        long total = 0;
         List<Edit> l = new ArrayList<Edit>();
         List<Edit> r = new ArrayList<Edit>();
         ListIterator<Edit> lit = edits.listIterator();
+        long total = 0;
         while (lit.hasNext()) {
             Edit edit = lit.next();
             if (total + edit.getDuration() > tvMv) {
@@ -268,14 +268,21 @@ public class Util {
      */
     public static List<Edit> editsOnEdits(Rational mvByTrack, List<Edit> lower, List<Edit> higher) {
         List<Edit> result = new ArrayList<Edit>();
-        List<Edit> next = new ArrayList<Edit>(lower);
         for (Edit edit : higher) {
             long startMv = mvByTrack.multiplyLong(edit.getMediaTime());
-            Pair<List<Edit>> split = splitEdits(next, mvByTrack.flip(), startMv);
-            Pair<List<Edit>> split2 = splitEdits(split.getB(), mvByTrack.flip(), startMv + edit.getDuration());
+            Pair<List<Edit>> split = splitEdits(lower, mvByTrack.flip(), startMv);
+            long off = totalDur(split.getA());
+            Pair<List<Edit>> split2 = splitEdits(split.getB(), mvByTrack.flip(), startMv + edit.getDuration() - off);
             result.addAll(split2.getA());
-            next = split2.getB();
         }
         return result;
+    }
+    
+    private static long totalDur(List<Edit> a) {
+        long total = 0;
+        for (Edit edit : a) {
+            total += edit.getDuration();
+        }
+        return total;
     }
 }
