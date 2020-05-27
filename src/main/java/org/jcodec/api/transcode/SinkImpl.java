@@ -242,6 +242,7 @@ public class SinkImpl implements Sink, PacketSink {
         return "set" + new String(chars);
     }
 
+    @SuppressWarnings("AndroidJdkLibsChecker")
     private void setEncoderOption(String key, String value) {
         Method[] methods = videoEncoder.getClass().getMethods();
         for (Method method : methods) {
@@ -272,7 +273,7 @@ public class SinkImpl implements Sink, PacketSink {
         else if (type == double.class)
             return Double.parseDouble(value);
         else
-            Logger.error("Unsupported codec argument type: " + type.getClass().getName());
+            Logger.error("Unsupported codec argument type: " + type.getName());
         return null;
     }
 

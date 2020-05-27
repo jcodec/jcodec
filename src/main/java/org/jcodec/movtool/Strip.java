@@ -292,7 +292,7 @@ public class Strip {
      * @param be Interval b end (exclusive)
      * @return True if intersect
      */
-    private boolean intersects(long as, long ae, long bs, long be) {
+    private static boolean intersects(long as, long ae, long bs, long be) {
         be -= 1;
         ae -= 1;
         return (as >= bs && as <= be) || (ae >= bs && ae <= be) || (bs >= as && bs <= ae) || (be >= as && be <= ae);

@@ -6,7 +6,6 @@ import static org.jcodec.platform.Platform.stringFromBytes;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.platform.Platform;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,7 +24,6 @@ import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**

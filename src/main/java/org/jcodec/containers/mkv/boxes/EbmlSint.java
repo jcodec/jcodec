@@ -46,7 +46,7 @@ public class EbmlSint extends EbmlBin {
             return 5;
         } else if (val <= 0x20000000000L && val >= -0x01FFFFFFFFFFL) {
             return 6;
-        } else if (val <= 0x1000000000000l && val >= -0x00FFFFFFFFFFFFL) {
+        } else if (val <= 0x1000000000000L && val >= -0x00FFFFFFFFFFFFL) {
             return 7;
         } else {
             return 8;

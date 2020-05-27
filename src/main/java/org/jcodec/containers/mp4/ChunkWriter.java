@@ -27,7 +27,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 public class ChunkWriter {
     private long[] offsets;
     private SampleEntry[] entries;
-    private SeekableByteChannel input;
+    private final SeekableByteChannel input;
     private int curChunk;
     private SeekableByteChannel out;
     byte[] buf;
@@ -90,19 +90,15 @@ public class ChunkWriter {
         }
     }
 
-    private SeekableByteChannel getInput(Chunk chunk) {
+    public void write(Chunk chunk) throws IOException {
         SampleEntry se = entries[chunk.getEntry() - 1];
         if (se.getDrefInd() != 1)
-            throw new RuntimeException("Multiple sample entries not supported");
-        return input;
-    }
+            throw new IOException("Multiple sample entries not supported");
 
-    public void write(Chunk chunk) throws IOException {
         long pos = out.position();
 
         ByteBuffer chunkData = chunk.getData();
         if (chunkData == null) {
-            SeekableByteChannel input = getInput(chunk);
             input.setPosition(chunk.getOffset());
             chunkData = NIOUtils.fetchFromChannel(input, (int) chunk.getSize());
         }
@@ -112,15 +108,15 @@ public class ChunkWriter {
 
         if (chunk.getSampleSize() == Chunk.UNEQUAL_SIZES) {
             if (sampleCount != 0)
-                throw new RuntimeException("Mixed chunks unsupported 1.");
+                throw new IOException("Mixed chunks unsupported 1.");
             sampleSizes.addAll(chunk.getSampleSizes());
         } else {
             if (sampleSizes.size() != 0)
-                throw new RuntimeException("Mixed chunks unsupported 2.");
+                throw new IOException("Mixed chunks unsupported 2.");
             if (sampleCount == 0) {
                 sampleSize = chunk.getSampleSize();
             } else if (sampleSize != chunk.getSampleSize()) {
-                throw new RuntimeException("Mismatching default sizes");
+                throw new IOException("Mismatching default sizes");
             }
             sampleCount += chunk.getSampleCount();
         }

@@ -319,22 +319,6 @@ public class Picture {
         }
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null || !(obj instanceof Picture))
-            return false;
-        Picture other = (Picture) obj;
-
-        if (other.getCroppedWidth() != getCroppedWidth() || other.getCroppedHeight() != getCroppedHeight()
-                || other.getColor() != color)
-            return false;
-
-        for (int i = 0; i < getData().length; i++)
-            if (!planeEquals(other, i))
-                return false;
-        return true;
-    }
-
     private boolean planeEquals(Picture other, int plane) {
         int cw = color.compWidth[plane];
         int ch = color.compHeight[plane];

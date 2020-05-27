@@ -172,7 +172,7 @@ public class SourceImpl implements Source, PacketSource {
                 demuxVideo = mpsDemuxer;
             }
             if (inputAudioCodec != null) {
-                if (inputVideoCodec == null || inputVideoCodec.v0 != inputAudioCodec.v0) {
+                if (inputVideoCodec == null || (int)inputVideoCodec.v0 != (int)inputAudioCodec.v0) {
                     mpsDemuxer = new MPSDemuxer(mtsDemuxer.getProgram(inputAudioCodec.v0));
                 }
                 audioInputTrack = openTSTrack(mpsDemuxer, inputAudioCodec.v1);

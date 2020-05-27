@@ -36,10 +36,10 @@ public class ChunkReader {
     private SampleSizesBox stsz;
     private TimeToSampleEntry[] tts;
     private SampleDescriptionBox stsd;
-    private SeekableByteChannel input;
-    private SampleEntry[] entries;
+    private final SeekableByteChannel input;
+    private final SampleEntry[] entries;
 
-    public ChunkReader(TrakBox trakBox, SeekableByteChannel inputs) {
+    public ChunkReader(TrakBox trakBox, SeekableByteChannel input) {
         TimeToSampleBox stts = trakBox.getStts();
         tts = stts.getEntries();
         ChunkOffsetsBox stco = trakBox.getStco();
@@ -54,7 +54,7 @@ public class ChunkReader {
         sampleToChunk = stsc.getSampleToChunk();
         stsd = trakBox.getStsd();
         entries = trakBox.getSampleEntries();
-        this.input = inputs;
+        this.input = input;
     }
 
     public boolean hasNext() {
@@ -94,26 +94,22 @@ public class ChunkReader {
             sizes = Platform.copyOfRangeI(stsz.getSizes(), sampleNo, sampleNo + sampleCount);
         }
 
-        int dref = sampleToChunk[s2cIndex].getEntry();
-        Chunk chunk = new Chunk(chunkOffsets[curChunk], chunkTv, sampleCount, size, sizes, sampleDur, samplesDur, dref);
+        int eno = sampleToChunk[s2cIndex].getEntry();
+        SampleEntry se = entries[eno - 1];
+        if (se.getDrefInd() != 1)
+            throw new IOException("Multiple sample entries not supported");
+
+        Chunk chunk = new Chunk(chunkOffsets[curChunk], chunkTv, sampleCount, size, sizes, sampleDur, samplesDur, eno);
 
         chunkTv += chunk.getDuration();
         sampleNo += sampleCount;
         ++curChunk;
-        
+
         if (input != null) {
-        	SeekableByteChannel input = getInput(chunk);
         	input.setPosition(chunk.getOffset());
         	chunk.setData(NIOUtils.fetchFromChannel(input, (int) chunk.getSize()));
         }
         return chunk;
-    }
-    
-    private SeekableByteChannel getInput(Chunk chunk) {
-        SampleEntry se = entries[chunk.getEntry() - 1];
-        if (se.getDrefInd() != 1)
-            throw new RuntimeException("Multiple sample entries");
-        return input;
     }
 
     private int getFrameSize() {

@@ -512,7 +512,8 @@ public class ArrayUtil {
     }
 
     public static int instances(byte[] bytes, byte[] bs) {
-        int idx = 0, count = 0;
+        int idx = 0;
+        int count = 0;
         while ((idx = find(bytes, idx + bs.length, bs)) != -1) {
             count++;
         }

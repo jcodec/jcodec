@@ -100,15 +100,18 @@ public class PCE extends Element {
         assocDataElementsCount = _in.readNBit(3);
         validCCElementsCount = _in.readNBit(4);
 
-        if (monoMixdown = _in.readBool()) {
+        monoMixdown = _in.readBool();
+        if (monoMixdown) {
             Logger.warn("mono mixdown present, but not yet supported");
             monoMixdownElementNumber = _in.readNBit(4);
         }
-        if (stereoMixdown = _in.readBool()) {
+        stereoMixdown = _in.readBool();
+        if (stereoMixdown) {
             Logger.warn("stereo mixdown present, but not yet supported");
             stereoMixdownElementNumber = _in.readNBit(4);
         }
-        if (matrixMixdownIDXPresent = _in.readBool()) {
+        matrixMixdownIDXPresent = _in.readBool();
+        if (matrixMixdownIDXPresent) {
             Logger.warn("matrix mixdown present, but not yet supported");
             matrixMixdownIDX = _in.readNBit(2);
             pseudoSurround = _in.readBool();

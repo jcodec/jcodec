@@ -128,7 +128,7 @@ public class Util {
         return tv;
     }
 
-    private static void appendToInternal(MovieBox movie, TrakBox dest, TrakBox src) {
+    private static void appendToInternal(TrakBox dest, TrakBox src) {
         int off = appendEntries(dest, src);
 
         appendChunkOffsets(dest, src);
@@ -144,13 +144,13 @@ public class Util {
     }
 
     public static void appendTo(MovieBox movie, TrakBox dest, TrakBox src) {
-        appendToInternal(movie, dest, src);
+        appendToInternal(dest, src);
         appendEdits(dest, src, dest.getEdits().size());
         updateDuration(dest, src);
     }
 
     public static void insertTo(MovieBox movie, TrakBox dest, TrakBox src, long tvMv) {
-        appendToInternal(movie, dest, src);
+        appendToInternal(dest, src);
         insertEdits(movie, dest, src, tvMv);
         updateDuration(dest, src);
     }
@@ -277,7 +277,7 @@ public class Util {
         }
         return result;
     }
-    
+
     private static long totalDur(List<Edit> a) {
         long total = 0;
         for (Edit edit : a) {

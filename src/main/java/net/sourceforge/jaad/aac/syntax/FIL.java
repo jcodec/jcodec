@@ -114,18 +114,21 @@ public class FIL extends Element implements SyntaxConstants {
         int bandCount = 1;
 
         // pce tag
-        if (dri.pceTagPresent = _in.readBool()) {
+        dri.pceTagPresent = _in.readBool();
+        if (dri.pceTagPresent) {
             dri.pceInstanceTag = _in.readNBit(4);
             dri.tagReservedBits = _in.readNBit(4);
         }
 
         // excluded channels
-        if (dri.excludedChannelsPresent = _in.readBool()) {
+        dri.excludedChannelsPresent = _in.readBool();
+        if (dri.excludedChannelsPresent) {
             ret -= decodeExcludedChannels(_in);
         }
 
         // bands
-        if (dri.bandsPresent = _in.readBool()) {
+        dri.bandsPresent = _in.readBool();
+        if (dri.bandsPresent) {
             dri.bandsIncrement = _in.readNBit(4);
             dri.interpolationScheme = _in.readNBit(4);
             ret -= 8;
@@ -138,7 +141,8 @@ public class FIL extends Element implements SyntaxConstants {
         }
 
         // prog ref level
-        if (dri.progRefLevelPresent = _in.readBool()) {
+        dri.progRefLevelPresent = _in.readBool();
+        if (dri.progRefLevelPresent) {
             dri.progRefLevel = _in.readNBit(7);
             dri.progRefLevelReservedBits = _in.readNBit(1);
             ret -= 8;

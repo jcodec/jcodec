@@ -113,7 +113,7 @@ public class Flatten {
 
         long extra = mdatOff - out.position();
         if (extra < 0)
-            throw new RuntimeException("Not enough space to write the header");
+            throw new IOException("Not enough space to write the header");
         writeHeader(Header.createHeader("free", extra), out);
 
         out.setPosition(mdatOff);
@@ -124,7 +124,7 @@ public class Flatten {
         MovieBox moov = movie.getMoov();
         if (!moov.isPureRefMovie())
             throw new IllegalArgumentException("movie should be reference");
-        
+
         FileChannelWrapper out = null;
         try {
             out = NIOUtils.rwChannel(outF);
@@ -175,7 +175,7 @@ public class Flatten {
             writers[i] = new ChunkWriter(tracks[i], inputs[i], out);
             head[i] = readers[i].next();
             if (tracks[i].isVideo())
-                off[i] = 2 * moov.getTimescale();
+                off[i] = 2L * moov.getTimescale();
         }
 
         while (true) {
@@ -199,7 +199,7 @@ public class Flatten {
             if (processor != null) {
                 Chunk orig = head[min];
                 if (orig.getSampleSize() == Chunk.UNEQUAL_SIZES) {
-                    writers[min].write(processChunk(processor, orig, tracks[min], moov));
+                    writers[min].write(processChunk(processor, orig, tracks[min]));
                     writtenChunks++;
                 }
             } else {
@@ -218,7 +218,7 @@ public class Flatten {
         }
     }
 
-    private Chunk processChunk(SampleProcessor processor, Chunk orig, TrakBox track, MovieBox moov) throws IOException {
+    private static Chunk processChunk(SampleProcessor processor, Chunk orig, TrakBox track) throws IOException {
         ByteBuffer src = NIOUtils.duplicate(orig.getData());
         int[] sampleSizes = orig.getSampleSizes();
         int[] sampleDurs = orig.getSampleDurs();
@@ -276,11 +276,11 @@ public class Flatten {
         for (int i = 0; i < tracks.length; i++) {
             DataRefBox drefs = NodeBox.findFirstPath(tracks[i], DataRefBox.class, Box.path("mdia.minf.dinf.dref"));
             if (drefs == null) {
-                throw new RuntimeException("No data references");
+                throw new IOException("No data references");
             }
             List<Box> entries = drefs.getBoxes();
             if (entries.size() != 1)
-                throw new RuntimeException("Concat tracks not supported");
+                throw new IOException("Concat tracks not supported");
             result[i] = resolveDataRef(entries.get(0));
         }
         return result;

@@ -47,7 +47,8 @@ public class ICPrediction {
     public void decode(BitReader _in, int maxSFB, SampleFrequency sf) throws AACException {
         final int predictorCount = sf.getPredictorCount();
 
-        if (predictorReset = _in.readBool())
+        predictorReset = _in.readBool();
+        if (predictorReset)
             predictorResetGroup = _in.readNBit(5);
 
         final int maxPredSFB = sf.getMaximalPredictionSFB();

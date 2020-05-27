@@ -20,9 +20,9 @@ import org.jcodec.common.model.Picture;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
- * 
+ *
  * Encodes macroblock as P16x16
- * 
+ *
  * @author Stanislav Vitvitskyy
  */
 public class MBWriterP16x16 {
@@ -63,14 +63,14 @@ public class MBWriterP16x16 {
         int dx = tlAvb ? ctx.mvTopLeftX : 0;
         int dy = tlAvb ? ctx.mvTopLeftY : 0;
         boolean dr = tlAvb ? (ctx.mvTopLeftR == refIdx) : false;
-        
+
         int mvpx = median(ax, ar, bx, br, cx, cr, dx, dr, mbX > 0, mbY > 0, trAvb, tlAvb);
         int mvpy = median(ay, ar, by, br, cy, cr, dy, dr, mbX > 0, mbY > 0, trAvb, tlAvb);
 
         // Motion estimation for the current macroblock
         CAVLCWriter.writeSE(out, params.mv[0] - mvpx); // mvdx
         CAVLCWriter.writeSE(out, params.mv[1] - mvpy); // mvdy
-        
+
         Picture mbRef = Picture.create(16, 16, sps.chromaFormatIdc);
         int[][] mb = new int[][] { new int[256], new int[64], new int[64] };
 
@@ -95,8 +95,8 @@ public class MBWriterP16x16 {
 
         CAVLCWriter.writeSE(out, qp - ctx.prevQp);
 
-        luma(ctx, pic, mb[0], mbX, mbY, out, qp, outMB.getNc());
-        chroma(ctx, pic, mb[1], mb[2], mbX, mbY, out, qp);
+        luma(ctx, mb[0], mbX, mbY, out, qp, outMB.getNc());
+        chroma(ctx, mb[1], mb[2], mbX, mbY, out, qp);
 
         MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(0), mb[0], mbRef.getPlaneData(0), 4, 0, 0, 16, 16);
         MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb[1], mbRef.getPlaneData(1), 3, 0, 0, 8, 8);
@@ -116,14 +116,14 @@ public class MBWriterP16x16 {
 
     /**
      * Decides which reference to use
-     * 
+     *
      * @return
      */
     private int decideRef() {
         return 0;
     }
 
-    private void luma(EncodingContext ctx, Picture pic, int[] pix, int mbX, int mbY, BitWriter out, int qp, int[] nc) {
+  private static void luma(EncodingContext ctx, int[] pix, int mbX, int mbY, BitWriter out, int qp, int[] nc) {
         int[][] ac = new int[16][16];
         for (int i = 0; i < ac.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_4x4[i].length; j++) {
@@ -132,7 +132,7 @@ public class MBWriterP16x16 {
             CoeffTransformer.fdct4x4(ac[i]);
         }
 
-        writeAC(ctx, 0, mbX, mbY, out, mbX << 2, mbY << 2, ac, qp, nc);
+        writeAC(ctx, 0, mbX, out, mbX << 2, mbY << 2, ac, qp, nc);
 
         for (int i = 0; i < ac.length; i++) {
             CoeffTransformer.dequantizeAC(ac[i], qp, null);
@@ -142,7 +142,7 @@ public class MBWriterP16x16 {
         }
     }
 
-    private void chroma(EncodingContext ctx, Picture pic, int[] pix1, int[] pix2, int mbX, int mbY, BitWriter out,
+    private static void chroma(EncodingContext ctx, int[] pix1, int[] pix2, int mbX, int mbY, BitWriter out,
             int qp) {
         int[][] ac1 = new int[4][16];
         int[][] ac2 = new int[4][16];
@@ -166,7 +166,7 @@ public class MBWriterP16x16 {
         }
     }
 
-    private void writeAC(EncodingContext ctx, int comp, int mbX, int mbY,
+    private static void writeAC(EncodingContext ctx, int comp, int mbX,
             BitWriter out, int mbLeftBlk, int mbTopBlk, int[][] ac, int qp, int[] nc) {
         for (int bIndx = 0; bIndx < ac.length; bIndx++) {
             int dIdx = H264Const.BLK_DISP_MAP[bIndx];
