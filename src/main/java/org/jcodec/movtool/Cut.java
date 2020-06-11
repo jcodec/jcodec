@@ -84,7 +84,7 @@ public class Cut {
                 out = writableChannel(new File(source.getParentFile(), JCodecUtil2.removeExtension(source.getName())
                         + ".self.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
-                new Strip().strip(movie.getMoov());
+                new Strip().stripToChunks(movie.getMoov());
                 new Flatten().flattenChannel(movie, out);
             }
             saveSlices(slicesMovs, sliceNames, source.getParentFile());

@@ -67,7 +67,7 @@ public class Trim {
         }
 
         Strip strip = new Strip();
-        strip.strip(movie);
-        strip.trim(movie, null);
+        strip.stripToChunks(movie);
+        strip.stripToSamples(movie, false);
     }
 }
