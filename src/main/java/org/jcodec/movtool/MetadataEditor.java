@@ -62,7 +62,9 @@ public class MetadataEditor {
                 meta1.setKeyedMeta(keyedMeta);
             }
 
-            if (itunesMeta != null && itunesMeta.size() > 0) {
+            boolean hasItunesMeta = itunesMeta != null && itunesMeta.size() > 0;
+            boolean hasUdataMeta = udata != null && udata.size() > 0;
+            if (hasItunesMeta || hasUdataMeta) {
                 UdtaBox udta = NodeBox.findFirst(movie, UdtaBox.class, "udta");
                 if (meta2 == null) {
                     meta2 = UdtaMetaBox.createUdtaMetaBox();
@@ -72,9 +74,12 @@ public class MetadataEditor {
                     }
                     udta.add(meta2);
                 }
-                meta2.setItunesMeta(itunesMeta);
-                udta.setMetadata(udata);
+                if (hasItunesMeta)
+                    meta2.setItunesMeta(itunesMeta);
+                if (hasUdataMeta)
+                    udta.setMetadata(udata);
             }
+
         }
 
         public Map<Integer, MetaValue> getItunesMeta() {
