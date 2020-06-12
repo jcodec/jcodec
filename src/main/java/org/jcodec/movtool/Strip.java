@@ -139,15 +139,9 @@ public class Strip {
         return new RationalLarge(duration, mdhd.getTimescale());
     }
     
-    static List<_2<Long, Long>> findGaps(RationalLarge rescale, List<Edit> edits) {
-        long timelineEnd = 0;
-        for (Edit edit : edits) {
-            long editEnd = edit.getMediaTime() + rescale.multiplyS(edit.getDuration()) - 1;
-            if (editEnd > timelineEnd)
-                timelineEnd = editEnd;
-        }
+    static List<_2<Long, Long>> findGaps(RationalLarge rescale, List<Edit> edits, _2<Long, Long> timeline) {
         List<_2<Long, Long>> intervals = new ArrayList<_2<Long, Long>>();
-        intervals.add(new _2<Long, Long>(0L, timelineEnd));
+        intervals.add(timeline);
         for (Edit edit : edits) {
             List<_2<Long, Long>> newGaps = new ArrayList<_2<Long, Long>>();
             long editEnd = edit.getMediaTime() + rescale.multiplyS(edit.getDuration());
@@ -208,14 +202,14 @@ public class Strip {
                     chunk = split.v1;
                     while (chunk != null && gap.v1 >= chunk.getStartTv() + chunk.getDuration()) {
                         pullBack += chunk.getDuration();
-                        chunk = it.next();
+                        chunk = it.hasNext() ? it.next() : null;
                     }
                 }
                 if (chunk == null)
                     break;
                 if (gap.v1 >= chunk.getStartTv() && gap.v1 < chunk.getStartTv() + chunk.getDuration()) {
                     // break it down
-                    _2<Chunk, Chunk> split = chunk.split(gap.v1 - chunk.getStartTv(), false);
+                    _2<Chunk, Chunk> split = chunk.split(gap.v1 - chunk.getStartTv() + 1, false);
                     long wantStart = gap.v1 + 1;
                     long realStart = split.v0.getDuration() + chunk.getStartTv();
                     pullBack += split.v0.getDuration();
@@ -258,9 +252,18 @@ public class Strip {
         ChunkReader chunkReader = new ChunkReader(track, null);
         List<Edit> edits = track.getEdits();
         
-        List<_2<Long, Long>> gaps = findGaps(RationalLarge.R(track.getTimescale(), movie.getTimescale()), edits);
+        List<Chunk> chunks = chunkReader.readAll();
+        _2<Long, Long> timeline;
+        if (!chunks.isEmpty()) {
+            Chunk firstChunk = chunks.get(0);
+            Chunk lastChunk = chunks.get(chunks.size() - 1);
+            timeline = new _2<Long, Long>(firstChunk.getStartTv(), lastChunk.getStartTv() + lastChunk.getDuration());
+        } else {
+            timeline = new _2<Long, Long>(0L, 0L);
+        }
+        List<_2<Long, Long>> gaps = findGaps(RationalLarge.R(track.getTimescale(), movie.getTimescale()), edits, timeline);
         List<_2<Long, Long>> newIntervals = new ArrayList<_2<Long, Long>>();
-        List<Chunk> result = cutChunksToGaps(chunkReader.readAll(), gaps, toWholeSample ? newIntervals : null);
+        List<Chunk> result = cutChunksToGaps(chunks, gaps, toWholeSample ? newIntervals : null);
         if (toWholeSample) {
             List<Edit> newEdits = new ArrayList<Edit>();
             for (_2<Long,Long> _2 : newIntervals) {

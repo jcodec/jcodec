@@ -114,7 +114,7 @@ public class StripTest {
         List<_2<Long, Long>> exp = new ArrayList<_2<Long, Long>>();
         exp.add(new _2<Long, Long>(0L, 3L));
         exp.add(new _2<Long, Long>(12L, 14L));
-        List<_2<Long, Long>> gaps = Strip.findGaps(RationalLarge.ONE, edits);
+        List<_2<Long, Long>> gaps = Strip.findGaps(RationalLarge.ONE, edits, new _2<Long, Long>(0L, 21L));
         for (int i = 0; i < 2; i++) {
             Assert.assertEquals((long) exp.get(i).v0, (long) gaps.get(i).v0);
             Assert.assertEquals((long) exp.get(i).v1, (long) gaps.get(i).v1);
