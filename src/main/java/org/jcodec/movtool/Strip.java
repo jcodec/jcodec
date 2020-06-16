@@ -200,12 +200,12 @@ public class Strip {
                         left.trimLastSample(left.getDuration() - wantDur);
                     }
                     chunk = split.v1;
-                    if (chunk != null && chunk.getSampleCount() == 0)
-                        chunk = null;
                     while (chunk != null && gap.v1 >= chunk.getStartTv() + chunk.getDuration()) {
                         pullBack += chunk.getDuration();
                         chunk = it.hasNext() ? it.next() : null;
                     }
+                    if (chunk != null && chunk.getSampleCount() == 0)
+                        chunk = null;
                 }
                 if (chunk == null)
                     break;
@@ -223,9 +223,8 @@ public class Strip {
                     chunk = split.v1;
                 }
             }
-            if (chunk == null)
-                break;
-            result.add(chunk);
+            if (chunk != null)
+                result.add(chunk);
         }
         // Pass 1, translating chunk start tv to the new timeline
         long startTv = result.isEmpty() ? 0 : result.get(0).getStartTv();
