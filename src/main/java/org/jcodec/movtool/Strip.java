@@ -200,6 +200,8 @@ public class Strip {
                         left.trimLastSample(left.getDuration() - wantDur);
                     }
                     chunk = split.v1;
+                    if (chunk != null && chunk.getSampleCount() == 0)
+                        chunk = null;
                     while (chunk != null && gap.v1 >= chunk.getStartTv() + chunk.getDuration()) {
                         pullBack += chunk.getDuration();
                         chunk = it.hasNext() ? it.next() : null;
