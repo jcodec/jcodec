@@ -56,7 +56,7 @@ public class StripTest {
                     samples[s] = sc >= 32 ? sc + 142 - 32 : sc + 42;
                     offset += samples[s];
                 }
-                chunks.add(new Chunk(nextOffset, startTv, realChSz, -1, samples, 1024, null, 1));
+                chunks.add(Chunk.createSameDuration(nextOffset, startTv, samples, 1024));
             }
 
             ArrayList<_2<Long, Long>> gaps = new ArrayList<_2<Long, Long>>();
