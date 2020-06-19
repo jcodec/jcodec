@@ -238,7 +238,6 @@ public class Flatten {
             totalSize += modSample.remaining();
         }
         byte[] result = new byte[totalSize];
-        System.out.println("total size: " + totalSize);
         int[] modSizes = new int[modSamples.size()];
         int ss = 0;
         ByteBuffer tmp = ByteBuffer.wrap(result);

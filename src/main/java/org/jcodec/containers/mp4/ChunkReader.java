@@ -1,5 +1,7 @@
 package org.jcodec.containers.mp4;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -123,5 +125,16 @@ public class ChunkReader {
 
     public int size() {
         return chunkOffsets.length;
+    }
+
+    public List<Chunk> readAll() throws IOException {
+        if (input != null)
+            throw new IllegalStateException("Reading all chunk data to memory is costy.");
+        List<Chunk> result = new ArrayList<Chunk>();
+        Chunk chunk = null;
+        while ((chunk = next()) != null) {
+            result.add(chunk);
+        }
+        return result;
     }
 }

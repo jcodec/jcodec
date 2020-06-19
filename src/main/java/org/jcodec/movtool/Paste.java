@@ -58,7 +58,7 @@ public class Paste {
             from = readableChannel(fromFile);
             Movie toMov = MP4Util.createRefFullMovie(to, "file://" + toFile.getCanonicalPath());
             Movie fromMov = MP4Util.createRefFullMovie(from, "file://" + fromFile.getCanonicalPath());
-            new Strip().strip(fromMov.getMoov());
+            new Strip().stripToChunks(fromMov.getMoov());
             if (args.length > 2) {
                 new Paste().paste(toMov.getMoov(), fromMov.getMoov(), Double.parseDouble(args[2]));
             } else {
