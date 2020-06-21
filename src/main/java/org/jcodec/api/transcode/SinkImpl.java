@@ -222,6 +222,8 @@ public class SinkImpl implements Sink, PacketSink {
 
     private Map<String, String> getCodecOpts() {
         Map<String, String> map = new HashMap<String, String>();
+        if (outputVideoCodec == null)
+            return map;
         if (codecOpts == null)
             return map;
         String opts = codecOpts.get(outputVideoCodec.name().toLowerCase());
