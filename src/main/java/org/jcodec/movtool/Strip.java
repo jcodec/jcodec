@@ -227,7 +227,7 @@ public class Strip {
                 result.add(chunk);
         }
         // Pass 1, translating chunk start tv to the new timeline
-        long startTv = result.isEmpty() ? 0 : result.get(0).getStartTv();
+        long startTv = 0;
         for (Chunk chunk : result) {
             chunk.setStartTv(startTv);
             startTv += chunk.getDuration();
@@ -265,16 +265,19 @@ public class Strip {
         List<_2<Long, Long>> gaps = findGaps(RationalLarge.R(track.getTimescale(), movie.getTimescale()), edits, timeline);
         List<_2<Long, Long>> newIntervals = new ArrayList<_2<Long, Long>>();
         List<Chunk> result = cutChunksToGaps(chunks, gaps, toWholeSample ? newIntervals : null);
+        List<Edit> newEdits = new ArrayList<Edit>();
         if (toWholeSample) {
-            List<Edit> newEdits = new ArrayList<Edit>();
-            for (_2<Long,Long> _2 : newIntervals) {
-                Edit edit = new Edit(movie.rescale(_2.v1, track.getTimescale()), _2.v0, 1f);
-                newEdits.add(edit);
+            for (_2<Long, Long> _2 : newIntervals) {
+                newEdits.add(new Edit(movie.rescale(_2.v1, track.getTimescale()), _2.v0, 1f));
             }
-            track.setEdits(newEdits);
-        } else {
-            track.setEdits(new ArrayList<Edit>());
+        } else if (result.size() > 0) {
+            Chunk firstChunk = result.get(0);
+            Chunk lastChunk = result.get(result.size() - 1);
+            long start = firstChunk.getStartTv();
+            long duration = lastChunk.getStartTv() + lastChunk.getDuration();
+            newEdits.add(new Edit(movie.rescale(duration, track.getTimescale()), start, 1f));
         }
+        track.setEdits(newEdits);
         NodeBox stbl = NodeBox.findFirstPath(track, NodeBox.class, Box.path("mdia.minf.stbl"));
         stbl.replace("stts", getTimeToSamples(result));
         stbl.replace("stsz", getSampleSizes(result));
