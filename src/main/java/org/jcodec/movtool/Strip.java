@@ -242,7 +242,7 @@ public class Strip {
                 startTv = _2.v1 + _2.v0;
             }
             if (startTv < totalDur) {
-                newIntervals.add(new _2<Long,Long>(startTv, totalDur));
+                newIntervals.add(new _2<Long,Long>(startTv, totalDur - startTv));
             }
         }
         
