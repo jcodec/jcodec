@@ -66,7 +66,7 @@ public class ChunkWriter {
         stbl.replaceBox(stsz);
     }
 
-    private void cleanDrefs(TrakBox trak) {
+    public static void cleanDrefs(TrakBox trak) {
         MediaInfoBox minf = trak.getMdia().getMinf();
         DataInfoBox dinf = trak.getMdia().getMinf().getDinf();
         if (dinf == null) {

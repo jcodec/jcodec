@@ -7,6 +7,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.IBoxFactory;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 
 import java.lang.StringBuilder;
 import java.lang.reflect.Array;
@@ -103,6 +104,14 @@ public class NodeBox extends Box {
     public void replaceBox(Box box) {
         removeChildren(new String[]{box.getFourcc()});
         add(box);
+    }
+    
+    public void replaceBoxWith(LeafBox was, Box now) {
+        for (ListIterator<Box> it = boxes.listIterator(); it.hasNext();) {
+            Box box = it.next();
+            if (box == was)
+                it.set(now);
+        }
     }
 
     protected void dump(StringBuilder sb) {
