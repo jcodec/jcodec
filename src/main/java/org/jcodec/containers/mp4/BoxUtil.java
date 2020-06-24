@@ -1,12 +1,18 @@
 package org.jcodec.containers.mp4;
 
+import org.jcodec.common.Callbacks;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Header;
+import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.platform.Platform;
 
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 public class BoxUtil {
 
@@ -62,5 +68,27 @@ public class BoxUtil {
         b.write(buf);
         buf.flip();
         return buf;
+    }
+    
+    public static void hideBox(Box box) {
+        box.getHeader().setFourcc("free");
+    }
+
+    public static boolean revealBox(NodeBox parent, LeafBox box, String newFourcc) {
+        if (!"free".equals(box.getFourcc()))
+            return false;
+        Box newBox = BoxUtil.parseBox(box.getData(), Header.createHeader(newFourcc, 0L), BoxFactory.getDefault());
+        parent.replaceBoxWith(box, newBox);
+        return true;
+    }
+
+    public static LeafBox searchHiddenBox(NodeBox parent, Callbacks.Callback1Into1<Boolean, LeafBox> evaluator) {
+        for (Box box : parent.getBoxes()) {
+            if ("free".equals(box.getHeader().getFourcc())) {
+                if (evaluator.call((LeafBox) box))
+                    return (LeafBox) box;
+            }
+        }
+        return null;
     }
 }
