@@ -5,7 +5,6 @@ import java.util.Iterator;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.IBoxFactory;
 import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 
@@ -17,7 +16,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 
 import org.jcodec.platform.Platform;
 
@@ -105,7 +103,7 @@ public class NodeBox extends Box {
         removeChildren(new String[]{box.getFourcc()});
         add(box);
     }
-    
+
     public void replaceBoxWith(LeafBox was, Box now) {
         for (ListIterator<Box> it = boxes.listIterator(); it.hasNext();) {
             Box box = it.next();

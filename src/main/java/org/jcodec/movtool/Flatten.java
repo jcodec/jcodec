@@ -168,6 +168,7 @@ public class Flatten {
         for (int i = 0; i < tracks.length; i++) {
             if (inputs[i] == null)
                 continue;
+
             readers[i] = new ChunkReader(tracks[i], inputs[i]);
             totalChunks += readers[i].size();
 

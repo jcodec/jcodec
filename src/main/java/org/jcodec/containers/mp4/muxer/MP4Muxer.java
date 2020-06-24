@@ -173,7 +173,6 @@ public class MP4Muxer implements Muxer {
         if (videoTrack != null) {
             timescale = videoTrack.getTimescale();
         }
-        
         long duration = 0;
         for (AbstractMP4MuxerTrack track : tracks) {
             long trackDuration = track.getTrackTotalDuration() * timescale / track.getTimescale();
