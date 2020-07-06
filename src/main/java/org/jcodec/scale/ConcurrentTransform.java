@@ -67,6 +67,8 @@ public abstract class ConcurrentTransform implements Transform {
     @Override
     public final void transform(final Picture src, final Picture dst) 
     {
+//    	long start = System.nanoTime();
+
     	final List<Runnable> tasks = getTasks(isThreaded, src, dst);
     	if (isThreaded)
     	{
@@ -74,6 +76,7 @@ public abstract class ConcurrentTransform implements Transform {
     		for (Runnable task : tasks)
     		{
     			tp.submit(new TransformTask(countdown, task));
+//    			System.out.println("************** submitted tasl");
     		}
     		
     		try {
@@ -83,6 +86,8 @@ public abstract class ConcurrentTransform implements Transform {
     		catch (InterruptedException e) {
     			throw new RuntimeException(e);
     		}
+    		
+//    		System.out.println("************** COMPLETE");
     	}
     	else
     	{
@@ -93,6 +98,8 @@ public abstract class ConcurrentTransform implements Transform {
     			task.run();
     		}
     	}
+    	
+//        System.out.println("Concurrent - " + isThreaded + ", Time in ns to complete - " + (System.nanoTime() - start));
     }
 	
     
