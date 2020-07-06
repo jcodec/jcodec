@@ -212,9 +212,11 @@ public class Flatten {
         }
 
         for (int i = 0; i < tracks.length; i++) {
-            if (writers[i] == null)
-                continue;
-            writers[i].apply();
+            if (writers[i] == null) {
+                ChunkWriter.cleanDrefs(tracks[i]);
+            } else {
+                writers[i].apply();
+            }
         }
     }
 

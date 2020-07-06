@@ -110,6 +110,11 @@ public abstract class Box {
         public LeafBox(Header atom) {
             super(atom);
         }
+        
+        public LeafBox(Header atom, ByteBuffer data) {
+            super(atom);
+            this.data = data;
+        }
 
         public void parse(ByteBuffer input) {
             data = NIOUtils.read(input, (int) header.getBodySize());

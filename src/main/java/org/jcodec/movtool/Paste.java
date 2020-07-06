@@ -1,12 +1,10 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
 
+import java.lang.System;
 
 import static java.util.Arrays.fill;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
-import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
 import static org.jcodec.movtool.Util.forceEditListMov;
 import static org.jcodec.movtool.Util.insertTo;
 import static org.jcodec.movtool.Util.shift;
@@ -115,15 +113,6 @@ public class Paste {
         }
     }
 
-    long[] tv;
-
-    private long getFrameTv(TrakBox videoTrack, int frame) {
-        if (tv == null) {
-            tv = Util.getTimevalues(videoTrack);
-        }
-        return tv[frame];
-    }
-
     private int[][] findMatches(TrakBox[] fromTracks, TrakBox[] toTracks) {
         int[] f2t = new int[fromTracks.length];
         int[] t2f = new int[toTracks.length];
@@ -149,14 +138,17 @@ public class Paste {
     }
 
     private boolean matches(TrakBox trakBox1, TrakBox trakBox2) {
-        return trakBox1.getHandlerType().equals(trakBox2.getHandlerType()) && matchHeaders(trakBox1, trakBox2)
-                && matchSampleSizes(trakBox1, trakBox2) && matchMediaHeader(trakBox1, trakBox2)
-                && matchClip(trakBox1, trakBox2) && matchLoad(trakBox1, trakBox2);
+        return trakBox1.getHandlerType().equals(trakBox2.getHandlerType()) &&
+            matchHeaders(trakBox1, trakBox2) &&
+            matchSampleSizes(trakBox1, trakBox2) &&
+            matchMediaHeader(trakBox1, trakBox2) &&
+            matchClip(trakBox1, trakBox2) &&
+            matchLoad(trakBox1, trakBox2);
     }
 
     private boolean matchSampleSizes(TrakBox trakBox1, TrakBox trakBox2) {
         SampleSizesBox stsz1 = NodeBox.findFirstPath(trakBox1, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
-        SampleSizesBox stsz2 = NodeBox.findFirstPath(trakBox1, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        SampleSizesBox stsz2 = NodeBox.findFirstPath(trakBox2, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         return stsz1.getDefaultSize() == stsz2.getDefaultSize();
     }
 
@@ -174,7 +166,7 @@ public class Paste {
             if ((smhd1 == null && smhd2 != null) || (smhd1 != null && smhd2 == null))
                 return false;
             else if (smhd1 != null && smhd2 != null)
-                return smhd1.getBalance() == smhd1.getBalance();
+                return smhd1.getBalance() == smhd2.getBalance();
         }
 
         return true;

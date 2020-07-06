@@ -10,6 +10,7 @@ import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.DataInfoBox;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
 import org.jcodec.containers.mp4.boxes.EditListBox;
+import org.jcodec.containers.mp4.boxes.EditsBox;
 import org.jcodec.containers.mp4.boxes.EncodedPixelBox;
 import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.GenericMediaInfoBox;
@@ -64,7 +65,7 @@ public class DefaultBoxes extends Boxes {
         mappings.put(MovieHeaderBox.fourcc(), MovieHeaderBox.class);
         mappings.put(TrakBox.fourcc(), TrakBox.class);
         mappings.put(TrackHeaderBox.fourcc(), TrackHeaderBox.class);
-        mappings.put("edts", NodeBox.class);
+        mappings.put("edts", EditsBox.class);
         mappings.put(EditListBox.fourcc(), EditListBox.class);
         mappings.put(MediaBox.fourcc(), MediaBox.class);
         mappings.put(MediaHeaderBox.fourcc(), MediaHeaderBox.class);

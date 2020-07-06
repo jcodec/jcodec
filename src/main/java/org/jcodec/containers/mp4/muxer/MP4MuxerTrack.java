@@ -215,7 +215,7 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
         NodeBox stbl = new NodeBox(new Header("stbl"));
         minf.add(stbl);
 
-        putCompositionOffsets(stbl);
+        putCompositionOffsets(mvhd, stbl);
         putEdits(trak);
         putName(trak);
 
@@ -230,7 +230,7 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
         return trak;
     }
 
-    private void putCompositionOffsets(NodeBox stbl) {
+    private void putCompositionOffsets(MovieHeaderBox mvhd, NodeBox stbl) {
         if (compositionOffsets.size() > 0) {
             compositionOffsets.add(new LongEntry(lastCompositionSamples, lastCompositionOffset));
 
@@ -245,7 +245,8 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
             if (first.getOffset() > 0) {
                 if (edits == null) {
                     edits = new ArrayList<Edit>();
-                    edits.add(new Edit(trackTotalDuration, first.getOffset(), 1.0f));
+                    long totalDuration = (mvhd.getTimescale() * trackTotalDuration) / _timescale;
+                    edits.add(new Edit(totalDuration, first.getOffset(), 1.0f));
                 } else {
                     for (Edit edit : edits) {
                         edit.setMediaTime(edit.getMediaTime() + first.getOffset());

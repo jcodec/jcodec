@@ -42,10 +42,11 @@ public class FrameGrabDemo {
         try {
             AWTFrameGrab fg;
             if (!cmd.hasVoidFlag(FLAG_DASH)) {
-                fg = AWTFrameGrab.createAWTFrameGrab(in);
                 in = NIOUtils.readableChannel(MainUtils.tildeExpand(cmd.getArg(0)));
-            } else
+                fg = AWTFrameGrab.createAWTFrameGrab(in);
+            } else {
                 fg = AWTFrameGrab.createAWTFromDash(cmd.getArg(0));
+            }
             for (int i = 0; i < maxFrames; i++) {
                 BufferedImage frame = fg.getFrame();
                 ImageIO.write(frame, "jpeg", new File(String.format(outDir, i)));

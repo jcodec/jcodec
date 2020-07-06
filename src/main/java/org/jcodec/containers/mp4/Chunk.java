@@ -2,9 +2,7 @@ package org.jcodec.containers.mp4;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-
 import org.jcodec.common.Tuple._2;
-import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -106,8 +104,9 @@ public class Chunk {
     }
 
     public long getSize() {
-        if (sampleSize != UNEQUAL_SIZES)
-            return sampleSize * sampleCount;
+        if (sampleSize != UNEQUAL_SIZES) {
+            return (long)sampleSize * sampleCount;
+        }
         long sum = 0;
         for (int j = 0; j < sampleSizes.length; j++) {
             int i = sampleSizes[j];
@@ -139,14 +138,16 @@ public class Chunk {
         for (int s = 0; s < sampleCount; s++) {
             long dur = sampleDur == Chunk.UNEQUAL_DUR ? sampleDurs[s] : sampleDur;
             long size = sampleSize == Chunk.UNEQUAL_SIZES ? sampleSizes[s] : sampleSize;
-            if (dur > cutDur && !roundUp)
+            if (dur > cutDur && !roundUp) {
                 break;
+            }
             drop++;
             tvOff += dur;
             byteOff += size;
             cutDur -= dur;
-            if (cutDur < 0)
+            if (cutDur < 0) {
                 break;
+            }
         }
         Chunk left = new Chunk(offset, startTv, drop, sampleSize,
                 sampleSizes == null ? null : Arrays.copyOfRange(sampleSizes, 0, drop), sampleDur,
@@ -158,8 +159,9 @@ public class Chunk {
     }
 
     public void trimLastSample(long l) {
-        if (sampleCount == 0)
+        if (sampleCount == 0) {
             throw new IllegalStateException("Trimming empty chunk");
+        }
         if (sampleDur != UNEQUAL_DUR) {
             if (sampleCount == 1) {
                 if (sampleDur < l)
@@ -176,8 +178,9 @@ public class Chunk {
     }
 
     public void trimFirstSample(long l) {
-        if (sampleCount == 0)
+        if (sampleCount == 0) {
             throw new IllegalStateException("Trimming empty chunk");
+        }
         if (sampleDur != UNEQUAL_DUR) {
             if (sampleCount == 1) {
                 if (sampleDur < l)

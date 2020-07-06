@@ -153,4 +153,8 @@ public class Header {
             return false;
         return true;
     }
+
+    public void setFourcc(String fourcc) {
+        this.fourcc = fourcc;
+    }
 }
