@@ -224,13 +224,12 @@ public class Flatten {
         ByteBuffer src = NIOUtils.duplicate(orig.getData());
         int[] sampleSizes = orig.getSampleSizes();
         int[] sampleDurs = orig.getSampleDurs();
-        boolean uneqDur = orig.getSampleDur() == Chunk.UNEQUAL_DUR;
         List<ByteBuffer> modSamples = new LinkedList<ByteBuffer>();
         int totalSize = 0;
         int totalDur = 0;
         for (int ss = 0; ss < sampleSizes.length; ss++) {
             ByteBuffer sample = NIOUtils.read(src, sampleSizes[ss]);
-            int sampleDur = uneqDur ? sampleDurs[ss] : orig.getSampleDur();
+            int sampleDur = sampleDurs[ss];
 
             ByteBuffer modSample = processor.processSample(sample,
                     ((double) (totalDur + orig.getStartTv())) / track.getTimescale(),

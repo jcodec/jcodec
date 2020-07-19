@@ -71,21 +71,14 @@ public class ChunkReader {
             s2cIndex++;
         int sampleCount = sampleToChunk[s2cIndex].getCount();
 
-        int[] samplesDur = null;
-        int sampleDur = Chunk.UNEQUAL_DUR;
-        if (ttsSubInd + sampleCount <= tts[ttsInd].getSampleCount()) {
-            sampleDur = tts[ttsInd].getSampleDuration();
-            ttsSubInd += sampleCount;
-        } else {
-            samplesDur = new int[sampleCount];
-            for (int i = 0; i < sampleCount; i++) {
-                if (ttsSubInd >= tts[ttsInd].getSampleCount() && ttsInd < tts.length - 1) {
-                    ttsSubInd = 0;
-                    ++ttsInd;
-                }
-                samplesDur[i] = tts[ttsInd].getSampleDuration();
-                ++ttsSubInd;
+        int[] samplesDur = new int[sampleCount];
+        for (int i = 0; i < sampleCount; i++) {
+            if (ttsSubInd >= tts[ttsInd].getSampleCount() && ttsInd < tts.length - 1) {
+                ttsSubInd = 0;
+                ++ttsInd;
             }
+            samplesDur[i] = tts[ttsInd].getSampleDuration();
+            ++ttsSubInd;
         }
 
         int size = Chunk.UNEQUAL_SIZES;
@@ -101,7 +94,7 @@ public class ChunkReader {
         if (se.getDrefInd() != 1)
             throw new IOException("Multiple sample entries not supported");
 
-        Chunk chunk = new Chunk(chunkOffsets[curChunk], chunkTv, sampleCount, size, sizes, sampleDur, samplesDur, eno);
+        Chunk chunk = new Chunk(chunkOffsets[curChunk], chunkTv, sampleCount, size, sizes, samplesDur, eno);
 
         chunkTv += chunk.getDuration();
         sampleNo += sampleCount;
