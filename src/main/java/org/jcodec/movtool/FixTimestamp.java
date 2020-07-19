@@ -40,7 +40,7 @@ public abstract class FixTimestamp {
             int[] sampleDurs = next.getSampleDurs();
             for (int i = 0; i < sampleSizes.length; i++) {
                 int sz = sampleSizes[i];
-                oldDur = sampleDurs != null ? sampleDurs[i] : next.getSampleDur();
+                oldDur = sampleDurs[i];
                 ByteBuffer sampleData = NIOUtils.read(data, sz);
                 long pts = (long) (getPts(sampleData, oldPts, trakBox) * trakBox.getTimescale());
                 totalDur = pts;

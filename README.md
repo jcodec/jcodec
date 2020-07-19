@@ -51,7 +51,7 @@ JCodec can be used in both standard Java and Android. It contains platform-agnos
 <dependency>
     <groupId>org.jcodec</groupId>
     <artifactId>jcodec</artifactId>
-    <version>0.2.3</version>
+    <version>0.2.5</version>
 </dependency>
 ```
 
@@ -60,7 +60,7 @@ OR gradle dependency as below:
 ```gradle
 dependencies {
     ...
-    compile 'org.jcodec:jcodec:0.2.3'
+    implementation 'org.jcodec:jcodec:0.2.5'
     ...
 }
 ```
@@ -71,12 +71,12 @@ Additionally if you want to use JCodec with AWT images (BufferedImage) add this 
 <dependency>
     <groupId>org.jcodec</groupId>
     <artifactId>jcodec</artifactId>
-    <version>0.2.3</version>
+    <version>0.2.5</version>
 </dependency>
 <dependency>
     <groupId>org.jcodec</groupId>
     <artifactId>jcodec-javase</artifactId>
-    <version>0.2.3</version>
+    <version>0.2.5</version>
 </dependency>
 ```
 
@@ -90,13 +90,13 @@ android {
 }
 dependencies {
     ...
-    compile 'org.jcodec:jcodec:0.2.3'
-    compile 'org.jcodec:jcodec-android:0.2.3'
+    implementation 'org.jcodec:jcodec:0.2.5'
+    implementation 'org.jcodec:jcodec-android:0.2.5'
     ...
 }
 ```
 
-For the latest and greatest (the 0.2.3-SNAPSHOT) clone this Git project and build locally like so:
+For the latest and greatest (the 0.2.6-SNAPSHOT) clone this Git project and build locally like so:
 ```
 git clone https://github.com/jcodec/jcodec.git
 cd jcodec
@@ -106,8 +106,8 @@ mvn clean install
 ```
 
 If you JUST need the jars, download them from here:
-* [JCodec 0.2.3 JAR](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.3/jcodec-0.2.3.jar), [GPG Sign](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.3/jcodec-0.2.3.jar.asc), [POM](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.3/jcodec-0.2.3.pom)
-* [JCodec JavaSE 0.2.3 JAR](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.3/jcodec-javase-0.2.3.jar), [GPG Sign](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.3/jcodec-javase-0.2.3.jar.asc), [POM](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.3/jcodec-javase-0.2.3.pom)
+* [JCodec 0.2.5 JAR](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.5/jcodec-0.2.5.jar), [GPG Sign](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.5/jcodec-0.2.5.jar.asc), [POM](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.5/jcodec-0.2.5.pom)
+* [JCodec JavaSE 0.2.5 JAR](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.5/jcodec-javase-0.2.5.jar), [GPG Sign](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.5/jcodec-javase-0.2.5.jar.asc), [POM](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.5/jcodec-javase-0.2.5.pom)
 
 There is virtually no documentation right now but the plan is to catch up on this so stay tuned. stackoverflow.com contains quite a bit information at this point.
 

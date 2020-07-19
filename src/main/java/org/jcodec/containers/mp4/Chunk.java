@@ -12,52 +12,45 @@ import org.jcodec.common.Tuple._2;
  *
  */
 public class Chunk {
-    public static final int UNEQUAL_DUR = -1;
     public static final int UNEQUAL_SIZES = -1;
     private long offset;
     private long startTv;
     private int sampleCount;
     private int sampleSize;
     private int sampleSizes[];
-    private int sampleDur;
     private int sampleDurs[];
     private int entry;
     private ByteBuffer data;
 
-    public static Chunk createSameSizeAndDuration(long offset, long tv, int sampleSize, int sampleDuration,
-            int sampleCount) {
-        return new Chunk(offset, tv, sampleCount, sampleSize, null, sampleDuration, null, 1);
-    }
-
     public static Chunk createSameSize(long offset, long tv, int sampleSize, int[] sampleDurations) {
-        return new Chunk(offset, tv, sampleDurations.length, sampleSize, null, UNEQUAL_DUR, sampleDurations, 1);
-    }
-
-    public static Chunk createSameDuration(long offset, long tv, int[] sampleSizes, int sampleDuration) {
-        return new Chunk(offset, tv, sampleSizes.length, UNEQUAL_SIZES, sampleSizes, sampleDuration, null, 1);
+        return new Chunk(offset, tv, sampleDurations.length, sampleSize, null, sampleDurations, 1);
     }
 
     public static Chunk create(long offset, long tv, int[] sampleSizes, int sampleDurations[]) {
         if (sampleSizes.length != sampleDurations.length)
             throw new IllegalArgumentException("Sizes and durations array lenghts should match");
-        return new Chunk(offset, tv, sampleSizes.length, UNEQUAL_SIZES, sampleSizes, UNEQUAL_DUR, sampleDurations, 1);
+        return new Chunk(offset, tv, sampleSizes.length, UNEQUAL_SIZES, sampleSizes, sampleDurations, 1);
     }
     
-    Chunk(long offset, long startTv, int sampleCount, int sampleSize, int[] sampleSizes, int sampleDur,
-            int[] sampleDurs, int entry) {
+    public static Chunk createSameDuration(int offset, int startTv, int[] sampleSizes, int sampleDuration) {
+        int[] sampleDurations = new int[sampleSizes.length];
+        Arrays.fill(sampleDurations, sampleDuration);
+        return new Chunk(offset, startTv, sampleSizes.length, UNEQUAL_SIZES, sampleSizes, sampleDurations, 1);
+    }
+
+    Chunk(long offset, long startTv, int sampleCount, int sampleSize, int[] sampleSizes, int[] sampleDurs, int entry) {
         this.offset = offset;
         this.startTv = startTv;
         this.sampleCount = sampleCount;
         this.sampleSize = sampleSize;
         this.sampleSizes = sampleSizes;
-        this.sampleDur = sampleDur;
         this.sampleDurs = sampleDurs;
         this.entry = entry;
     }
 
     public static Chunk createFrom(Chunk other) {
         return new Chunk(other.getOffset(), other.getStartTv(), other.getSampleCount(), other.getSampleSize(),
-                other.getSampleSizes(), other.getSampleDur(), other.getSampleDurs(), other.getEntry());
+                other.getSampleSizes(), other.getSampleDurs(), other.getEntry());
     }
 
     public long getOffset() {
@@ -80,10 +73,6 @@ public class Chunk {
         return sampleSizes;
     }
 
-    public int getSampleDur() {
-        return sampleDur;
-    }
-
     public int[] getSampleDurs() {
         return sampleDurs;
     }
@@ -93,8 +82,6 @@ public class Chunk {
     }
 
     public int getDuration() {
-        if (sampleDur != UNEQUAL_DUR)
-            return sampleDur * sampleCount;
         int sum = 0;
         for (int j = 0; j < sampleDurs.length; j++) {
             int i = sampleDurs[j];
@@ -136,7 +123,7 @@ public class Chunk {
         long tvOff = 0;
         long byteOff = 0;
         for (int s = 0; s < sampleCount; s++) {
-            long dur = sampleDur == Chunk.UNEQUAL_DUR ? sampleDurs[s] : sampleDur;
+            long dur = sampleDurs[s];
             long size = sampleSize == Chunk.UNEQUAL_SIZES ? sampleSizes[s] : sampleSize;
             if (dur > cutDur && !roundUp) {
                 break;
@@ -150,10 +137,10 @@ public class Chunk {
             }
         }
         Chunk left = new Chunk(offset, startTv, drop, sampleSize,
-                sampleSizes == null ? null : Arrays.copyOfRange(sampleSizes, 0, drop), sampleDur,
+                sampleSizes == null ? null : Arrays.copyOfRange(sampleSizes, 0, drop),
                 sampleDurs == null ? null : Arrays.copyOfRange(sampleDurs, 0, drop), entry);
         Chunk right = new Chunk(offset + byteOff, startTv + tvOff, sampleCount - drop, sampleSize,
-                sampleSizes == null ? null : Arrays.copyOfRange(sampleSizes, drop, sampleSizes.length), sampleDur,
+                sampleSizes == null ? null : Arrays.copyOfRange(sampleSizes, drop, sampleSizes.length),
                 sampleDurs == null ? null : Arrays.copyOfRange(sampleDurs, drop, sampleDurs.length), entry);
         return new _2<Chunk, Chunk>(left, right);
     }
@@ -162,39 +149,20 @@ public class Chunk {
         if (sampleCount == 0) {
             throw new IllegalStateException("Trimming empty chunk");
         }
-        if (sampleDur != UNEQUAL_DUR) {
-            if (sampleCount == 1) {
-                if (sampleDur < l)
-                    throw new IllegalArgumentException("Trimming more then one sample duration");
-                sampleDur -= l;
-            } else {
-                throw new IllegalStateException("Can not trim equal duration track samples");
-            }
-        } else {
-            if (sampleDurs[sampleCount - 1] < l)
-                throw new IllegalArgumentException("Trimming more then one sample duration");
-            sampleDurs[sampleCount - 1] -= l;
-        }
+
+        if (sampleDurs[sampleCount - 1] < l)
+            throw new IllegalArgumentException("Trimming more then one sample duration");
+        sampleDurs[sampleCount - 1] -= l;
     }
 
     public void trimFirstSample(long l) {
         if (sampleCount == 0) {
             throw new IllegalStateException("Trimming empty chunk");
         }
-        if (sampleDur != UNEQUAL_DUR) {
-            if (sampleCount == 1) {
-                if (sampleDur < l)
-                    throw new IllegalArgumentException("Trimming more then one sample duration");
-                sampleDur -= l;
-                startTv += l;
-            } else {
-                throw new IllegalStateException("Can not trim equal duration track samples");
-            }
-        } else {
-            if (sampleDurs[0] < l)
-                throw new IllegalArgumentException("Trimming more then one sample duration");
-            sampleDurs[0] -= l;
-            startTv += l;
-        }
+
+        if (sampleDurs[0] < l)
+            throw new IllegalArgumentException("Trimming more then one sample duration");
+        sampleDurs[0] -= l;
+        startTv += l;
     }
 }
