@@ -58,7 +58,7 @@ public final class NALUnitType {
     }
 
     public static NALUnitType fromValue(int value) {
-        return value < lut.length ? lut[value] : null;
+        return value > 0 && value < lut.length ? lut[value] : null;
     }
     
     @Override
