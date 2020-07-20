@@ -113,12 +113,15 @@ public class NALReasemble
 		
 		// Peek at the first two bytes of the first NAL.
 		final ByteBuffer headNAL = nals.get(0);
+		final NALUnit nalUnit = NALUnit.read(headNAL);
+		headNAL.rewind();
+		
 		final byte headFuIndicator = headNAL.get();
 		final byte headFuHeader = headNAL.get();
 		headNAL.rewind();
 		
 		// Ensure that the first NAL is an FU-A-START ONLY (i.e. not STARt, or START & END are not allowed)
-		if ((headFuIndicator & FU_TYPE_MASK) != 28 || 
+		if (NALUnitType.FU_A != nalUnit.type || 
 		    (headFuHeader & FU_START_MASK) == 0 || (headFuHeader & FU_STARTEND_MASK) == FU_STARTEND_MASK)
 		{
 			return new byte[0];
