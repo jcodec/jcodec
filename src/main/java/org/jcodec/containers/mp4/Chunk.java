@@ -157,24 +157,23 @@ public class Chunk {
                 sampleDurs == null ? null : Arrays.copyOfRange(sampleDurs, drop, sampleDurs.length), entry);
         return new _2<Chunk, Chunk>(left, right);
     }
+    
+    private void unpackDurations() {
+        sampleDurs = new int[sampleCount];
+        Arrays.fill(sampleDurs, sampleDur);
+        sampleDur = UNEQUAL_DUR;
+    }
 
     public void trimLastSample(long l) {
         if (sampleCount == 0) {
             throw new IllegalStateException("Trimming empty chunk");
         }
         if (sampleDur != UNEQUAL_DUR) {
-            if (sampleCount == 1) {
-                if (sampleDur < l)
-                    throw new IllegalArgumentException("Trimming more then one sample duration");
-                sampleDur -= l;
-            } else {
-                throw new IllegalStateException("Can not trim equal duration track samples");
-            }
-        } else {
-            if (sampleDurs[sampleCount - 1] < l)
-                throw new IllegalArgumentException("Trimming more then one sample duration");
-            sampleDurs[sampleCount - 1] -= l;
+            unpackDurations();
         }
+        if (sampleDurs[sampleCount - 1] < l)
+            throw new IllegalArgumentException("Trimming more then one sample duration");
+        sampleDurs[sampleCount - 1] -= l;
     }
 
     public void trimFirstSample(long l) {
@@ -182,19 +181,11 @@ public class Chunk {
             throw new IllegalStateException("Trimming empty chunk");
         }
         if (sampleDur != UNEQUAL_DUR) {
-            if (sampleCount == 1) {
-                if (sampleDur < l)
-                    throw new IllegalArgumentException("Trimming more then one sample duration");
-                sampleDur -= l;
-                startTv += l;
-            } else {
-                throw new IllegalStateException("Can not trim equal duration track samples");
-            }
-        } else {
-            if (sampleDurs[0] < l)
-                throw new IllegalArgumentException("Trimming more then one sample duration");
-            sampleDurs[0] -= l;
-            startTv += l;
+            unpackDurations();
         }
+        if (sampleDurs[0] < l)
+            throw new IllegalArgumentException("Trimming more then one sample duration");
+        sampleDurs[0] -= l;
+        startTv += l;
     }
 }
