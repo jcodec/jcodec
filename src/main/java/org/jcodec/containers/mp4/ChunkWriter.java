@@ -107,18 +107,32 @@ public class ChunkWriter {
         offsets[curChunk++] = pos;
 
         if (chunk.getSampleSize() == Chunk.UNEQUAL_SIZES) {
-            if (sampleCount != 0)
-                throw new IOException("Mixed chunks unsupported 1.");
+            if (sampleCount != 0) {
+                unpackSampleSizes();
+            }
             sampleSizes.addAll(chunk.getSampleSizes());
         } else {
-            if (sampleSizes.size() != 0)
-                throw new IOException("Mixed chunks unsupported 2.");
-            if (sampleCount == 0) {
-                sampleSize = chunk.getSampleSize();
-            } else if (sampleSize != chunk.getSampleSize()) {
-                throw new IOException("Mismatching default sizes");
+            if (sampleSizes.size() != 0) {
+                for (int i = 0; i < chunk.getSampleCount(); i++) {
+                    sampleSizes.add(chunk.getSampleSize());
+                }
+            } else {
+                if (sampleCount == 0) {
+                    sampleSize = chunk.getSampleSize();
+                } else if (sampleSize != chunk.getSampleSize()) {
+                    unpackSampleSizes();
+                    for (int i = 0; i < chunk.getSampleCount(); i++) {
+                        sampleSizes.add(chunk.getSampleSize());
+                    }
+                }
+                sampleCount += chunk.getSampleCount();
             }
-            sampleCount += chunk.getSampleCount();
         }
+    }
+
+    private void unpackSampleSizes() {
+        sampleSizes = new IntArrayList(128);
+        sampleSizes.fill(0, sampleCount, sampleSize);
+        sampleCount = 0;
     }
 }
