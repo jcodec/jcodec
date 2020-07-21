@@ -326,14 +326,24 @@ public class Strip {
         ArrayList<TimeToSampleEntry> tts = new ArrayList<TimeToSampleEntry>();
         int curTts = -1, cnt = 0;
         for (Chunk chunk : chunks) {
-            for (int dur : chunk.getSampleDurs()) {
-                if (curTts == -1 || curTts != dur) {
+            if (chunk.getSampleDur() != Chunk.UNEQUAL_DUR) {
+                if (curTts == -1 || curTts != chunk.getSampleDur()) {
                     if (curTts != -1)
                         tts.add(new TimeToSampleEntry(cnt, curTts));
                     cnt = 0;
-                    curTts = dur;
+                    curTts = chunk.getSampleDur();
                 }
-                ++cnt;
+                cnt += chunk.getSampleCount();
+            } else {
+                for (int dur : chunk.getSampleDurs()) {
+                    if (curTts == -1 || curTts != dur) {
+                        if (curTts != -1)
+                            tts.add(new TimeToSampleEntry(cnt, curTts));
+                        cnt = 0;
+                        curTts = dur;
+                    }
+                    ++cnt;
+                }
             }
         }
         if (cnt > 0)
