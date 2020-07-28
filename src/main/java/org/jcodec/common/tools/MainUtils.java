@@ -145,6 +145,22 @@ public class MainUtils {
                 result[i] = Integer.parseInt(split[i]);
             return result;
         }
+        
+        private double[] getMultiDoubleFlagInternal(Map<String, String> longFlags, Map<String, String> shortFlags,
+                Flag flag, double[] defaultValue) {
+            String flagValue;
+            if (longFlags.containsKey(flag.getLongName()))
+                flagValue = longFlags.get(flag.getLongName());
+            else if (shortFlags.containsKey(flag.getShortName()))
+                flagValue = shortFlags.get(flag.getShortName());
+            else
+                return defaultValue;
+            String[] split = StringUtils.splitS(flagValue, ",");
+            double[] result = new double[split.length];
+            for (int i = 0; i < split.length; i++)
+                result[i] = Double.parseDouble(split[i]);
+            return result;
+        }
 
         private <T extends Enum<T>> T getEnumFlagInternal(Map<String, String> longFlags, Map<String, String> shortFlags,
                 Flag flag, T defaultValue, Class<T> class1) {
@@ -263,6 +279,22 @@ public class MainUtils {
 
         public int[] getMultiIntegerFlagI(int arg, Flag flagName) {
             return getMultiIntegerFlagInternal(longArgFlags[arg], shortArgFlags[arg], flagName, new int[0]);
+        }
+        
+        public double[] getMultiDoubleFlagD(Flag flagName, double[] defaultValue) {
+            return getMultiDoubleFlagInternal(longFlags, shortFlags, flagName, defaultValue);
+        }
+
+        public double[] getMultiDoubleFlag(Flag flagName) {
+            return getMultiDoubleFlagInternal(longFlags, shortFlags, flagName, new double[0]);
+        }
+
+        public double[] getMultiDoubleFlagID(int arg, Flag flagName, double[] defaultValue) {
+            return getMultiDoubleFlagInternal(longArgFlags[arg], shortArgFlags[arg], flagName, defaultValue);
+        }
+
+        public double[] getMultiDoubleFlagI(int arg, Flag flagName) {
+            return getMultiDoubleFlagInternal(longArgFlags[arg], shortArgFlags[arg], flagName, new double[0]);
         }
 
         public <T extends Enum<T>> T getEnumFlagD(Flag flagName, T defaultValue, Class<T> class1) {

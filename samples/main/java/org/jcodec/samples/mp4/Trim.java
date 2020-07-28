@@ -30,9 +30,9 @@ import org.jcodec.movtool.Util;
  * 
  */
 public class Trim {
-    private static final Flag FLAG_FROM_SEC = Flag.flag("from", "f", "From second");
-    private static final Flag FLAG_TO_SEC = Flag.flag("duration", "d", "Duration of the audio");
-    private static final Flag[] flags = { FLAG_FROM_SEC, FLAG_TO_SEC };
+    private static final Flag FLAG_FROM_SEC = Flag.flag("from", "f", "List of start seconds (comma separated)");
+    private static final Flag FLAG_DUR_SEC = Flag.flag("duration", "d", "List of durations in seconds (comma separated)");
+    private static final Flag[] flags = { FLAG_FROM_SEC, FLAG_DUR_SEC };
 
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
@@ -44,9 +44,11 @@ public class Trim {
         }
         File file = new File(cmd.getArg(1));
         Movie movie = MP4Util.createRefFullMovieFromFile(new File(cmd.getArg(0)));
-        final double inS = cmd.getDoubleFlagD(FLAG_FROM_SEC, 0d);
-        final double durS = cmd.getDoubleFlagD(FLAG_TO_SEC,
-                ((double) movie.getMoov().getDuration() / movie.getMoov().getTimescale()) - inS);
+        final double[] inS = cmd.getMultiDoubleFlagD(FLAG_FROM_SEC, new double[] {0d});
+        final double[] durS = cmd.getMultiDoubleFlagD(FLAG_DUR_SEC,
+                new double[] {
+                        ((double) movie.getMoov().getDuration() / movie.getMoov().getTimescale()) - inS[0]
+                        });
         modifyMovie(inS, durS, movie.getMoov());
         Flatten flatten = new Flatten();
         long finishTime = System.currentTimeMillis();
@@ -54,11 +56,13 @@ public class Trim {
         flatten.flatten(movie, file);
     }
 
-    private static void modifyMovie(double inS, double durS, MovieBox movie) throws IOException {
+    private static void modifyMovie(double[] inS, double[] durS, MovieBox movie) throws IOException {
         for (TrakBox track : movie.getTracks()) {
             List<Edit> edits = new ArrayList<Edit>();
-            Edit edit = new Edit((long) (movie.getTimescale() * durS), (long) (track.getTimescale() * inS), 1f);
-            edits.add(edit);
+            for (int i = 0; i < inS.length; i++) {
+                Edit edit = new Edit((long) (movie.getTimescale() * durS[i]), (long) (track.getTimescale() * inS[i]), 1f);
+                edits.add(edit);
+            }
             List<Edit> oldEdits = track.getEdits();
             if (oldEdits != null) {
                 edits = Util.editsOnEdits(Rational.R(movie.getTimescale(), track.getTimescale()), oldEdits, edits);
