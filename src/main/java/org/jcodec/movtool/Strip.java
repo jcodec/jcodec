@@ -143,6 +143,10 @@ public class Strip {
         List<_2<Long, Long>> intervals = new ArrayList<_2<Long, Long>>();
         intervals.add(timeline);
         for (Edit edit : edits) {
+            if (edit.getMediaTime() == -1) {
+                // Timeline shift
+                continue;
+            }
             List<_2<Long, Long>> newGaps = new ArrayList<_2<Long, Long>>();
             long editEnd = edit.getMediaTime() + rescale.multiplyS(edit.getDuration());
             for (_2<Long, Long> gap : intervals) {
@@ -167,6 +171,10 @@ public class Strip {
         for (_2<Long, Long> gap : intervals) {
             boolean claimed = false;
             for (Edit edit : edits) {
+                if (edit.getMediaTime() == -1) {
+                    // Timeline shift
+                    continue;
+                }
                 long editEnd = edit.getMediaTime() + rescale.multiplyS(edit.getDuration()) - 1;
                 if (gap.v0 == edit.getMediaTime() || gap.v1 == editEnd) {
                     claimed = true;
@@ -276,6 +284,12 @@ public class Strip {
             long start = firstChunk.getStartTv();
             long duration = lastChunk.getStartTv() + lastChunk.getDuration();
             newEdits.add(new Edit(movie.rescale(duration, track.getTimescale()), start, 1f));
+        }
+        if (!edits.isEmpty() ) {
+            Edit firstEdit = edits.get(0);
+            if (firstEdit.getMediaTime() == -1) {
+               newEdits.add(0, firstEdit);
+            }
         }
         track.setEdits(newEdits);
         NodeBox stbl = NodeBox.findFirstPath(track, NodeBox.class, Box.path("mdia.minf.stbl"));
