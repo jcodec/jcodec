@@ -1,5 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
 import org.jcodec.platform.Platform;
 
 import java.nio.ByteBuffer;
@@ -56,6 +57,7 @@ public class ChunkOffsetsBox extends FullBox {
         return 12 + 4 + chunkOffsets.length * 4;
     }
 
+    @AtomField(idx=0)
     public long[] getChunkOffsets() {
         return chunkOffsets;
     }

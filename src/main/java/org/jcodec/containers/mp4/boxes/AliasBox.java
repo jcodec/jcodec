@@ -3,6 +3,7 @@ package org.jcodec.containers.mp4.boxes;
 import static org.jcodec.common.JCodecUtil2.asciiString;
 
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
 import org.jcodec.platform.Platform;
 
 import java.nio.ByteBuffer;
@@ -71,6 +72,20 @@ public class AliasBox extends FullBox {
         public String toString() {
             return Platform.stringFromCharset4(data, 0, len, (type == 14 || type == 15) ? Platform.UTF_16 : Platform.UTF_8);
         }
+
+        @AtomField(idx=0)
+        public short getType() {
+            return type;
+        }
+        @AtomField(idx=1)
+        public int getLen() {
+            return len;
+        }
+        @AtomField(idx=2)
+        public byte[] getData() {
+            return data;
+        }
+        
     }
 
     public AliasBox(Header atom) {
@@ -157,10 +172,12 @@ public class AliasBox extends FullBox {
         return 12 + sz;
     }
 
+    @AtomField(idx=1)
     public int getRecordSize() {
         return recordSize;
     }
 
+    @AtomField(idx=8)
     public String getFileName() {
         return fileName;
     }
@@ -190,5 +207,85 @@ public class AliasBox extends FullBox {
     public String getUnixPath() {
         ExtraField extraField = getExtra(AliasBox.UNIXAbsolutePath);
         return extraField == null ? null : "/" + extraField.toString();
+    }
+
+    @AtomField(idx=0)
+    public String getType() {
+        return type;
+    }
+
+    @AtomField(idx=2)
+    public short getKind() {
+        return kind;
+    }
+
+    @AtomField(idx=3)
+    public String getVolumeName() {
+        return volumeName;
+    }
+
+    @AtomField(idx=4)
+    public int getVolumeCreateDate() {
+        return volumeCreateDate;
+    }
+
+    @AtomField(idx=5)
+    public short getVolumeSignature() {
+        return volumeSignature;
+    }
+
+    @AtomField(idx=6)
+    public short getVolumeType() {
+        return volumeType;
+    }
+
+    @AtomField(idx=7)
+    public int getParentDirId() {
+        return parentDirId;
+    }
+
+    @AtomField(idx=9)
+    public int getFileNumber() {
+        return fileNumber;
+    }
+
+    @AtomField(idx=10)
+    public int getCreatedLocalDate() {
+        return createdLocalDate;
+    }
+
+    @AtomField(idx=11)
+    public String getFileTypeName() {
+        return fileTypeName;
+    }
+
+    @AtomField(idx=12)
+    public String getCreatorName() {
+        return creatorName;
+    }
+
+    @AtomField(idx=13)
+    public short getNlvlFrom() {
+        return nlvlFrom;
+    }
+
+    @AtomField(idx=14)
+    public short getNlvlTo() {
+        return nlvlTo;
+    }
+
+    @AtomField(idx=15)
+    public int getVolumeAttributes() {
+        return volumeAttributes;
+    }
+
+    @AtomField(idx=16)
+    public short getFsId() {
+        return fsId;
+    }
+
+    @AtomField(idx=17)
+    public List<ExtraField> getExtra() {
+        return extra;
     }
 }

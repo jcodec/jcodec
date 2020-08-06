@@ -5,6 +5,8 @@ import static org.jcodec.containers.mp4.TimeUtil.toMovTime;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -42,26 +44,29 @@ public class MediaHeaderBox extends FullBox {
         return mdhd;
     }
 
+    @AtomField(idx=2)
     public int getTimescale() {
         return timescale;
     }
 
+    @AtomField(idx=3)
     public long getDuration() {
         return duration;
     }
-
+    @AtomField(idx=0)
     public long getCreated() {
         return created;
     }
-
+    @AtomField(idx=1)
     public long getModified() {
         return modified;
     }
 
+    @AtomField(idx=4)
     public int getLanguage() {
         return language;
     }
-
+    @AtomField(idx=5)
     public int getQuality() {
         return quality;
     }

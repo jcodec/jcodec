@@ -3,6 +3,7 @@ package org.jcodec.containers.mp4.boxes;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
 import org.jcodec.platform.Platform;
 
 /**
@@ -32,6 +33,7 @@ public class MdtaBox extends Box {
         key = Platform.stringFromBytes(NIOUtils.toArray(NIOUtils.readBuf(buf)));
     }
 
+    @AtomField(idx=0)
     public String getKey() {
         return key;
     }

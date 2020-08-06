@@ -2,6 +2,8 @@ package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -26,10 +28,12 @@ public class TimeToSampleBox extends FullBox {
             this.sampleDuration = sampleDuration;
         }
 
+        @AtomField(idx=0)
         public int getSampleCount() {
             return sampleCount;
         }
 
+        @AtomField(idx=1)
         public int getSampleDuration() {
             return sampleDuration;
         }
@@ -68,6 +72,7 @@ public class TimeToSampleBox extends FullBox {
         }
     }
 
+    @AtomField(idx=0)
     public TimeToSampleEntry[] getEntries() {
         return entries;
     }
