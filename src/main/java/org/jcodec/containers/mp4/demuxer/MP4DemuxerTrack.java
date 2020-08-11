@@ -4,6 +4,7 @@ import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet.FrameType;
@@ -64,8 +65,8 @@ public class MP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
 
         if (stsz.getDefaultSize() != 0) {
-            sizes = new int[1];
-            sizes[0] = stsz.getDefaultSize();
+            sizes = new int[stsz.getCount()];
+            Arrays.fill(sizes, stsz.getDefaultSize());
         } else
             sizes = stsz.getSizes();
     }

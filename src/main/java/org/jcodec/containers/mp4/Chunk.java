@@ -158,10 +158,22 @@ public class Chunk {
         return new _2<Chunk, Chunk>(left, right);
     }
     
-    private void unpackDurations() {
+    public void unpackDurations() {
+        if (sampleDur == UNEQUAL_DUR) {
+            return;
+        }
         sampleDurs = new int[sampleCount];
         Arrays.fill(sampleDurs, sampleDur);
         sampleDur = UNEQUAL_DUR;
+    }
+    
+    public void unpackSampleSizes() {
+        if (sampleSize == UNEQUAL_SIZES) {
+            return;
+        }
+        sampleSizes = new int[sampleCount];
+        Arrays.fill(sampleSizes, sampleSize);
+        sampleSize = UNEQUAL_SIZES;
     }
 
     public void trimLastSample(long l) {
