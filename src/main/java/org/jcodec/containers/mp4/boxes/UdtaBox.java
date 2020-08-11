@@ -109,7 +109,7 @@ public class UdtaBox extends NodeBox {
                 bb.put(string.getBytes());
             }
         }
-        bb.flip();
+        ((java.nio.Buffer)bb).flip();
         return bb;
     }
 

@@ -66,7 +66,7 @@ public class BoxUtil {
         int estimateSize = b.estimateSize();
         ByteBuffer buf = ByteBuffer.allocate(estimateSize);
         b.write(buf);
-        buf.flip();
+        ((java.nio.Buffer)buf).flip();
         return buf;
     }
     

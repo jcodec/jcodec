@@ -63,7 +63,7 @@ public class MP4Muxer implements Muxer {
         Header.createHeader("mdat", 1).write(buf);
         mdatOffset = buf.position();
         buf.putLong(0);
-        buf.flip();
+        ((java.nio.Buffer)buf).flip();
         output.write(buf);
     }
 

@@ -96,7 +96,7 @@ public abstract class Box {
             T res = Platform.newInstance(class1, new Object[]{box.getHeader()});
             ByteBuffer buffer = ByteBuffer.allocate((int)box.getHeader().getBodySize());
             box.doWrite(buffer);
-            buffer.flip();
+            ((java.nio.Buffer)buffer).flip();
             res.parse(buffer);
             return res;
         } catch (Exception e) {

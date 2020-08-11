@@ -145,7 +145,7 @@ public class NodeBox extends Box {
     public static Box doCloneBox(Box box, int approxSize, IBoxFactory bf) {
         ByteBuffer buf = ByteBuffer.allocate(approxSize);
         box.write(buf);
-        buf.flip();
+        ((java.nio.Buffer)buf).flip();
         return parseChildBox(buf, bf);
     }
 

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -66,8 +67,8 @@ public class NIOUtils {
     public static final ByteBuffer read(ByteBuffer buffer, int count) {
         ByteBuffer slice = buffer.duplicate();
         int limit = buffer.position() + count;
-        slice.limit(limit);
-        buffer.position(limit);
+        ((java.nio.Buffer)slice).limit(limit);
+        ((java.nio.Buffer)buffer).position(limit);
         return slice;
     }
 
@@ -78,7 +79,7 @@ public class NIOUtils {
     public static ByteBuffer fetchFromChannel(ReadableByteChannel ch, int size) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(size);
         NIOUtils.readFromChannel(ch, buf);
-        buf.flip();
+        ((java.nio.Buffer)buf).flip();
         return buf;
     }
 
@@ -156,10 +157,10 @@ public class NIOUtils {
 
     public static int readL(ReadableByteChannel channel, ByteBuffer buffer, int length) throws IOException {
         ByteBuffer fork = buffer.duplicate();
-        fork.limit(min(fork.position() + length, fork.limit()));
+        ((java.nio.Buffer)fork).limit(min(fork.position() + length, fork.limit()));
         while (channel.read(fork) != -1 && fork.hasRemaining())
             ;
-        buffer.position(fork.position());
+        ((java.nio.Buffer)buffer).position(fork.position());
         return buffer.position() == 0 ? -1 : buffer.position();
     }
 
@@ -204,7 +205,7 @@ public class NIOUtils {
 
     public static int skip(ByteBuffer buffer, int count) {
         int toSkip = Math.min(buffer.remaining(), count);
-        buffer.position(buffer.position() + toSkip);
+        ((Buffer)buffer).position(buffer.position() + toSkip);
         return toSkip;
     }
 
@@ -267,7 +268,7 @@ public class NIOUtils {
         ByteBuffer fork = buffer.duplicate();
         while (buffer.hasRemaining() && buffer.get() != 0) {
         }
-        fork.limit(buffer.position() - 1);
+        ((java.nio.Buffer)fork).limit(buffer.position() - 1);
         return Platform.stringFromCharset(toArray(fork), charset);
     }
 
@@ -287,7 +288,7 @@ public class NIOUtils {
 
     public static ByteBuffer readBuf(ByteBuffer buffer) {
         ByteBuffer result = buffer.duplicate();
-        buffer.position(buffer.limit());
+        ((java.nio.Buffer)buffer).position(buffer.limit());
         return result;
     }
 
@@ -310,10 +311,10 @@ public class NIOUtils {
         ByteBuffer buf = ByteBuffer.allocate(0x10000);
         int read;
         do {
-            buf.position(0);
+            ((java.nio.Buffer)buf).position(0);
             read = in.read(buf);
             if (read != -1) {
-                buf.flip();
+                ((java.nio.Buffer)buf).flip();
                 out.write(buf);
             }
         } while (read != -1);
@@ -371,11 +372,13 @@ public class NIOUtils {
     }
 
     public static void writeInt(WritableByteChannel channel, int value) throws IOException {
-        channel.write((ByteBuffer) ByteBuffer.allocate(4).putInt(value).flip());
+        ByteBuffer putInt = ByteBuffer.allocate(4).putInt(value);
+        channel.write((ByteBuffer) ((java.nio.Buffer)putInt).flip());
     }
 
     public static void writeLong(WritableByteChannel channel, long value) throws IOException {
-        channel.write((ByteBuffer) ByteBuffer.allocate(8).putLong(value).flip());
+        ByteBuffer putLong = ByteBuffer.allocate(8).putLong(value);
+        channel.write((ByteBuffer) ((java.nio.Buffer)putLong).flip());
     }
 
     public static FileChannelWrapper readableChannel(File file) throws FileNotFoundException {
@@ -409,7 +412,7 @@ public class NIOUtils {
     public static ByteBuffer duplicate(ByteBuffer bb) {
         ByteBuffer out = ByteBuffer.allocate(bb.remaining());
         out.put(bb.duplicate());
-        out.flip();
+        ((java.nio.Buffer)out).flip();
         return out;
     }
 

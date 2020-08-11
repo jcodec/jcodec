@@ -253,7 +253,7 @@ public class Flatten {
     private void writeHeader(Header header, SeekableByteChannel out) throws IOException {
         ByteBuffer bb = ByteBuffer.allocate(16);
         header.write(bb);
-        bb.flip();
+        ((java.nio.Buffer)bb).flip();
         out.write(bb);
     }
 
