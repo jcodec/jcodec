@@ -92,7 +92,7 @@ public class QTTimeUtil {
      * @return
      */
     public static long mediaToEdited(TrakBox trak, long mediaTv, int movieTimescale) {
-        if (trak.getEdits() == null)
+        if (trak.getEdits() == null || trak.getEdits().isEmpty())
             return mediaTv;
         long accum = 0;
         for (Edit edit : trak.getEdits()) {

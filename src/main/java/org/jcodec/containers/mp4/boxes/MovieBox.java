@@ -124,18 +124,17 @@ public class MovieBox extends NodeBox {
     }
 
     public TrakBox importTrack(MovieBox movie, TrakBox track) {
-        TrakBox newTrack = (TrakBox) NodeBox.cloneBox(track, 1024 * 1024, factory);
+        TrakBox newTrack = (TrakBox) NodeBox.cloneBox(track, track.estimateSize() * 2, factory);
 
         List<Edit> edits = newTrack.getEdits();
-
-        ArrayList<Edit> result = new ArrayList<Edit>();
-        if (edits != null) {
+        if (edits != null && !edits.isEmpty()) {
+            ArrayList<Edit> result = new ArrayList<Edit>();
             for (Edit edit : edits) {
                 result.add(new Edit(rescale(edit.getDuration(), movie.getTimescale()), edit.getMediaTime(), edit
                         .getRate()));
             }
+            newTrack.setEdits(result);
         }
-        newTrack.setEdits(result);
 
         return newTrack;
     }
