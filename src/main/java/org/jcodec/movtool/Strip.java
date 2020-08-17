@@ -212,8 +212,9 @@ public class Strip {
                         pullBack += chunk.getDuration();
                         chunk = it.hasNext() ? it.next() : null;
                     }
-                    if (chunk != null && chunk.getSampleCount() == 0)
+                    if (chunk != null && chunk.getSampleCount() == 0) {
                         chunk = null;
+                    }
                 }
                 if (chunk == null)
                     break;
@@ -223,13 +224,21 @@ public class Strip {
                     long wantStart = gap.v1 + 1;
                     long realStart = split.v0.getDuration() + chunk.getStartTv();
                     pullBack += split.v0.getDuration();
-                    if (newIntervals != null) {
-                        newGaps.add(new _2<Long, Long>(realStart - pullBack, wantStart - realStart));
-                    } else {
-                        split.v1.trimFirstSample(wantStart - realStart);
-                    }
                     chunk = split.v1;
+                    if (chunk != null && chunk.getSampleCount() == 0) {
+                        chunk = null;
+                    }
+                    long trimDur = wantStart - realStart;
+                    if (trimDur != 0) {
+                        if (newIntervals != null) {
+                            newGaps.add(new _2<Long, Long>(realStart - pullBack, trimDur));
+                        } else {
+                            split.v1.trimFirstSample(trimDur);
+                        }
+                    }
                 }
+                if (chunk == null)
+                    break;
             }
             if (chunk != null)
                 result.add(chunk);

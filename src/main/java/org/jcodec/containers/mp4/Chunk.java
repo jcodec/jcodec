@@ -177,6 +177,9 @@ public class Chunk {
     }
 
     public void trimLastSample(long l) {
+        if (l == 0) {
+            return;
+        }
         if (sampleCount == 0) {
             throw new IllegalStateException("Trimming empty chunk");
         }
@@ -189,6 +192,9 @@ public class Chunk {
     }
 
     public void trimFirstSample(long l) {
+        if (l == 0) {
+            return;
+        }
         if (sampleCount == 0) {
             throw new IllegalStateException("Trimming empty chunk");
         }
