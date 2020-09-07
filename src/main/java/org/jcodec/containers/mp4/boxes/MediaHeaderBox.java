@@ -85,7 +85,7 @@ public class MediaHeaderBox extends FullBox {
             created = fromMovTime(input.getInt());
             modified = fromMovTime(input.getInt());
             timescale = input.getInt();
-            duration = input.getInt();
+            duration = input.getInt() & 0xffffffffL;
         } else if (version == 1) {
             created = fromMovTime((int) input.getLong());
             modified = fromMovTime((int) input.getLong());
@@ -109,7 +109,7 @@ public class MediaHeaderBox extends FullBox {
             out.putLong(toMovTime(created));
             out.putLong(toMovTime(modified));
             out.putInt(timescale);
-            out.putLong((int) duration);
+            out.putLong(duration);
         }
         out.putShort((short) language);
         out.putShort((short) quality);
