@@ -32,7 +32,10 @@ public class SeqParameterSetExt {
 
     public static SeqParameterSetExt read(ByteBuffer is) {
         BitReader _in = BitReader.createBitReader(is);
+        return read(_in);
+    }
 
+    public static SeqParameterSetExt read(BitReader _in) {
         SeqParameterSetExt spse = new SeqParameterSetExt();
         spse.seq_parameter_set_id = readUEtrace(_in, "SPSE: seq_parameter_set_id");
         spse.aux_format_idc = readUEtrace(_in, "SPSE: aux_format_idc");
