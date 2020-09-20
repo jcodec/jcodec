@@ -158,13 +158,28 @@ public class Chunk {
         return new _2<Chunk, Chunk>(left, right);
     }
     
-    private void unpackDurations() {
+    public void unpackDurations() {
+        if (sampleDur == UNEQUAL_DUR) {
+            return;
+        }
         sampleDurs = new int[sampleCount];
         Arrays.fill(sampleDurs, sampleDur);
         sampleDur = UNEQUAL_DUR;
     }
+    
+    public void unpackSampleSizes() {
+        if (sampleSize == UNEQUAL_SIZES) {
+            return;
+        }
+        sampleSizes = new int[sampleCount];
+        Arrays.fill(sampleSizes, sampleSize);
+        sampleSize = UNEQUAL_SIZES;
+    }
 
     public void trimLastSample(long l) {
+        if (l == 0) {
+            return;
+        }
         if (sampleCount == 0) {
             throw new IllegalStateException("Trimming empty chunk");
         }
@@ -177,6 +192,9 @@ public class Chunk {
     }
 
     public void trimFirstSample(long l) {
+        if (l == 0) {
+            return;
+        }
         if (sampleCount == 0) {
             throw new IllegalStateException("Trimming empty chunk");
         }

@@ -5,6 +5,8 @@ import static org.jcodec.containers.mp4.TimeUtil.toMovTime;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -42,26 +44,29 @@ public class MediaHeaderBox extends FullBox {
         return mdhd;
     }
 
+    @AtomField(idx=2)
     public int getTimescale() {
         return timescale;
     }
 
+    @AtomField(idx=3)
     public long getDuration() {
         return duration;
     }
-
+    @AtomField(idx=0)
     public long getCreated() {
         return created;
     }
-
+    @AtomField(idx=1)
     public long getModified() {
         return modified;
     }
 
+    @AtomField(idx=4)
     public int getLanguage() {
         return language;
     }
-
+    @AtomField(idx=5)
     public int getQuality() {
         return quality;
     }
@@ -80,7 +85,7 @@ public class MediaHeaderBox extends FullBox {
             created = fromMovTime(input.getInt());
             modified = fromMovTime(input.getInt());
             timescale = input.getInt();
-            duration = input.getInt();
+            duration = input.getInt() & 0xffffffffL;
         } else if (version == 1) {
             created = fromMovTime((int) input.getLong());
             modified = fromMovTime((int) input.getLong());
@@ -104,7 +109,7 @@ public class MediaHeaderBox extends FullBox {
             out.putLong(toMovTime(created));
             out.putLong(toMovTime(modified));
             out.putInt(timescale);
-            out.putLong((int) duration);
+            out.putLong(duration);
         }
         out.putShort((short) language);
         out.putShort((short) quality);

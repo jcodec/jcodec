@@ -195,6 +195,17 @@ try {
 }
 ```
 
+## H264 video from png images
+```
+File output = new File("test.mp4");
+SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(output), new Rational(1, 1));
+String[] files = {"frame0.png", "frame1.png", "frame2.png"};
+for (String file : files) {
+   enc.encodeNativeFrame(AWTUtil.decodePNG(new File(file), ColorSpace.RGB));
+}
+enc.finish();
+```
+
 ## Read Tape Timecode from MXF file
 
 ```java

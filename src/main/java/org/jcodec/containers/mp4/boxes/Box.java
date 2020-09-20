@@ -1,5 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +29,12 @@ import static org.jcodec.common.Preconditions.checkState;
 public abstract class Box {
     public Header header;
     public static final int MAX_BOX_SIZE = 128 * 1024 * 1024;
+    
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public static @interface AtomField {
+        int idx();
+    }
     
     @UsedViaReflection
     public Box(Header header) {
@@ -96,7 +106,7 @@ public abstract class Box {
             T res = Platform.newInstance(class1, new Object[]{box.getHeader()});
             ByteBuffer buffer = ByteBuffer.allocate((int)box.getHeader().getBodySize());
             box.doWrite(buffer);
-            buffer.flip();
+            ((java.nio.Buffer)buffer).flip();
             res.parse(buffer);
             return res;
         } catch (Exception e) {

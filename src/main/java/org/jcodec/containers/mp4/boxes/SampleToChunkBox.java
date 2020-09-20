@@ -2,6 +2,8 @@ package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -28,6 +30,7 @@ public class SampleToChunkBox extends FullBox {
             this.entry = entry;
         }
 
+        @AtomField(idx=0)
         public long getFirst() {
             return first;
         }
@@ -35,11 +38,11 @@ public class SampleToChunkBox extends FullBox {
         public void setFirst(long first) {
             this.first = first;
         }
-
+        @AtomField(idx=1)
         public int getCount() {
             return count;
         }
-
+        @AtomField(idx=2)
         public int getEntry() {
             return entry;
         }
@@ -75,6 +78,7 @@ public class SampleToChunkBox extends FullBox {
         }
     }
 
+    @AtomField(idx=0)
     public SampleToChunkEntry[] getSampleToChunk() {
         return sampleToChunk;
     }

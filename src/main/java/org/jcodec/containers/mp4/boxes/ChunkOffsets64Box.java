@@ -2,6 +2,8 @@ package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
+
 /**
  * This class is part of JCodec ( www.jcodec.org )
  * This software is distributed under FreeBSD License
@@ -51,6 +53,7 @@ public class ChunkOffsets64Box extends FullBox {
         return 12 + 4 + chunkOffsets.length * 8;
     }
     
+    @AtomField(idx=0)
     public long[] getChunkOffsets() {
         return chunkOffsets;
     }

@@ -91,7 +91,7 @@ public class ChunkReader {
         int size = Chunk.UNEQUAL_SIZES;
         int[] sizes = null;
         if (stsz.getDefaultSize() > 0) {
-            size = getFrameSize();
+            size = stsz.getDefaultSize();
         } else {
             sizes = Platform.copyOfRangeI(stsz.getSizes(), sampleNo, sampleNo + sampleCount);
         }
@@ -112,15 +112,6 @@ public class ChunkReader {
         	chunk.setData(NIOUtils.fetchFromChannel(input, (int) chunk.getSize()));
         }
         return chunk;
-    }
-
-    private int getFrameSize() {
-        int size = stsz.getDefaultSize();
-        Box box = stsd.getBoxes().get(sampleToChunk[s2cIndex].getEntry() - 1);
-        if (box instanceof AudioSampleEntry) {
-            return ((AudioSampleEntry) box).calcFrameSize();
-        }
-        return size;
     }
 
     public int size() {

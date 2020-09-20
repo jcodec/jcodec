@@ -221,13 +221,29 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
 
         stbl.add(SampleDescriptionBox.createSampleDescriptionBox(sampleEntries.toArray(new SampleEntry[0])));
         stbl.add(SampleToChunkBox.createSampleToChunkBox(samplesInChunks.toArray(new SampleToChunkEntry[0])));
-        stbl.add(SampleSizesBox.createSampleSizesBox2(sampleSizes.toArray()));
+        stbl.add(createStsz());
         stbl.add(TimeToSampleBox.createTimeToSampleBox(sampleDurations.toArray(new TimeToSampleEntry[] {})));
         stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(chunkOffsets.toArray()));
         if (!allIframes && iframes.size() > 0)
             stbl.add(SyncSamplesBox.createSyncSamplesBox(iframes.toArray()));
 
         return trak;
+    }
+
+    private SampleSizesBox createStsz() {
+        if (sampleSizes.size() == 0) {
+            return SampleSizesBox.createSampleSizesBox2(sampleSizes.toArray());
+        }
+        boolean allSame = true;
+        int defaultSize = sampleSizes.get(0);
+        for (int i = 0; i < sampleSizes.size(); i++) {
+            if (sampleSizes.get(i) != defaultSize) {
+                allSame = false;
+                break;
+            }
+        }
+        return allSame ? SampleSizesBox.createSampleSizesBox(defaultSize, sampleSizes.size())
+                : SampleSizesBox.createSampleSizesBox2(sampleSizes.toArray());
     }
 
     private void putCompositionOffsets(MovieHeaderBox mvhd, NodeBox stbl) {

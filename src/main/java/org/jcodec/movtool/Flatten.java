@@ -80,9 +80,6 @@ public class Flatten {
     }
 
     public boolean setSampleProcessor(TrakBox trak, SampleProcessor processor) {
-        // Will not modify individual samples of tracks with equal sample sizes
-        if (trak.getStsz().getDefaultSize() != 0)
-            return false;
         this.sampleProcessors.put(trak, processor);
         return true;
     }
@@ -198,10 +195,9 @@ public class Flatten {
             SampleProcessor processor = sampleProcessors.get(tracks[min]);
             if (processor != null) {
                 Chunk orig = head[min];
-                if (orig.getSampleSize() == Chunk.UNEQUAL_SIZES) {
-                    writers[min].write(processChunk(processor, orig, tracks[min]));
-                    writtenChunks++;
-                }
+                orig.unpackSampleSizes();
+                writers[min].write(processChunk(processor, orig, tracks[min]));
+                writtenChunks++;
             } else {
                 writers[min].write(head[min]);
                 writtenChunks++;
@@ -257,7 +253,7 @@ public class Flatten {
     private void writeHeader(Header header, SeekableByteChannel out) throws IOException {
         ByteBuffer bb = ByteBuffer.allocate(16);
         header.write(bb);
-        bb.flip();
+        ((java.nio.Buffer)bb).flip();
         out.write(bb);
     }
 

@@ -57,6 +57,7 @@ public class EditListBox extends FullBox {
         return 12 + 4 + edits.size() * 12;
     }
 
+    @AtomField(idx=0)
     public List<Edit> getEdits() {
         return edits;
     }

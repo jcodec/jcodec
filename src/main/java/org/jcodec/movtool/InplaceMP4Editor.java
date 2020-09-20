@@ -198,7 +198,7 @@ public class InplaceMP4Editor {
 
     private boolean rewriteBox(ByteBuffer buffer, Box box) {
         try {
-            buffer.clear();
+            ((java.nio.Buffer)buffer).clear();
             box.write(buffer);
             if (buffer.hasRemaining()) {
                 if (buffer.remaining() < 8)
@@ -206,7 +206,7 @@ public class InplaceMP4Editor {
                 buffer.putInt(buffer.remaining());
                 buffer.put(new byte[] { 'f', 'r', 'e', 'e' });
             }
-            buffer.flip();
+            ((java.nio.Buffer)buffer).flip();
             return true;
         } catch (BufferOverflowException e) {
             return false;
