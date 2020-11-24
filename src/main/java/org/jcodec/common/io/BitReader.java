@@ -36,7 +36,7 @@ public class BitReader {
     }
 
     public final int readInt() {
-        if (bb.remaining() >= 4) {
+        if (((java.nio.Buffer)bb).remaining() >= 4) {
             deficit -= 32;
             return ((bb.get() & 0xff) << 24) | ((bb.get() & 0xff) << 16) | ((bb.get() & 0xff) << 8) | (bb.get() & 0xff);
         } else
@@ -44,7 +44,7 @@ public class BitReader {
     }
 
     private int readIntSafe() {
-        deficit -= (bb.remaining() << 3);
+        deficit -= (((java.nio.Buffer)bb).remaining() << 3);
         int res = 0;
         if (bb.hasRemaining())
             res |= bb.get() & 0xff;
@@ -101,12 +101,12 @@ public class BitReader {
     }
 
     public boolean moreData() {
-        int remaining = bb.remaining() + 4 - ((deficit + 7) >> 3);
+        int remaining = ((java.nio.Buffer)bb).remaining() + 4 - ((deficit + 7) >> 3);
         return remaining > 1 || (remaining == 1 && curInt != 0);
     }
 
     public int remaining() {
-        return (bb.remaining() << 3) + 32 - deficit;
+        return (((java.nio.Buffer)bb).remaining() << 3) + 32 - deficit;
     }
 
     public final boolean isByteAligned() {
@@ -120,8 +120,8 @@ public class BitReader {
             left -= 32 - deficit;
             deficit = 32;
             if (left > 31) {
-                int skip = Math.min(left >> 3, bb.remaining());
-                bb.position(bb.position() + skip);
+                int skip = Math.min(left >> 3, ((java.nio.Buffer)bb).remaining());
+                ((java.nio.Buffer)bb).position(((java.nio.Buffer)bb).position() + skip);
                 left -= skip << 3;
             }
             curInt = readInt();
@@ -203,11 +203,11 @@ public class BitReader {
     }
 
     private int nextIgnore16() {
-        return bb.remaining() > 1 ? bb.getShort() & 0xffff : (bb.hasRemaining() ? ((bb.get() & 0xff) << 8) : 0);
+        return ((java.nio.Buffer)bb).remaining() > 1 ? bb.getShort() & 0xffff : (((java.nio.Buffer)bb).hasRemaining() ? ((bb.get() & 0xff) << 8) : 0);
     }
 
     private int nextIgnore() {
-        return bb.hasRemaining() ? bb.get() & 0xff : 0;
+        return ((java.nio.Buffer)bb).hasRemaining() ? bb.get() & 0xff : 0;
     }
 
     public int curBit() {
@@ -215,16 +215,16 @@ public class BitReader {
     }
 
     public boolean lastByte() {
-        return bb.remaining() + 4 - (deficit >> 3) <= 1;
+        return ((java.nio.Buffer)bb).remaining() + 4 - (deficit >> 3) <= 1;
     }
 
     public void terminate() {
         int putBack = (32 - deficit) >> 3;
-        bb.position(bb.position() - putBack);
+        ((java.nio.Buffer)bb).position(((java.nio.Buffer)bb).position() - putBack);
     }
 
     public int position() {
-        return ((bb.position() - initPos - 4) << 3) + deficit;
+        return ((((java.nio.Buffer)bb).position() - initPos - 4) << 3) + deficit;
     }
 
     /**
@@ -232,7 +232,7 @@ public class BitReader {
      * byte unread byte
      */
     public void stop() {
-        bb.position(bb.position() - ((32 - deficit) >> 3));
+        ((java.nio.Buffer)bb).position(((java.nio.Buffer)bb).position() - ((32 - deficit) >> 3));
     }
 
     public int checkAllBits() {

@@ -224,7 +224,7 @@ public class NIOUtils {
         for (ByteBuffer byteBuffer : picture) {
             write(result, byteBuffer);
         }
-        result.flip();
+        ((java.nio.Buffer)result).flip();
         return result;
     }
 
