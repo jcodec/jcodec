@@ -47,6 +47,7 @@ public final class Codec {
     public final static Codec NELLYMOSER = new Codec("NELLYMOSER", AUDIO, false);
     public final static Codec G711 = new Codec("G711", AUDIO, false);
     public final static Codec SPEEX = new Codec("SPEEX", AUDIO, false);
+    public final static Codec OPUS = new Codec("OPUS", AUDIO, false);
     public final static Codec RAW = new Codec("RAW", null, false);
     public final static Codec TIMECODE = new Codec("TIMECODE", TrackType.OTHER, false);
 
@@ -85,6 +86,7 @@ public final class Codec {
         _values.put("G711", G711);
         _values.put("SPEEX", SPEEX);
         _values.put("RAW", RAW);
+        _values.put("OPUS", OPUS);
         _values.put("TIMECODE", TIMECODE);
     }
 
