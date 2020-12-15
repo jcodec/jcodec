@@ -10,6 +10,9 @@ import static org.jcodec.containers.mkv.MKVType.Info;
 import static org.jcodec.containers.mkv.MKVType.PixelHeight;
 import static org.jcodec.containers.mkv.MKVType.PixelWidth;
 import static org.jcodec.containers.mkv.MKVType.SamplingFrequency;
+import static org.jcodec.containers.mkv.MKVType.TagLanguage;
+import static org.jcodec.containers.mkv.MKVType.Language;
+import static org.jcodec.containers.mkv.MKVType.Channels;
 import static org.jcodec.containers.mkv.MKVType.Segment;
 import static org.jcodec.containers.mkv.MKVType.Timecode;
 import static org.jcodec.containers.mkv.MKVType.TimecodeScale;
@@ -23,6 +26,7 @@ import static org.jcodec.containers.mkv.MKVType.findList;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,13 +34,17 @@ import java.util.Map;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.TrackType;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Label;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Packet.FrameType;
@@ -67,11 +75,85 @@ public final class MKVDemuxer implements Demuxer {
     int pictureWidth;
     int pictureHeight;
 
-    private static Map<String, Codec> codecMapping = new HashMap<String, Codec>();
+    private static Map<String, Codec> codecVideoMapping = new HashMap<String, Codec>();
     static {
-        codecMapping.put("V_VP8", Codec.VP8);
-        codecMapping.put("V_VP9", Codec.VP9);
-        codecMapping.put("V_MPEG4/ISO/AVC", Codec.H264);
+        codecVideoMapping.put("V_MS/VFW/FOURCC", null);
+        codecVideoMapping.put("V_UNCOMPRESSED", null);
+        codecVideoMapping.put("V_MPEG4/ISO/SP", null);
+        codecVideoMapping.put("V_MPEG4/ISO/ASP", null);
+        codecVideoMapping.put("V_MPEG4/ISO/AP", null);
+        codecVideoMapping.put("V_MPEG4/MS/V3", Codec.MPEG4);
+        codecVideoMapping.put("V_MPEG4/ISO/AVC", Codec.H264);
+        codecVideoMapping.put("V_MPEGH/ISO/HEVC", Codec.H265);
+        codecVideoMapping.put("V_MPEG1", null);
+        codecVideoMapping.put("V_MPEG2", Codec.MPEG2);
+        codecVideoMapping.put("V_REAL/RV10", null);
+        codecVideoMapping.put("V_REAL/RV20", null);
+        codecVideoMapping.put("V_REAL/RV30", null);
+        codecVideoMapping.put("V_REAL/RV40", null);
+        codecVideoMapping.put("V_QUICKTIME", null);
+        codecVideoMapping.put("V_THEORA", null);
+        codecVideoMapping.put("V_PRORES", null);
+        codecVideoMapping.put("V_VP8", Codec.VP8);
+        codecVideoMapping.put("V_VP9", Codec.VP9);
+        codecVideoMapping.put("V_FFV1", null);
+    }
+    private static Map<String, Codec> codecAudioMapping = new HashMap<String, Codec>();
+    static {
+        codecAudioMapping.put("A_MPEG/L3", Codec.MP3);
+        codecAudioMapping.put("A_MPEG/L2", null);
+        codecAudioMapping.put("A_MPEG/L1", null);
+        codecAudioMapping.put("A_PCM/INT/BIG", null);
+        codecAudioMapping.put("A_PCM/INT/LIT", null);
+        codecAudioMapping.put("A_PCM/FLOAT/IEEE", null);
+        codecAudioMapping.put("A_MPC", null);
+        codecAudioMapping.put("A_AC3", Codec.AC3);
+        codecAudioMapping.put("A_AC3/BSID9", Codec.AC3);
+        codecAudioMapping.put("A_AC3/BSID10", Codec.AC3);
+        codecAudioMapping.put("A_ALAC", null);
+        codecAudioMapping.put("A_DTS", null);
+        codecAudioMapping.put("A_DTS/EXPRESS", null);
+        codecAudioMapping.put("A_DTS/LOSSLESS", null);
+        codecAudioMapping.put("A_VORBIS", Codec.VORBIS);
+        codecAudioMapping.put("A_FLAC", null);
+        codecAudioMapping.put("A_REAL/14_4", null);
+        codecAudioMapping.put("A_REAL/28_8", null);
+        codecAudioMapping.put("A_REAL/COOK", null);
+        codecAudioMapping.put("A_REAL/SIPR", null);
+        codecAudioMapping.put("A_REAL/RALF", null);
+        codecAudioMapping.put("A_REAL/ATRC", null);
+        codecAudioMapping.put("A_MS/ACM", null);
+        codecAudioMapping.put("A_AAC/MPEG2/MAIN", Codec.AAC);
+        codecAudioMapping.put("A_AAC/MPEG2/LC", Codec.AAC);
+        codecAudioMapping.put("A_AAC/MPEG2/LC/SBR", Codec.AAC);
+        codecAudioMapping.put("A_AAC/MPEG2/SSR", Codec.AAC);
+        codecAudioMapping.put("A_AAC/MPEG4/MAIN", Codec.AAC);
+        codecAudioMapping.put("A_AAC/MPEG4/LC", Codec.AAC);
+        codecAudioMapping.put("A_AAC/MPEG4/LC/SBR", Codec.AAC);
+        codecAudioMapping.put("A_AAC/MPEG4/SSR", Codec.AAC);
+        codecAudioMapping.put("A_AAC/MPEG4/LTP", Codec.AAC);
+        codecAudioMapping.put("A_QUICKTIME", null);
+        codecAudioMapping.put("A_QUICKTIME/QDMC", null);
+        codecAudioMapping.put("A_QUICKTIME/QDM2", null);
+        codecAudioMapping.put("A_TTA1", null);
+        codecAudioMapping.put("A_WAVPACK4", null);
+        codecAudioMapping.put("A_OPUS", Codec.OPUS);
+
+    }
+    private static Map<String, Codec> codecSubtitleMapping = new HashMap<String, Codec>();
+    static {
+        // unmanage codec:
+        codecSubtitleMapping.put("S_TEXT/UTF8", null);
+        codecSubtitleMapping.put("S_TEXT/SSA", null);
+        codecSubtitleMapping.put("S_TEXT/ASS", null);
+        codecSubtitleMapping.put("S_TEXT/USF", null);
+        codecSubtitleMapping.put("S_TEXT/WEBVTT", null);
+        codecSubtitleMapping.put("S_IMAGE/BMP", null);
+        codecSubtitleMapping.put("S_DVBSUB", null);
+        codecSubtitleMapping.put("S_VOBSUB", null);
+        codecSubtitleMapping.put("S_HDMV/PGS", null);
+        codecSubtitleMapping.put("S_HDMV/TEXTST", null);
+        codecSubtitleMapping.put("S_KATE", null);
     }
 
     public MKVDemuxer(SeekableByteChannel fileChannelWrapper) throws IOException {
@@ -102,7 +184,7 @@ public final class MKVDemuxer implements Demuxer {
                 MKVType[] path3 = { TrackEntry, CodecPrivate };
                 MKVType[] path10 = { TrackEntry, MKVType.CodecID };
                 EbmlString codecId = (EbmlString) findFirst(aTrack, path10);
-                Codec codec = codecMapping.get(codecId.getString());
+                Codec codec = codecVideoMapping.get(codecId.getString());
                 
                 EbmlBin videoCodecState = (EbmlBin) findFirst(aTrack, path3);
                 ByteBuffer state = null;
@@ -110,7 +192,6 @@ public final class MKVDemuxer implements Demuxer {
                     state = videoCodecState.data;
 
                 MKVType[] path4 = { TrackEntry, Video, PixelWidth };
-
                 EbmlUint width = (EbmlUint) findFirst(aTrack, path4);
                 MKVType[] path5 = { TrackEntry, Video, PixelHeight };
                 EbmlUint height = (EbmlUint) findFirst(aTrack, path5);
@@ -131,17 +212,30 @@ public final class MKVDemuxer implements Demuxer {
                         throw new RuntimeException("DisplayUnits other then 0 are not implemented yet");
                     }
                 }
-
                 vTrack = new VideoTrack(this, (int) id, state, codec);
-
             } else if (type == 2) {
-                AudioTrack audioTrack = new AudioTrack((int) id, this);
+                double sampleRate = 8000.0;
+                long channelCount = 1;
+                String language = "eng";
+                MKVType[] path10 = { TrackEntry, MKVType.CodecID };
+                EbmlString codecId = (EbmlString) findFirst(aTrack, path10);
+                Codec codec = codecAudioMapping.get(codecId.getString());
                 MKVType[] path3 = { TrackEntry, Audio, SamplingFrequency };
                 EbmlFloat sf = (EbmlFloat) findFirst(aTrack, path3);
-                if (sf != null)
-                    audioTrack.samplingFrequency = sf.getDouble();
-
-                aTracks.add(audioTrack);
+                if (sf != null) {
+                    sampleRate = sf.getDouble();
+                }
+                MKVType[] path4 = { TrackEntry, Audio, Channels };
+                EbmlUint channels = (EbmlUint) findFirst(aTrack, path4);
+                if (channels != null) {
+                    channelCount = channels.getUint();
+                }
+                MKVType[] path5 = { TrackEntry, Language };
+                EbmlString tagLanguage = (EbmlString) findFirst(aTrack, path5);
+                if (tagLanguage != null) {
+                    language = tagLanguage.getString();
+                }
+                aTracks.add(new AudioTrack(this, (int) id, codec, sampleRate, channelCount, language));
             } else if (type == 17) {
                 SubtitlesTrack subsTrack = new SubtitlesTrack((int) id, this);
                 subsTracks.add(subsTrack);
@@ -482,10 +576,17 @@ public final class MKVDemuxer implements Demuxer {
     }
 
     public static class AudioTrack extends MkvTrack {
-        public double samplingFrequency;
+        private double sampleRate = 8000;
+        private String language = "eng";
+        private long channelCount = 1;
+        private Codec codec = null;
 
-        public AudioTrack(int trackNo, MKVDemuxer demuxer) {
+        public AudioTrack(MKVDemuxer demuxer, int trackNo, Codec codec, double sampleRate, long channelCount, String language) {
             super(trackNo, demuxer);
+            this.codec = codec;
+            this.language = language;
+            this.sampleRate = sampleRate;
+            this.channelCount = channelCount;
         }
 
         @Override
@@ -493,7 +594,7 @@ public final class MKVDemuxer implements Demuxer {
             MkvBlockData b = nextBlock();
             if (b == null) return null;
 
-            return Packet.createPacket(b.data, b.block.absoluteTimecode, (int) Math.round(samplingFrequency), 1, 0, FrameType.KEY,
+            return Packet.createPacket(b.data, b.block.absoluteTimecode, (int) Math.round(sampleRate), 1, 0, FrameType.KEY,
                     ZERO_TAPE_TIMECODE);
         }
 
@@ -507,18 +608,27 @@ public final class MKVDemuxer implements Demuxer {
             MkvBlockData frameBlock = getFrameBlock(count);
             if (frameBlock == null) return null;
 
-            return Packet.createPacket(frameBlock.data, frameBlock.block.absoluteTimecode, (int) Math.round(samplingFrequency),
+            return Packet.createPacket(frameBlock.data, frameBlock.block.absoluteTimecode, (int) Math.round(sampleRate),
                     frameBlock.count, 0, FrameType.KEY, ZERO_TAPE_TIMECODE);
         }
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            return null;
+            return new DemuxerTrackMeta(org.jcodec.common.TrackType.AUDIO, this.codec, 0, null, 0, null, null, AudioCodecMeta.createAudioCodecMeta("", 0, (int)this.channelCount, (int)this.sampleRate,
+                    ByteOrder.LITTLE_ENDIAN, this.codec.isPcm(), null, null));
         }
 
         @Override
         public boolean gotoSyncFrame(long frame) {
             return gotoFrame(frame);
+        }
+
+        public String getLanguage() {
+            return language;
+        }
+
+        public long getChannelCount() {
+            return channelCount;
         }
     }
 
