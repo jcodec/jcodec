@@ -138,11 +138,10 @@ public final class MKVDemuxer implements Demuxer {
         codecAudioMapping.put("A_TTA1", null);
         codecAudioMapping.put("A_WAVPACK4", null);
         codecAudioMapping.put("A_OPUS", Codec.OPUS);
-
     }
+
     private static Map<String, Codec> codecSubtitleMapping = new HashMap<String, Codec>();
     static {
-        // unmanage codec:
         codecSubtitleMapping.put("S_TEXT/UTF8", null);
         codecSubtitleMapping.put("S_TEXT/SSA", null);
         codecSubtitleMapping.put("S_TEXT/ASS", null);
@@ -172,35 +171,36 @@ public final class MKVDemuxer implements Demuxer {
             timescale = (int) ts.getUint();
         MKVType[] path9 = { Segment, Tracks, TrackEntry };
 
-        for (EbmlMaster aTrack : findList(t, EbmlMaster.class, path9)) {
+        for (EbmlMaster elemTrack : findList(t, EbmlMaster.class, path9)) {
             MKVType[] path1 = { TrackEntry, TrackType };
-            long type = ((EbmlUint) findFirst(aTrack, path1)).getUint();
+            long type = ((EbmlUint) findFirst(elemTrack, path1)).getUint();
             MKVType[] path2 = { TrackEntry, TrackNumber };
-            long id = ((EbmlUint) findFirst(aTrack, path2)).getUint();
+            long id = ((EbmlUint) findFirst(elemTrack, path2)).getUint();
             if (type == 1) {
-                // video
+                // Parse Video
                 if (vTrack != null)
                     throw new RuntimeException("More then 1 video track, can not compute...");
                 MKVType[] path3 = { TrackEntry, CodecPrivate };
                 MKVType[] path10 = { TrackEntry, MKVType.CodecID };
-                EbmlString codecId = (EbmlString) findFirst(aTrack, path10);
+                EbmlString codecId = (EbmlString) findFirst(elemTrack, path10);
                 Codec codec = codecVideoMapping.get(codecId.getString());
+                }
                 
-                EbmlBin videoCodecState = (EbmlBin) findFirst(aTrack, path3);
+                EbmlBin videoCodecState = (EbmlBin) findFirst(elemTrack, path3);
                 ByteBuffer state = null;
                 if (videoCodecState != null)
                     state = videoCodecState.data;
 
                 MKVType[] path4 = { TrackEntry, Video, PixelWidth };
-                EbmlUint width = (EbmlUint) findFirst(aTrack, path4);
+                EbmlUint width = (EbmlUint) findFirst(elemTrack, path4);
                 MKVType[] path5 = { TrackEntry, Video, PixelHeight };
-                EbmlUint height = (EbmlUint) findFirst(aTrack, path5);
+                EbmlUint height = (EbmlUint) findFirst(elemTrack, path5);
                 MKVType[] path6 = { TrackEntry, Video, DisplayWidth };
-                EbmlUint dwidth = (EbmlUint) findFirst(aTrack, path6);
+                EbmlUint dwidth = (EbmlUint) findFirst(elemTrack, path6);
                 MKVType[] path7 = { TrackEntry, Video, DisplayHeight };
-                EbmlUint dheight = (EbmlUint) findFirst(aTrack, path7);
+                EbmlUint dheight = (EbmlUint) findFirst(elemTrack, path7);
                 MKVType[] path8 = { TrackEntry, Video, DisplayUnit };
-                EbmlUint unit = (EbmlUint) findFirst(aTrack, path8);
+                EbmlUint unit = (EbmlUint) findFirst(elemTrack, path8);
                 if (width != null && height != null) {
                     pictureWidth = (int) width.getUint();
                     pictureHeight = (int) height.getUint();
@@ -214,24 +214,25 @@ public final class MKVDemuxer implements Demuxer {
                 }
                 vTrack = new VideoTrack(this, (int) id, state, codec);
             } else if (type == 2) {
+                // Parse Audio
                 double sampleRate = 8000.0;
                 long channelCount = 1;
                 String language = "eng";
                 MKVType[] path10 = { TrackEntry, MKVType.CodecID };
-                EbmlString codecId = (EbmlString) findFirst(aTrack, path10);
+                EbmlString codecId = (EbmlString) findFirst(elemTrack, path10);
                 Codec codec = codecAudioMapping.get(codecId.getString());
                 MKVType[] path3 = { TrackEntry, Audio, SamplingFrequency };
-                EbmlFloat sf = (EbmlFloat) findFirst(aTrack, path3);
+                EbmlFloat sf = (EbmlFloat) findFirst(elemTrack, path3);
                 if (sf != null) {
                     sampleRate = sf.getDouble();
                 }
                 MKVType[] path4 = { TrackEntry, Audio, Channels };
-                EbmlUint channels = (EbmlUint) findFirst(aTrack, path4);
+                EbmlUint channels = (EbmlUint) findFirst(elemTrack, path4);
                 if (channels != null) {
                     channelCount = channels.getUint();
                 }
                 MKVType[] path5 = { TrackEntry, Language };
-                EbmlString tagLanguage = (EbmlString) findFirst(aTrack, path5);
+                EbmlString tagLanguage = (EbmlString) findFirst(elemTrack, path5);
                 if (tagLanguage != null) {
                     language = tagLanguage.getString();
                 }
