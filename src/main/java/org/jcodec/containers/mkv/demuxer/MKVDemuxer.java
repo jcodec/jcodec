@@ -98,6 +98,7 @@ public final class MKVDemuxer implements Demuxer {
         codecVideoMapping.put("V_VP9", Codec.VP9);
         codecVideoMapping.put("V_FFV1", null);
     }
+
     private static Map<String, Codec> codecAudioMapping = new HashMap<String, Codec>();
     static {
         codecAudioMapping.put("A_MPEG/L3", Codec.MP3);
@@ -145,7 +146,7 @@ public final class MKVDemuxer implements Demuxer {
 
     private static Map<String, Codec> codecSubtitleMapping = new HashMap<String, Codec>();
     static {
-        codecSubtitleMapping.put("S_TEXT/UTF8", null);
+        codecSubtitleMapping.put("S_TEXT/UTF8", Codec.UTF8);
         codecSubtitleMapping.put("S_TEXT/SSA", null);
         codecSubtitleMapping.put("S_TEXT/ASS", null);
         codecSubtitleMapping.put("S_TEXT/USF", null);
@@ -245,9 +246,32 @@ public final class MKVDemuxer implements Demuxer {
                     language = tagLanguage.getString();
                 }
                 aTracks.add(new AudioTrack(this, (int) id, codec, sampleRate, channelCount, language));
+            } else if (type == 3) {
+                // Parse complex
+            } else if (type == 16) {
+                // Parse logo
             } else if (type == 17) {
-                SubtitlesTrack subsTrack = new SubtitlesTrack((int) id, this);
+                // Parse subtitle
+                String language = "eng";
+                MKVType[] path10 = { TrackEntry, MKVType.CodecID };
+                EbmlString codecId = (EbmlString) findFirst(elemTrack, path10);
+                Codec codec = codecSubtitleMapping.get(codecId.getString());
+                if (codec == null) {
+                    System.out.println("Unknown subtitle codec: '" + codecId.getString() + "'");
+                }
+                MKVType[] path5 = { TrackEntry, Language };
+                EbmlString tagLanguage = (EbmlString) findFirst(elemTrack, path5);
+                if (tagLanguage != null) {
+                    language = tagLanguage.getString();
+                }
+                SubtitlesTrack subsTrack = new SubtitlesTrack(this, (int) id, codec, language);
                 subsTracks.add(subsTrack);
+            } else if (type == 18) {
+                // Parse buttons
+            } else if (type == 32) {
+                // Parse control
+            } else if (type == 33) {
+                // Parse metadata
             }
         }
         MKVType[] path2 = { Segment, Cluster };
@@ -401,8 +425,21 @@ public final class MKVDemuxer implements Demuxer {
     }
 
     public static class SubtitlesTrack extends MkvTrack {
-        SubtitlesTrack(int trackNo, MKVDemuxer demuxer) {
+        private Codec codec = null;
+        private String language = "eng";
+        SubtitlesTrack(MKVDemuxer demuxer, int trackNo, Codec codec, String language) {
             super(trackNo, demuxer);
+            this.codec = codec;
+            if (language != null) {
+                this.language = language;
+            }
+        }
+        @Override
+        public DemuxerTrackMeta getMeta() {
+            return new DemuxerTrackMeta(org.jcodec.common.TrackType.TEXT, this.codec, 0, null, 0, null, null, null);
+        }
+        public String getLanguage() {
+            return language;
         }
     }
 
