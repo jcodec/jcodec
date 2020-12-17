@@ -32,7 +32,7 @@ public final class Codec {
     public final static Codec VP6 = new Codec("VP6", VIDEO, false);
     public final static Codec VP8 = new Codec("VP8", VIDEO, false);
     public final static Codec VP9 = new Codec("VP9", VIDEO, false);
-    public final static Codec VORBIS = new Codec("VORBIS", VIDEO, false);
+    public final static Codec VORBIS = new Codec("VORBIS", AUDIO, false);
     public final static Codec AAC = new Codec("AAC", AUDIO, false);
     public final static Codec MP3 = new Codec("MP3", AUDIO, false);
     public final static Codec MP2 = new Codec("MP2", AUDIO, false);
