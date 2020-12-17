@@ -123,10 +123,13 @@ public final class MKVDemuxer implements Demuxer {
         codecAudioMapping.put("A_REAL/RALF", null);
         codecAudioMapping.put("A_REAL/ATRC", null);
         codecAudioMapping.put("A_MS/ACM", null);
+        codecAudioMapping.put("A_AAC", Codec.AAC);
+        codecAudioMapping.put("A_AAC/MPEG2", Codec.AAC);
         codecAudioMapping.put("A_AAC/MPEG2/MAIN", Codec.AAC);
         codecAudioMapping.put("A_AAC/MPEG2/LC", Codec.AAC);
         codecAudioMapping.put("A_AAC/MPEG2/LC/SBR", Codec.AAC);
         codecAudioMapping.put("A_AAC/MPEG2/SSR", Codec.AAC);
+        codecAudioMapping.put("A_AAC/MPEG4", Codec.AAC);
         codecAudioMapping.put("A_AAC/MPEG4/MAIN", Codec.AAC);
         codecAudioMapping.put("A_AAC/MPEG4/LC", Codec.AAC);
         codecAudioMapping.put("A_AAC/MPEG4/LC/SBR", Codec.AAC);
@@ -184,6 +187,8 @@ public final class MKVDemuxer implements Demuxer {
                 MKVType[] path10 = { TrackEntry, MKVType.CodecID };
                 EbmlString codecId = (EbmlString) findFirst(elemTrack, path10);
                 Codec codec = codecVideoMapping.get(codecId.getString());
+                if (codec == null) {
+                    System.out.println("Unknown video codec: '" + codecId.getString() + "'");
                 }
                 
                 EbmlBin videoCodecState = (EbmlBin) findFirst(elemTrack, path3);
@@ -221,6 +226,9 @@ public final class MKVDemuxer implements Demuxer {
                 MKVType[] path10 = { TrackEntry, MKVType.CodecID };
                 EbmlString codecId = (EbmlString) findFirst(elemTrack, path10);
                 Codec codec = codecAudioMapping.get(codecId.getString());
+                if (codec == null) {
+                    System.out.println("Unknown audio codec: '" + codecId.getString() + "'");
+                }
                 MKVType[] path3 = { TrackEntry, Audio, SamplingFrequency };
                 EbmlFloat sf = (EbmlFloat) findFirst(elemTrack, path3);
                 if (sf != null) {
@@ -585,9 +593,15 @@ public final class MKVDemuxer implements Demuxer {
         public AudioTrack(MKVDemuxer demuxer, int trackNo, Codec codec, double sampleRate, long channelCount, String language) {
             super(trackNo, demuxer);
             this.codec = codec;
-            this.language = language;
-            this.sampleRate = sampleRate;
-            this.channelCount = channelCount;
+            if (language != null) {
+                this.language = language;
+            }
+            if (sampleRate > 0.0) {
+                this.sampleRate = sampleRate;
+            }
+            if (channelCount > 0) {
+                this.channelCount = channelCount;
+            }
         }
 
         @Override
@@ -615,8 +629,12 @@ public final class MKVDemuxer implements Demuxer {
 
         @Override
         public DemuxerTrackMeta getMeta() {
+            boolean isPcm = false;
+            if (this.codec != null) {
+                isPcm = this.codec.isPcm();
+            }
             return new DemuxerTrackMeta(org.jcodec.common.TrackType.AUDIO, this.codec, 0, null, 0, null, null, AudioCodecMeta.createAudioCodecMeta("", 0, (int)this.channelCount, (int)this.sampleRate,
-                    ByteOrder.LITTLE_ENDIAN, this.codec.isPcm(), null, null));
+                    ByteOrder.LITTLE_ENDIAN, isPcm, null, null));
         }
 
         @Override
