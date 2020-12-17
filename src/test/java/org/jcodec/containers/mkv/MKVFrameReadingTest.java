@@ -35,7 +35,7 @@ public class MKVFrameReadingTest {
     public static void setUpTestSuite() throws Exception {
         suite = MKVTestSuite.read();
         if (!suite.isSuitePresent())
-            Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
+            Assert.fail("MKV test suite is missing, please download from https://www.matroska.org/downloads/test_suite.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
     }
     */
 
