@@ -115,6 +115,9 @@ public class Flatten {
 
         out.setPosition(mdatOff);
         writeHeader(Header.createHeader("mdat", mdatSize), out);
+        for (int i = 0; i < inputFiles.length; i++) {
+            NIOUtils.closeQuietly(inputs[i]);
+        }
     }
 
     public void flattenOnTop(Movie movie, File outF) throws IOException {
