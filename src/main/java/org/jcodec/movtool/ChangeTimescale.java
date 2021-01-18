@@ -1,6 +1,4 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
 
 
 import org.jcodec.containers.mp4.boxes.Box;
@@ -31,6 +29,7 @@ public class ChangeTimescale {
             System.exit(-1);
         }
         new InplaceMP4Editor().modify(new File(args[0]), new MP4Edit() {
+            @Override
             public void apply(MovieBox mov) {
                 TrakBox vt = mov.getVideoTrack();
                 MediaHeaderBox mdhd = NodeBox.findFirstPath(vt, MediaHeaderBox.class, Box.path("mdia.mdhd"));

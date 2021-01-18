@@ -73,8 +73,7 @@ public class Strip {
     public void stripToChunks(MovieBox movie) throws IOException {
         RationalLarge maxDuration = RationalLarge.ZERO;
         TrakBox[] tracks = movie.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox track = tracks[i];
+        for (TrakBox track : tracks) {
             RationalLarge duration = stripTrack(movie, track);
             if (duration.greaterThen(maxDuration))
                 maxDuration = duration;
@@ -85,8 +84,7 @@ public class Strip {
     public void stripToSamples(MovieBox movie, boolean toWholeSampleMeta) throws IOException {
         RationalLarge maxDuration = RationalLarge.ZERO;
         TrakBox[] tracks = movie.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox track = tracks[i];
+        for (TrakBox track : tracks) {
             RationalLarge duration = trimEdits(movie, track,
                     !"meta".equals(track.getHandlerType()) || toWholeSampleMeta);
 
@@ -376,7 +374,7 @@ public class Strip {
 
     public SampleSizesBox getSampleSizes(List<Chunk> chunks) {
         int nSamples = 0;
-        int prevSize = chunks.size() != 0 ? chunks.get(0).getSampleSize() : 0;
+        int prevSize = chunks.isEmpty() ? 0 : chunks.get(0).getSampleSize();
         for (Chunk chunk : chunks) {
             nSamples += chunk.getSampleCount();
             if (prevSize == 0 && chunk.getSampleSize() != 0)
@@ -435,7 +433,7 @@ public class Strip {
         ae -= 1;
         return (as >= bs && as <= be) || (ae >= bs && ae <= be) || (bs >= as && bs <= ae) || (be >= as && be <= ae);
     }
-    /** Temporary for backward comatibility */
+    /** Temporary for backward compatibility */
     public void trim(MovieBox movie, String param) {
     }
 }

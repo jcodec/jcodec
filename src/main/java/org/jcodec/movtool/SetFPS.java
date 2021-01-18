@@ -24,7 +24,7 @@ public class SetFPS {
     private static final int MIN_TIMESCALE_ALLOWED = 25;
 
     public static class SetFPSEdit implements MP4Edit {
-        private RationalLarge newFPS;
+        private final RationalLarge newFPS;
 
         public SetFPSEdit(RationalLarge newFPS) {
             this.newFPS = newFPS;
