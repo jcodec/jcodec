@@ -1,11 +1,7 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
-
 
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Movie;
-import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.movtool.QTEdit.EditFactory;
 
 import java.io.File;
@@ -32,7 +28,7 @@ public class QTRefEdit {
         LinkedList<String> aa = new LinkedList<String>(Arrays.asList(args));
 
         final List<MP4Edit> edits = new LinkedList<MP4Edit>();
-        while (aa.size() > 0) {
+        while (!aa.isEmpty()) {
             int i;
             for (i = 0; i < factories.length; i++) {
                 if (aa.get(0).equals(factories[i].getName())) {
@@ -49,17 +45,17 @@ public class QTRefEdit {
             if (i == factories.length)
                 break;
         }
-        if (aa.size() == 0) {
+        if (aa.isEmpty()) {
             System.err.println("ERROR: A movie file should be specified");
             help();
         }
-        if (edits.size() == 0) {
+        if (edits.isEmpty()) {
             System.err.println("ERROR: At least one command should be specified");
             help();
         }
         File input = new File(aa.remove(0));
 
-        if (aa.size() == 0) {
+        if (aa.isEmpty()) {
             System.err.println("ERROR: A movie output file should be specified");
             help();
         }

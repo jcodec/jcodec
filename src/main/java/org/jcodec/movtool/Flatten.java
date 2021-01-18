@@ -286,8 +286,7 @@ public class Flatten {
     private int calcSpaceReq(MovieBox movie) {
         int sum = 0;
         TrakBox[] tracks = movie.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox trakBox = tracks[i];
+        for (TrakBox trakBox : tracks) {
             ChunkOffsetsBox stco = trakBox.getStco();
             if (stco != null)
                 sum += stco.getChunkOffsets().length * 4;

@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Movie;
-import org.jcodec.containers.mp4.boxes.MovieBox;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -27,7 +26,7 @@ public class WebOptimize {
             Movie movie = MP4Util.createRefFullMovieFromFile(src);
 
             new Flatten().flatten(movie, tgt);
-        } catch (Throwable t) {
+        } catch (IOException t) {
             t.printStackTrace();
             tgt.renameTo(new File(tgt.getParentFile(), tgt.getName() + ".error"));
             src.renameTo(tgt);

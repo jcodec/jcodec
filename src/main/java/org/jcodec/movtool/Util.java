@@ -116,13 +116,14 @@ public class Util {
         TimeToSampleBox stts = track.getStts();
         int count = 0;
         TimeToSampleEntry[] tts = stts.getEntries();
-        for (int i = 0; i < tts.length; i++)
-            count += tts[i].getSampleCount();
+        for (TimeToSampleEntry tt : tts) {
+            count += tt.getSampleCount();
+        }
         long[] tv = new long[count + 1];
         int k = 0;
-        for (int i = 0; i < tts.length; i++) {
-            for (int j = 0; j < tts[i].getSampleCount(); j++, k++) {
-                tv[k + 1] = tv[k] + tts[i].getSampleDuration();
+        for (TimeToSampleEntry tt : tts) {
+            for (int j = 0; j < tt.getSampleCount(); j++, k++) {
+                tv[k + 1] = tv[k] + tt.getSampleDuration();
             }
         }
         return tv;
@@ -203,8 +204,7 @@ public class Util {
         SampleEntry[] ent2 = trakBox2.getSampleEntries();
 
         SampleDescriptionBox stsd = SampleDescriptionBox.createSampleDescriptionBox(ent1);
-        for (int i = 0; i < ent2.length; i++) {
-            SampleEntry se = ent2[i];
+        for (SampleEntry se : ent2) {
             se.setDrefInd((short) (se.getDrefInd() + ent1.length));
             stsd.add(se);
         }
@@ -241,7 +241,7 @@ public class Util {
 
     public static void forceEditList(MovieBox movie, TrakBox trakBox) {
         List<Edit> edits = trakBox.getEdits();
-        if (edits == null || edits.size() == 0) {
+        if (edits == null || edits.isEmpty()) {
             MovieHeaderBox mvhd = NodeBox.findFirst(movie, MovieHeaderBox.class, "mvhd");
             edits = new ArrayList<Edit>();
             trakBox.setEdits(edits);
@@ -252,8 +252,7 @@ public class Util {
 
     public static void forceEditListMov(MovieBox movie) {
         TrakBox[] tracks = movie.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox trakBox = tracks[i];
+        for (TrakBox trakBox : tracks) {
             forceEditList(movie, trakBox);
         }
     }

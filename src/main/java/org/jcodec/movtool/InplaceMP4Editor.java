@@ -44,7 +44,7 @@ public class InplaceMP4Editor {
 
     /**
      * Tries to modify movie header in place according to what's implemented in
-     * the edit, the file gets pysically modified if the operation is
+     * the edit, the file gets physically modified if the operation is
      * successful. No temporary file is created.
      * 
      * @param file
@@ -54,7 +54,6 @@ public class InplaceMP4Editor {
      * @return Whether or not edit was successful, i.e. was there enough place
      *         to put the new header
      * @throws IOException
-     * @throws Exception
      */
     public boolean modify(File file, MP4Edit edit) throws IOException {
         SeekableByteChannel fi = null;
@@ -111,6 +110,7 @@ public class InplaceMP4Editor {
                 return false;
 
             List<_2<Long, ByteBuffer>> fragOffsets = Tuple._2map0(fragments, new Tuple.Mapper<Atom, Long>() {
+                @Override
                 public Long map(Atom t) {
                     return t.getOffset();
                 }

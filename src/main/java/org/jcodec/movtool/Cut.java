@@ -1,7 +1,5 @@
 package org.jcodec.movtool;
 
-import java.lang.System;
-
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.max;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
@@ -112,8 +110,8 @@ public class Cut {
     }
 
     public static class Slice {
-        private double inSec;
-        private double outSec;
+        private final double inSec;
+        private final double outSec;
 
         public Slice(double _in, double out) {
             super();
@@ -130,8 +128,7 @@ public class Cut {
             moov.fixTimescale(videoTrack.getTimescale());
 
         TrakBox[] tracks = moov.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox trakBox = tracks[i];
+        for (TrakBox trakBox : tracks) {
             forceEditList(moov, trakBox);
             for (Slice cut : commands) {
                 split(cut.inSec, moov, trakBox);

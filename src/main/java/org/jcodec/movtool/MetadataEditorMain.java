@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
@@ -44,10 +43,10 @@ public class MetadataEditorMain {
             + " format: key1,key2,key3,...");
     private static final Flag FLAG_DROP_ITUNES = Flag.flag("drop-itunes", "di",
             "Drop the field(s) from iTunes metadata," + " format: key1,key2,key3,...");
-    private static final Flag[] flags = { FLAG_SET_KEYED, FLAG_SET_ITUNES, FLAG_QUERY, FLAG_FAST, FLAG_SET_ITUNES_BLOB,
+    private static final Flag[] FLAGS = { FLAG_SET_KEYED, FLAG_SET_ITUNES, FLAG_QUERY, FLAG_FAST, FLAG_SET_ITUNES_BLOB,
             FLAG_DROP_KEYED, FLAG_DROP_ITUNES };
 
-    private static Map<String, Integer> strToType = new HashMap<String, Integer>();
+    private static final Map<String, Integer> strToType = new HashMap<String, Integer>();
 
     static {
         strToType.put("utf8", 1);
@@ -62,9 +61,9 @@ public class MetadataEditorMain {
     }
 
     public static void main(String[] args) throws IOException {
-        Cmd cmd = MainUtils.parseArguments(args, flags);
+        Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpCmdVa("metaedit", flags, "file name");
+            MainUtils.printHelpCmdVa("metaedit", FLAGS, "file name");
             System.exit(-1);
             return;
         }

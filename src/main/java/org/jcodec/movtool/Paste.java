@@ -1,7 +1,5 @@
 package org.jcodec.movtool;
 
-import java.lang.System;
-
 import static java.util.Arrays.fill;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
