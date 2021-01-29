@@ -68,7 +68,8 @@ public class Util {
                 long leftDurMedia = trackByMv.multiplyLong(leftDurMV);
 
                 Edit left = new Edit(leftDurMV, edit.getMediaTime(), 1.0f);
-                Edit right = new Edit(edit.getDuration() - leftDurMV, leftDurMedia + edit.getMediaTime(), 1.0f);
+                Edit right = new Edit(edit.getDuration() - leftDurMV,
+                        edit.getMediaTime() == -1 ? -1 : leftDurMedia + edit.getMediaTime(), 1.0f);
 
                 lit.remove();
                 if (left.getDuration() > 0) {
