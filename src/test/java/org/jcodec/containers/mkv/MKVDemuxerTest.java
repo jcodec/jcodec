@@ -8,6 +8,8 @@ import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.TrackType;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
@@ -34,12 +36,7 @@ public class MKVDemuxerTest {
     
     @Before
     public void setUp() throws IOException{
-        suite = MKVTestSuite.read();
-        if (!suite.isSuitePresent()) {
-            Assert.fail("MKV test suite is missing, please download from https://www.matroska.org/downloads/test_suite.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
-    	}
-        //System.out.println("Scanning file: " + suite.test5.getAbsolutePath());
-        demInputStream = new FileInputStream(suite.test5);
+        demInputStream = new FileInputStream(new File("src/test/resources/test5.mkv"));
         demuxer = new MKVDemuxer(new FileChannelWrapper(demInputStream.getChannel()));
     }
 
