@@ -67,6 +67,8 @@ public class MP4Demuxer implements Demuxer {
 
     private SeekableDemuxerTrack fromTrakBox(TrakBox trak) {
         SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        if (stsz == null)
+            return null;
 
         SampleEntry[] sampleEntries = NodeBox.findAllPath(trak, SampleEntry.class,
                 new String[] { "mdia", "minf", "stbl", "stsd", null });
@@ -111,7 +113,10 @@ public class MP4Demuxer implements Demuxer {
             if (se != null && "tmcd".equals(se.getFourcc())) {
                 tt = trak;
             } else {
-                tracks.add(fromTrakBox(trak));
+                SeekableDemuxerTrack trakBox = fromTrakBox(trak);
+                if (trakBox != null) {
+                    tracks.add(trakBox);
+                }
             }
         }
         if (tt != null) {
