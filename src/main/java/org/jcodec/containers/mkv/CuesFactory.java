@@ -91,8 +91,8 @@ public class CuesFactory {
             for (CuePointMock z : a) {
                 int minByteSize = calculatePayloadSize(z.elementOffset + cuesSize);
                 if (minByteSize > z.cueClusterPositionSize) {
-                    System.out.println(minByteSize + ">" + z.cueClusterPositionSize);
-                    System.err.println("Size "+cuesSize+" seems too small for element "+EbmlUtil.toHexString(z.id)+" increasing size by one.");
+//                    System.out.println(minByteSize + ">" + z.cueClusterPositionSize);
+//                    System.err.println("Size "+cuesSize+" seems too small for element "+EbmlUtil.toHexString(z.id)+" increasing size by one.");
                     z.cueClusterPositionSize +=1;
                     cuesSize += 1;
                     reindex = true;
