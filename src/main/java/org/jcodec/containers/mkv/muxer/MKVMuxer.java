@@ -41,6 +41,7 @@ import org.jcodec.common.Muxer;
 import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Rational;
 import org.jcodec.containers.mkv.CuesFactory;
 import org.jcodec.containers.mkv.MKVType;
 import org.jcodec.containers.mkv.SeekHeadFactory;
@@ -138,8 +139,8 @@ public class MKVMuxer implements Muxer {
 
     private EbmlMaster muxInfo() {
         EbmlMaster master = (EbmlMaster) createByType(Info);
-        int frameDurationInNanoseconds = MKVMuxerTrack.NANOSECONDS_IN_A_MILISECOND * 40;
-        createLong(master, TimecodeScale, frameDurationInNanoseconds);
+        Rational fr=tracks.get(0).getFrameRate();
+        createLong(master, TimecodeScale, (long)(fr.toDouble()*MKVMuxerTrack.DEFAULT_TIMESCALE));
         createString(master, WritingApp, "JCodec");
         createString(master, MuxingApp, "JCodec");
 
@@ -150,7 +151,7 @@ public class MKVMuxer implements Muxer {
             if (lastBlock.absoluteTimecode > max)
                 max = lastBlock.absoluteTimecode;
         }
-        createDouble(master, MKVType.Duration, (max + 1) * frameDurationInNanoseconds * 1.0);
+        createDouble(master, MKVType.Duration, (max + 1) * 1.0);
         createDate(master, DateUTC, new Date());
         return master;
     }
