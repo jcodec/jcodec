@@ -237,13 +237,15 @@ public class ICSInfo {
                 icPredict = new ICPrediction();
             icPredict.decode(_in, maxSFB, sf);
         } else if (AAC_LTP == profile) {
-            if (ltpData1Present = _in.readBool()) {
+            ltpData1Present = _in.readBool();
+            if (ltpData1Present) {
                 if (ltPredict1 == null)
                     ltPredict1 = new LTPrediction(frameLength);
                 ltPredict1.decode(_in, this, profile);
             }
             if (commonWindow) {
-                if (ltpData2Present = _in.readBool()) {
+                ltpData2Present = _in.readBool();
+                if (ltpData2Present) {
                     if (ltPredict2 == null)
                         ltPredict2 = new LTPrediction(frameLength);
                     ltPredict2.decode(_in, this, profile);
@@ -251,7 +253,8 @@ public class ICSInfo {
             }
         } else if (ER_AAC_LTP == profile) {
             if (!commonWindow) {
-                if (ltpData1Present = _in.readBool()) {
+                ltpData1Present = _in.readBool();
+                if (ltpData1Present) {
                     if (ltPredict1 == null)
                         ltPredict1 = new LTPrediction(frameLength);
                     ltPredict1.decode(_in, this, profile);

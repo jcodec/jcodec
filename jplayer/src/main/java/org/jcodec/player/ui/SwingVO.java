@@ -11,8 +11,8 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Rect;
+import org.jcodec.javase.scale.AWTUtil;
 import org.jcodec.player.filters.VideoOutput;
-import org.jcodec.scale.AWTUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

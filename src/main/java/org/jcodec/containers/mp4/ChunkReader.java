@@ -1,5 +1,7 @@
 package org.jcodec.containers.mp4;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -36,10 +38,10 @@ public class ChunkReader {
     private SampleSizesBox stsz;
     private TimeToSampleEntry[] tts;
     private SampleDescriptionBox stsd;
-	private SeekableByteChannel[] inputs;
-	private SampleEntry[] entries;
+    private final SeekableByteChannel input;
+    private final SampleEntry[] entries;
 
-    public ChunkReader(TrakBox trakBox, SeekableByteChannel[] inputs) {
+    public ChunkReader(TrakBox trakBox, SeekableByteChannel input) {
         TimeToSampleBox stts = trakBox.getStts();
         tts = stts.getEntries();
         ChunkOffsetsBox stco = trakBox.getStco();
@@ -54,7 +56,7 @@ public class ChunkReader {
         sampleToChunk = stsc.getSampleToChunk();
         stsd = trakBox.getStsd();
         entries = trakBox.getSampleEntries();
-        this.inputs = inputs;
+        this.input = input;
     }
 
     public boolean hasNext() {
@@ -89,41 +91,41 @@ public class ChunkReader {
         int size = Chunk.UNEQUAL_SIZES;
         int[] sizes = null;
         if (stsz.getDefaultSize() > 0) {
-            size = getFrameSize();
+            size = stsz.getDefaultSize();
         } else {
             sizes = Platform.copyOfRangeI(stsz.getSizes(), sampleNo, sampleNo + sampleCount);
         }
 
-        int dref = sampleToChunk[s2cIndex].getEntry();
-        Chunk chunk = new Chunk(chunkOffsets[curChunk], chunkTv, sampleCount, size, sizes, sampleDur, samplesDur, dref);
+        int eno = sampleToChunk[s2cIndex].getEntry();
+        SampleEntry se = entries[eno - 1];
+        if (se.getDrefInd() != 1)
+            throw new IOException("Multiple sample entries not supported");
+
+        Chunk chunk = new Chunk(chunkOffsets[curChunk], chunkTv, sampleCount, size, sizes, sampleDur, samplesDur, eno);
 
         chunkTv += chunk.getDuration();
         sampleNo += sampleCount;
         ++curChunk;
-        
-        if (inputs != null) {
-        	SeekableByteChannel input = getInput(chunk);
+
+        if (input != null) {
         	input.setPosition(chunk.getOffset());
         	chunk.setData(NIOUtils.fetchFromChannel(input, (int) chunk.getSize()));
         }
         return chunk;
     }
-    
-    private SeekableByteChannel getInput(Chunk chunk) {
-        SampleEntry se = entries[chunk.getEntry() - 1];
-        return inputs[se.getDrefInd() - 1];
-    }
-
-    private int getFrameSize() {
-        int size = stsz.getDefaultSize();
-        Box box = stsd.getBoxes().get(sampleToChunk[s2cIndex].getEntry() - 1);
-        if (box instanceof AudioSampleEntry) {
-            return ((AudioSampleEntry) box).calcFrameSize();
-        }
-        return size;
-    }
 
     public int size() {
         return chunkOffsets.length;
+    }
+
+    public List<Chunk> readAll() throws IOException {
+        if (input != null)
+            throw new IllegalStateException("Reading all chunk data to memory is costy.");
+        List<Chunk> result = new ArrayList<Chunk>();
+        Chunk chunk = null;
+        while ((chunk = next()) != null) {
+            result.add(chunk);
+        }
+        return result;
     }
 }

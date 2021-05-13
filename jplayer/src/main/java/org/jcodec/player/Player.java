@@ -19,7 +19,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jcodec.common.AudioFormat;
-import org.jcodec.common.SoundUtil;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Frame;
 import org.jcodec.common.model.Picture;
@@ -27,6 +26,7 @@ import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.common.tools.Debug;
+import org.jcodec.javase.common.SoundUtil;
 import org.jcodec.player.filters.AudioOut;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;

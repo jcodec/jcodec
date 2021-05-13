@@ -134,6 +134,7 @@ public class TimecodeMP4DemuxerTrack {
      * @deprecated Use getTimecode to automatically populate tape timecode for
      *             each frame
      */
+    @Deprecated
     public int getStartTimecode() throws IOException {
         return getTimecodeSample(0);
     }

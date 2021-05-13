@@ -6,10 +6,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-import org.jcodec.api.awt.AWTSequenceEncoder;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
+import org.jcodec.javase.api.awt.AWTSequenceEncoder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

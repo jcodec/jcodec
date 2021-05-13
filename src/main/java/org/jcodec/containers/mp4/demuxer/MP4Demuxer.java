@@ -67,11 +67,13 @@ public class MP4Demuxer implements Demuxer {
 
     private SeekableDemuxerTrack fromTrakBox(TrakBox trak) {
         SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        if (stsz == null)
+            return null;
 
         SampleEntry[] sampleEntries = NodeBox.findAllPath(trak, SampleEntry.class,
                 new String[] { "mdia", "minf", "stbl", "stsd", null });
-        boolean isPCM = (sampleEntries[0] instanceof AudioSampleEntry)
-                && isPCMCodec(Codec.codecByFourcc(sampleEntries[0].getFourcc()));
+        boolean isPCM = sampleEntries.length != 0 ? (sampleEntries[0] instanceof AudioSampleEntry)
+                && isPCMCodec(Codec.codecByFourcc(sampleEntries[0].getFourcc())) : false;
 
         if (stsz.getDefaultSize() != 0 && isPCM)
             return new PCMMP4DemuxerTrack(movie, trak, input);
@@ -111,7 +113,10 @@ public class MP4Demuxer implements Demuxer {
             if (se != null && "tmcd".equals(se.getFourcc())) {
                 tt = trak;
             } else {
-                tracks.add(fromTrakBox(trak));
+                SeekableDemuxerTrack trakBox = fromTrakBox(trak);
+                if (trakBox != null) {
+                    tracks.add(trakBox);
+                }
             }
         }
         if (tt != null) {

@@ -48,34 +48,42 @@ public class MovieHeaderBox extends FullBox {
         super(header);
     }
 
+    @AtomField(idx=0)
     public int getTimescale() {
         return timescale;
     }
 
+    @AtomField(idx=1)
     public long getDuration() {
         return duration;
     }
 
+    @AtomField(idx=7)
     public int getNextTrackId() {
         return nextTrackId;
     }
 
+    @AtomField(idx=2)
     public float getRate() {
         return rate;
     }
 
+    @AtomField(idx=3)
     public float getVolume() {
         return volume;
     }
 
+    @AtomField(idx=4)
     public long getCreated() {
         return created;
     }
 
+    @AtomField(idx=5)
     public long getModified() {
         return modified;
     }
 
+    @AtomField(idx=6)
     public int[] getMatrix() {
         return matrix;
     }

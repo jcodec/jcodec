@@ -16,7 +16,6 @@ import org.jcodec.api.transcode.Source;
 import org.jcodec.api.transcode.SourceImpl;
 import org.jcodec.api.transcode.Transcoder;
 import org.jcodec.api.transcode.Transcoder.TranscoderBuilder;
-import org.jcodec.api.transcode.filter.AWTFilter;
 import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
@@ -26,6 +25,7 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
+import org.jcodec.javase.api.transcode.filter.AWTFilter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

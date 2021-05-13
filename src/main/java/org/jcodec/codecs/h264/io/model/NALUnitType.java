@@ -24,13 +24,14 @@ public final class NALUnitType {
     public final static NALUnitType FILLER_DATA = new NALUnitType(12, "FILLER_DATA", "filler data");
     public final static NALUnitType SEQ_PAR_SET_EXT = new NALUnitType(13, "SEQ_PAR_SET_EXT", "sequence parameter set extension");
     public final static NALUnitType AUX_SLICE = new NALUnitType(19, "AUX_SLICE", "auxilary slice");
+    public final static NALUnitType FU_A = new NALUnitType(28, "FU_A", "fragmented unit a");
 
     private final static NALUnitType[] lut;
     private final static NALUnitType[] _values;
 
     static {
         _values = new NALUnitType[] { NON_IDR_SLICE, SLICE_PART_A, SLICE_PART_B, SLICE_PART_C, IDR_SLICE, SEI, SPS, PPS,
-                ACC_UNIT_DELIM, END_OF_SEQ, END_OF_STREAM, FILLER_DATA, SEQ_PAR_SET_EXT, AUX_SLICE };
+                ACC_UNIT_DELIM, END_OF_SEQ, END_OF_STREAM, FILLER_DATA, SEQ_PAR_SET_EXT, AUX_SLICE, FU_A };
         lut = new NALUnitType[256];
         for (int i = 0; i < _values.length; i++) {
             NALUnitType nalUnitType = _values[i];
@@ -57,7 +58,7 @@ public final class NALUnitType {
     }
 
     public static NALUnitType fromValue(int value) {
-        return value < lut.length ? lut[value] : null;
+        return value > 0 && value < lut.length ? lut[value] : null;
     }
     
     @Override

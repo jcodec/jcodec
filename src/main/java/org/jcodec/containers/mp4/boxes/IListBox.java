@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.Boxes;
 import org.jcodec.containers.mp4.IBoxFactory;
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -60,6 +61,7 @@ public class IListBox extends Box {
         }
     }
 
+    @AtomField(idx=0)
     public Map<Integer, List<Box>> getValues() {
         return values;
     }

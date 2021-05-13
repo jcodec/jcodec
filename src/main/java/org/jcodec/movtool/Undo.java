@@ -1,7 +1,6 @@
 package org.jcodec.movtool;
 
 import java.io.File;
-import java.lang.System;
 
 import org.jcodec.containers.mp4.MP4Util.Atom;
 

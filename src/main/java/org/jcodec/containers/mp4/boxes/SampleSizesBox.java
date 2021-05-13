@@ -2,6 +2,8 @@ package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
+
 /**
  * This class is part of JCodec ( www.jcodec.org )
  * This software is distributed under FreeBSD License
@@ -49,14 +51,17 @@ public class SampleSizesBox extends FullBox {
         }
     }
 
+    @AtomField(idx=0)
     public int getDefaultSize() {
         return defaultSize;
     }
 
+    @AtomField(idx=2)
     public int[] getSizes() {
         return sizes;
     }
     
+    @AtomField(idx=1)
     public int getCount() {
         return count;
     }

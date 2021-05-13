@@ -933,7 +933,7 @@ public class AVIReader {
             return (String.format(
                     "\tCHUNK [%s], ChunkSize [%d], Format [%s], Channels [%d], Channel Mask [%s], MP3 [%b], SamplesPerSec [%d], nBlockAlign [%d]",
                     toFourCC(dwFourCC), getChunkSize(), audioFormat, channels, Integer.toHexString(channelMask),
-                    mp3Flag, this.nSamplesPerSec, this.getStartOfChunk(), this.nBlockAlign));
+                    mp3Flag, this.nSamplesPerSec, this.nBlockAlign));
         }
     }
 

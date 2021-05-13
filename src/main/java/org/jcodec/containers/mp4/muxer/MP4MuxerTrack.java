@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.model.Packet;
@@ -16,7 +15,6 @@ import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
 import org.jcodec.containers.mp4.MP4TrackType;
-import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
@@ -28,7 +26,6 @@ import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MediaBox;
 import org.jcodec.containers.mp4.boxes.MediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
-import org.jcodec.containers.mp4.boxes.MetaDataSampleEntry;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
@@ -218,13 +215,13 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
         NodeBox stbl = new NodeBox(new Header("stbl"));
         minf.add(stbl);
 
-        putCompositionOffsets(stbl);
+        putCompositionOffsets(mvhd, stbl);
         putEdits(trak);
         putName(trak);
 
         stbl.add(SampleDescriptionBox.createSampleDescriptionBox(sampleEntries.toArray(new SampleEntry[0])));
         stbl.add(SampleToChunkBox.createSampleToChunkBox(samplesInChunks.toArray(new SampleToChunkEntry[0])));
-        stbl.add(SampleSizesBox.createSampleSizesBox2(sampleSizes.toArray()));
+        stbl.add(createStsz());
         stbl.add(TimeToSampleBox.createTimeToSampleBox(sampleDurations.toArray(new TimeToSampleEntry[] {})));
         stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(chunkOffsets.toArray()));
         if (!allIframes && iframes.size() > 0)
@@ -233,7 +230,23 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
         return trak;
     }
 
-    private void putCompositionOffsets(NodeBox stbl) {
+    private SampleSizesBox createStsz() {
+        if (sampleSizes.size() == 0) {
+            return SampleSizesBox.createSampleSizesBox2(sampleSizes.toArray());
+        }
+        boolean allSame = true;
+        int defaultSize = sampleSizes.get(0);
+        for (int i = 0; i < sampleSizes.size(); i++) {
+            if (sampleSizes.get(i) != defaultSize) {
+                allSame = false;
+                break;
+            }
+        }
+        return allSame ? SampleSizesBox.createSampleSizesBox(defaultSize, sampleSizes.size())
+                : SampleSizesBox.createSampleSizesBox2(sampleSizes.toArray());
+    }
+
+    private void putCompositionOffsets(MovieHeaderBox mvhd, NodeBox stbl) {
         if (compositionOffsets.size() > 0) {
             compositionOffsets.add(new LongEntry(lastCompositionSamples, lastCompositionOffset));
 
@@ -248,7 +261,8 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
             if (first.getOffset() > 0) {
                 if (edits == null) {
                     edits = new ArrayList<Edit>();
-                    edits.add(new Edit(trackTotalDuration, first.getOffset(), 1.0f));
+                    long totalDuration = (mvhd.getTimescale() * trackTotalDuration) / _timescale;
+                    edits.add(new Edit(totalDuration, first.getOffset(), 1.0f));
                 } else {
                     for (Edit edit : edits) {
                         edit.setMediaTime(edit.getMediaTime() + first.getOffset());
@@ -297,6 +311,7 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     public void addMetaSampleEntry(String contentEncoding, String contentType) {
         TextMetaDataSampleEntry se = new TextMetaDataSampleEntry(contentEncoding, contentType);
+        se.setDrefInd((short)1);
         addSampleEntry(se);
     }
 }

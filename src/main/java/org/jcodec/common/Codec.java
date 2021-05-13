@@ -5,6 +5,7 @@ import java.util.Map;
 
 import static org.jcodec.common.TrackType.AUDIO;
 import static org.jcodec.common.TrackType.VIDEO;
+import static org.jcodec.common.TrackType.TEXT;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -14,6 +15,7 @@ import static org.jcodec.common.TrackType.VIDEO;
  *
  */
 public final class Codec {
+    // Video codec
     public final static Codec H265 = new Codec("H265", VIDEO, false);
     public final static Codec H264 = new Codec("H264", VIDEO, false);
     public final static Codec MPEG2 = new Codec("MPEG2", VIDEO, false);
@@ -32,7 +34,8 @@ public final class Codec {
     public final static Codec VP6 = new Codec("VP6", VIDEO, false);
     public final static Codec VP8 = new Codec("VP8", VIDEO, false);
     public final static Codec VP9 = new Codec("VP9", VIDEO, false);
-    public final static Codec VORBIS = new Codec("VORBIS", VIDEO, false);
+    // audio codec
+    public final static Codec VORBIS = new Codec("VORBIS", AUDIO, false);
     public final static Codec AAC = new Codec("AAC", AUDIO, false);
     public final static Codec MP3 = new Codec("MP3", AUDIO, false);
     public final static Codec MP2 = new Codec("MP2", AUDIO, false);
@@ -47,11 +50,16 @@ public final class Codec {
     public final static Codec NELLYMOSER = new Codec("NELLYMOSER", AUDIO, false);
     public final static Codec G711 = new Codec("G711", AUDIO, false);
     public final static Codec SPEEX = new Codec("SPEEX", AUDIO, false);
+    public final static Codec OPUS = new Codec("OPUS", AUDIO, false);
+    // subtitle codec
+    public final static Codec UTF8 = new Codec("UTF8", TEXT, false);
+    // Other codec
     public final static Codec RAW = new Codec("RAW", null, false);
     public final static Codec TIMECODE = new Codec("TIMECODE", TrackType.OTHER, false);
 
     private final static Map<String, Codec> _values = new LinkedHashMap<String, Codec>();
     static {
+        // Video codec
         _values.put("H264", H264);
         _values.put("MPEG2", MPEG2);
         _values.put("MPEG4", MPEG4);
@@ -69,6 +77,7 @@ public final class Codec {
         _values.put("VP6", VP6);
         _values.put("VP8", VP8);
         _values.put("VP9", VP9);
+        // audio codec
         _values.put("VORBIS", VORBIS);
         _values.put("AAC", AAC);
         _values.put("MP3", MP3);
@@ -84,6 +93,10 @@ public final class Codec {
         _values.put("NELLYMOSER", NELLYMOSER);
         _values.put("G711", G711);
         _values.put("SPEEX", SPEEX);
+        _values.put("OPUS", OPUS);
+        // subtitle codec
+        _values.put("UTF8", UTF8);
+        // other codec
         _values.put("RAW", RAW);
         _values.put("TIMECODE", TIMECODE);
     }

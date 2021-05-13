@@ -1,5 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -22,14 +24,17 @@ public class Edit {
         this.rate = rate;
     }
 
+    @AtomField(idx=0)
     public long getDuration() {
         return duration;
     }
 
+    @AtomField(idx=1)
     public long getMediaTime() {
         return mediaTime;
     }
 
+    @AtomField(idx=2)
     public float getRate() {
         return rate;
     }

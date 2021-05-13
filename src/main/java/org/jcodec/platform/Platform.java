@@ -129,6 +129,7 @@ public class Platform {
     }
 
     public static byte[] getBytes(String fourcc) {
+    	if(fourcc==null) return null;
         try {
             return fourcc.getBytes("iso8859-1");
         } catch (UnsupportedEncodingException e) {

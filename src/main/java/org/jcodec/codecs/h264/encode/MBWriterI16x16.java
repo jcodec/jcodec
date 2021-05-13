@@ -11,6 +11,7 @@ import static org.jcodec.codecs.h264.io.model.MBType.I_16x16;
 
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Encoder.NonRdVector;
+import org.jcodec.codecs.h264.decode.ChromaPredictionBuilder;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.codecs.h264.decode.Intra16x16PredictionBuilder;
 import org.jcodec.codecs.h264.io.CAVLC;
@@ -63,8 +64,8 @@ public class MBWriterI16x16 {
         byte[][] pred1 = new byte[4][16];
         byte[][] pred2 = new byte[4][16];
 
-        predictChroma(ctx, pic, ac1, pred1, 1, x, y);
-        predictChroma(ctx, pic, ac2, pred2, 2, x, y);
+        predictChroma(ctx, pic, ac1, pred1, 1, x, y, chrPred);
+        predictChroma(ctx, pic, ac2, pred2, 2, x, y, chrPred);
 
         chromaResidual(mbX, mbY, out, qp, ac1, ac2, ctx.cavlc[1], ctx.cavlc[2], ctx.leftMBType, ctx.topMBType[mbX],
                 curMBType);
@@ -227,11 +228,8 @@ public class MBWriterI16x16 {
     }
 
     private static void predictChroma(EncodingContext ctx, Picture pic, int[][] ac, byte[][] pred, int comp, int x,
-            int y) {
-        chromaPredBlk0(ctx, comp, x, y, pred[0]);
-        chromaPredBlk1(ctx, comp, x, y, pred[1]);
-        chromaPredBlk2(ctx, comp, x, y, pred[2]);
-        chromaPredBlk3(ctx, comp, x, y, pred[3]);
+            int y, int mode) {
+        ChromaPredictionBuilder.buildPred(mode, x >> 3, x != 0, y != 0, ctx.leftRow[comp], ctx.topLine[comp], ctx.topLeft[comp], pred);
 
         MBEncoderHelper.takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x, y,
                 ac[0], pred[0], 4, 4);
@@ -244,67 +242,6 @@ public class MBWriterI16x16 {
 
         MBEncoderHelper.takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + 4,
                 y + 4, ac[3], pred[3], 4, 4);
-    }
-
-    private static final int chromaPredOne(byte[] pix, int x) {
-        return (pix[x] + pix[x + 1] + pix[x + 2] + pix[x + 3] + 2) >> 2;
-    }
-
-    private static final int chromaPredTwo(byte[] pix1, byte[] pix2, int x, int y) {
-        return (pix1[x] + pix1[x + 1] + pix1[x + 2] + pix1[x + 3] + pix2[y] + pix2[y + 1] + pix2[y + 2] + pix2[y + 3]
-                + 4) >> 3;
-    }
-
-    private static void chromaPredBlk0(EncodingContext ctx, int comp, int x, int y, byte[] pred) {
-        int dc, predY = y & 0x7;
-        if (x != 0 && y != 0)
-            dc = chromaPredTwo(ctx.leftRow[comp], ctx.topLine[comp], predY, x);
-        else if (x != 0)
-            dc = chromaPredOne(ctx.leftRow[comp], predY);
-        else if (y != 0)
-            dc = chromaPredOne(ctx.topLine[comp], x);
-        else
-            dc = 0;
-        for (int i = 0; i < pred.length; i++)
-            pred[i] += dc;
-    }
-
-    private static void chromaPredBlk1(EncodingContext ctx, int comp, int x, int y, byte[] pred) {
-        int dc, predY = y & 0x7;
-        if (y != 0)
-            dc = chromaPredOne(ctx.topLine[comp], x + 4);
-        else if (x != 0)
-            dc = chromaPredOne(ctx.leftRow[comp], predY);
-        else
-            dc = 0;
-        for (int i = 0; i < pred.length; i++)
-            pred[i] += dc;
-    }
-
-    private static void chromaPredBlk2(EncodingContext ctx, int comp, int x, int y, byte[] pred) {
-        int dc, predY = y & 0x7;
-        if (x != 0)
-            dc = chromaPredOne(ctx.leftRow[comp], predY + 4);
-        else if (y != 0)
-            dc = chromaPredOne(ctx.topLine[comp], x);
-        else
-            dc = 0;
-        for (int i = 0; i < pred.length; i++)
-            pred[i] += dc;
-    }
-
-    private static void chromaPredBlk3(EncodingContext ctx, int comp, int x, int y, byte[] pred) {
-        int dc, predY = y & 0x7;
-        if (x != 0 && y != 0)
-            dc = chromaPredTwo(ctx.leftRow[comp], ctx.topLine[comp], predY + 4, x + 4);
-        else if (x != 0)
-            dc = chromaPredOne(ctx.leftRow[comp], predY + 4);
-        else if (y != 0)
-            dc = chromaPredOne(ctx.topLine[comp], x + 4);
-        else
-            dc = 0;
-        for (int i = 0; i < pred.length; i++)
-            pred[i] += dc;
     }
 
     private void transform(Picture pic, int comp, int[][] ac, byte[][] pred, int x, int y) {

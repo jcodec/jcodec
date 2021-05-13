@@ -28,7 +28,6 @@ import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.TextMetaDataSampleEntry;
@@ -47,11 +46,6 @@ import net.sourceforge.jaad.aac.syntax.FIL;
 import net.sourceforge.jaad.aac.syntax.PCE;
 import net.sourceforge.jaad.aac.syntax.SCE_LFE;
 import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
-
-import org.jcodec.samples.mp4.Test1Proto.Words;
-import org.jcodec.samples.mp4.Test2Proto.Tag;
-
-import com.google.protobuf.UnknownFieldSet;
 
 /**
  * This will attempt to parse individual AAC frames out of a corrupt M4A file
@@ -171,28 +165,18 @@ public class M4AFix {
         ChannelReader reader = new ChannelReader(ch);
         long start = System.currentTimeMillis();
         Track audio = new Track();
-        Track tags = new Track();
-        Track words = new Track();
 
         boolean newChunk = true;
-        ByteBuffer protoBuf = ByteBuffer.allocate(1 << 16);
         while (true) {
             ByteBuffer buf = reader.getBuffer();
             if (!buf.hasRemaining())
                 break;
-            int sz = parseFrame(buf, protoBuf);
+            int sz = parseFrame(buf);
 
             if (sz == 0)
                 break;
             else if (sz > 0) {
                 audio.addFrame(sz, offset, newChunk);
-            } else {
-                protoBuf.getInt();
-                Words p = Words.parseFrom(protoBuf);
-                if (!p.getUnknownFields().asMap().isEmpty())
-                    tags.addFrame(-sz, offset, true);
-                else
-                    words.addFrame(-sz, offset, true);
             }
 
             if (sz > 0) {
@@ -225,9 +209,6 @@ public class M4AFix {
         newAudio.setDuration(duration);
         newAudio.setMediaDuration(mediaDuration);
         
-        moov.add(tags.finish(tagsTrack, moov));
-        moov.add(words.finish(wordsTrack, moov));
-
         moov.setDuration(MathUtil.max3L(audioTrack.getDuration(), tagsTrack.getDuration(), wordsTrack.getDuration()));
 
         Logger.info("Time: " + (System.currentTimeMillis() - start));
@@ -267,13 +248,11 @@ public class M4AFix {
         return el;
     }
 
-    static int parseFrame(ByteBuffer buf, ByteBuffer proto) throws AACException {
-        // Do I look like a proto?
+    static int parseFrame(ByteBuffer buf) throws AACException {
+        // Do I look like an AVC packet?
         int len = buf.duplicate().getInt();
         if ((len >> 16) == 0) {
-            proto.clear();
-            proto.put(NIOUtils.read(buf, len + 4));
-            proto.flip();
+            NIOUtils.skip(buf, len + 4);
             return -(len + 4);
         } else {
             BitReader _in = BitReader.createBitReader(buf.duplicate());

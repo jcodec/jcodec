@@ -31,7 +31,6 @@ public class MoovVersions {
         SeekableByteChannel is = null;
         try {
             is = readableChannel(file);
-            int version = 0;
             for (MP4Util.Atom atom : MP4Util.getRootAtoms(is)) {
                 if ("free".equals(atom.getHeader().getFourcc()) && isMoov(is, atom)) {
                     result.add(atom);
@@ -113,7 +112,7 @@ public class MoovVersions {
         try {
             Box mov = BoxUtil.parseBox(NIOUtils.fetchFromChannel(is, (int) header.getSize()), Header.createHeader("moov", header.getSize()), BoxFactory.getDefault());
             return (mov instanceof MovieBox) && BoxUtil.containsBox((NodeBox) mov, "mvhd");
-        } catch (Throwable t) {
+        } catch (IOException t) {
             return false;
         }
     }

@@ -49,12 +49,12 @@ import org.jcodec.containers.mp4.boxes.TrunBox;
 public class FragToMov {
     private static final Flag FLAG_INIT = Flag.flag("init", "i", "A file that contains global sequence headers");
     private static final Flag FLAG_OUT = Flag.flag("out", "o", "Output file");
-    private static final Flag[] flags = { FLAG_INIT, FLAG_OUT };
+    private static final Flag[] FLAGS = { FLAG_INIT, FLAG_OUT };
 
     public static void main(String[] args) throws IOException {
-        final Cmd cmd = MainUtils.parseArguments(args, flags);
+        final Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpCmd("frag2mov", flags, Arrays.asList(new String[] { "...out movie" }));
+            MainUtils.printHelpCmd("frag2mov", FLAGS, Arrays.asList(new String[] { "...out movie" }));
             System.exit(-1);
             return;
         }

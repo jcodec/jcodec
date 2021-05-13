@@ -1,7 +1,4 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
-
 
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.movtool.Flatten.ProgressListener;
@@ -71,11 +68,11 @@ public class QTEdit {
             if (i == factories.length)
                 break;
         }
-        if (aa.size() == 0) {
+        if (aa.isEmpty()) {
             System.err.println("ERROR: A movie file should be specified");
             help();
         }
-        if (commands.size() == 0) {
+        if (commands.isEmpty()) {
             System.err.println("ERROR: At least one command should be specified");
             help();
         }

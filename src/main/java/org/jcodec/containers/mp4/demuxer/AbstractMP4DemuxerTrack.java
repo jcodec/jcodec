@@ -227,7 +227,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
             input.setPosition(offset);
             NIOUtils.readL(input, result, size);
         }
-        result.flip();
+        ((java.nio.Buffer)result).flip();
         return result;
     }
 

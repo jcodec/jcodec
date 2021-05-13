@@ -243,7 +243,7 @@ public class MP4Util {
 
         ByteBuffer buf = ByteBuffer.allocate(sizeHint * 4);
         movie.write(buf);
-        buf.flip();
+        ((java.nio.Buffer)buf).flip();
         out.write(buf);
     }
 
@@ -291,7 +291,7 @@ public class MP4Util {
         ByteBuffer buf = ByteBuffer.allocate(sizeHint + 128);
         movie.getFtyp().write(buf);
         movie.getMoov().write(buf);
-        buf.flip();
+        ((java.nio.Buffer)buf).flip();
         out.write(buf);
     }
 

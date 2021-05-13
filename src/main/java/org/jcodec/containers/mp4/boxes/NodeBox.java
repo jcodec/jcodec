@@ -5,8 +5,8 @@ import java.util.Iterator;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.IBoxFactory;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 
 import java.lang.StringBuilder;
 import java.lang.reflect.Array;
@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 
 import org.jcodec.platform.Platform;
 
@@ -105,6 +104,14 @@ public class NodeBox extends Box {
         add(box);
     }
 
+    public void replaceBoxWith(LeafBox was, Box now) {
+        for (ListIterator<Box> it = boxes.listIterator(); it.hasNext();) {
+            Box box = it.next();
+            if (box == was)
+                it.set(now);
+        }
+    }
+
     protected void dump(StringBuilder sb) {
         sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
         sb.append("\"boxes\": [");
@@ -138,7 +145,7 @@ public class NodeBox extends Box {
     public static Box doCloneBox(Box box, int approxSize, IBoxFactory bf) {
         ByteBuffer buf = ByteBuffer.allocate(approxSize);
         box.write(buf);
-        buf.flip();
+        ((java.nio.Buffer)buf).flip();
         return parseChildBox(buf, bf);
     }
 

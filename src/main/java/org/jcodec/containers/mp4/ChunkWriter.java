@@ -27,7 +27,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 public class ChunkWriter {
     private long[] offsets;
     private SampleEntry[] entries;
-    private SeekableByteChannel[] inputs;
+    private final SeekableByteChannel input;
     private int curChunk;
     private SeekableByteChannel out;
     byte[] buf;
@@ -36,7 +36,7 @@ public class ChunkWriter {
     private int sampleSize;
     private int sampleCount;
 
-    public ChunkWriter(TrakBox trak, SeekableByteChannel[] inputs, SeekableByteChannel out) {
+    public ChunkWriter(TrakBox trak, SeekableByteChannel input, SeekableByteChannel out) {
         this.buf = new byte[8092];
         entries = trak.getSampleEntries();
         ChunkOffsetsBox stco = trak.getStco();
@@ -46,7 +46,7 @@ public class ChunkWriter {
             size = stco.getChunkOffsets().length;
         else
             size = co64.getChunkOffsets().length;
-        this.inputs = inputs;
+        this.input = input;
 
         offsets = new long[size];
         this.out = out;
@@ -66,7 +66,7 @@ public class ChunkWriter {
         stbl.replaceBox(stsz);
     }
 
-    private void cleanDrefs(TrakBox trak) {
+    public static void cleanDrefs(TrakBox trak) {
         MediaInfoBox minf = trak.getMdia().getMinf();
         DataInfoBox dinf = trak.getMdia().getMinf().getDinf();
         if (dinf == null) {
@@ -90,17 +90,15 @@ public class ChunkWriter {
         }
     }
 
-    private SeekableByteChannel getInput(Chunk chunk) {
-        SampleEntry se = entries[chunk.getEntry() - 1];
-        return inputs[se.getDrefInd() - 1];
-    }
-
     public void write(Chunk chunk) throws IOException {
+        SampleEntry se = entries[chunk.getEntry() - 1];
+        if (se.getDrefInd() != 1)
+            throw new IOException("Multiple sample entries not supported");
+
         long pos = out.position();
 
         ByteBuffer chunkData = chunk.getData();
         if (chunkData == null) {
-            SeekableByteChannel input = getInput(chunk);
             input.setPosition(chunk.getOffset());
             chunkData = NIOUtils.fetchFromChannel(input, (int) chunk.getSize());
         }
@@ -109,19 +107,33 @@ public class ChunkWriter {
         offsets[curChunk++] = pos;
 
         if (chunk.getSampleSize() == Chunk.UNEQUAL_SIZES) {
-            if (sampleCount != 0)
-                throw new RuntimeException("Mixed chunks unsupported 1.");
+            if (sampleCount != 0) {
+                unpackSampleSizes();
+            }
             sampleSizes.addAll(chunk.getSampleSizes());
         } else {
-            if (sampleSizes.size() != 0)
-                throw new RuntimeException("Mixed chunks unsupported 2.");
-            if (sampleCount == 0) {
-                sampleSize = chunk.getSampleSize();
-            } else if (sampleSize != chunk.getSampleSize()) {
-                throw new RuntimeException("Mismatching default sizes");
+            if (sampleSizes.size() != 0) {
+                for (int i = 0; i < chunk.getSampleCount(); i++) {
+                    sampleSizes.add(chunk.getSampleSize());
+                }
+            } else {
+                if (sampleCount == 0) {
+                    sampleSize = chunk.getSampleSize();
+                } else if (sampleSize != chunk.getSampleSize()) {
+                    unpackSampleSizes();
+                    for (int i = 0; i < chunk.getSampleCount(); i++) {
+                        sampleSizes.add(chunk.getSampleSize());
+                    }
+                }
+                sampleCount += chunk.getSampleCount();
             }
-            sampleCount += chunk.getSampleCount();
         }
+    }
+
+    private void unpackSampleSizes() {
+        sampleSizes = new IntArrayList(128);
+        sampleSizes.fill(0, sampleCount, sampleSize);
+        sampleCount = 0;
     }
 
     public void close() throws IOException {

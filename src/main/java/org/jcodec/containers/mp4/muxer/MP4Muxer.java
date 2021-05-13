@@ -63,7 +63,7 @@ public class MP4Muxer implements Muxer {
         Header.createHeader("mdat", 1).write(buf);
         mdatOffset = buf.position();
         buf.putLong(0);
-        buf.flip();
+        ((java.nio.Buffer)buf).flip();
         output.write(buf);
     }
 
@@ -168,12 +168,17 @@ public class MP4Muxer implements Muxer {
     }
 
     private MovieHeaderBox movieHeader() {
-        int timescale = tracks.get(0).getTimescale();
-        long duration = tracks.get(0).getTrackTotalDuration();
         AbstractMP4MuxerTrack videoTrack = getVideoTrack();
+        int timescale = tracks.get(0).getTimescale();
         if (videoTrack != null) {
             timescale = videoTrack.getTimescale();
-            duration = videoTrack.getTrackTotalDuration();
+        }
+        long duration = 0;
+        for (AbstractMP4MuxerTrack track : tracks) {
+            long trackDuration = track.getTrackTotalDuration() * timescale / track.getTimescale();
+            if (trackDuration > duration) {
+                duration = trackDuration;
+            }
         }
 
         return MovieHeaderBox.createMovieHeaderBox(timescale, duration, 1.0f, 1.0f, new Date().getTime(),

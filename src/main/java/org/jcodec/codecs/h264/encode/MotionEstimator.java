@@ -45,16 +45,24 @@ public class MotionEstimator {
         boolean trAvb = mbY > 0 && mbX < sps.picWidthInMbsMinus1;
         boolean tlAvb = mbX > 0 && mbY > 0;
 
+        int ax = mvLeftX;
+        int ay = mvLeftY;
+        boolean ar = mvLeftR == refIdx;
+
+        int bx = mvTopX[mbX];
+        int by = mvTopY[mbX];
+        boolean br = mvTopR[mbX] == refIdx;
+
         int cx = trAvb ? mvTopX[mbX + 1] : 0;
         int cy = trAvb ? mvTopY[mbX + 1] : 0;
         boolean cr = trAvb ? mvTopR[mbX + 1] == refIdx : false;
+
         int dx = tlAvb ? mvTopLeftX : 0;
         int dy = tlAvb ? mvTopLeftY : 0;
-        boolean dr = tlAvb ? mvTopLeftY == refIdx : false;
-        int mvpx = median(mvLeftX, mvLeftR == refIdx, mvTopX[mbX], mvTopR[mbX] == refIdx, cx, cr, dx, dr, mbX > 0,
-                mbY > 0, trAvb, tlAvb);
-        int mvpy = median(mvLeftY, mvLeftR == refIdx, mvTopY[mbX], mvTopR[mbX] == refIdx, cy, cr, dy, dr, mbX > 0,
-                mbY > 0, trAvb, tlAvb);
+        boolean dr = tlAvb && mvTopLeftR == refIdx;
+
+        int mvpx = median(ax, ar, bx, br, cx, cr, dx, dr, mbX > 0, mbY > 0, trAvb, tlAvb);
+        int mvpy = median(ay, ar, by, br, cy, cr, dy, dr, mbX > 0, mbY > 0, trAvb, tlAvb);
         MBEncoderHelper.take(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4, mbY << 4,
                 patch, 16, 16);
         int[] fullPix = estimateFullPix(ref, patch, mbX, mbY, mvpx, mvpy);
@@ -138,7 +146,6 @@ public class MotionEstimator {
                     scores[23] += MathUtil.abs(patch[off] - dnp);
                     scores[24] += MathUtil.abs(patch[off] - dpp);
                 }
-                
                 {
                     int a = pn[off + 0] + pn[off + 80];
                     int b = pn[off + 16] + pn[off + 64];
@@ -148,7 +155,7 @@ public class MotionEstimator {
                     int diagNN = clip((interpNeg + 512) >> 10, -128, 127);
                     int ver = (diagNN + verN20 + 1) >> 1;
                     int hor = (diagNN + horN20 + 1) >> 1;
-                    
+
                     scores[5] += MathUtil.abs(patch[off] - diagNN);
                     scores[13] += MathUtil.abs(patch[off] - ver);
                     scores[14] += MathUtil.abs(patch[off] - hor);
@@ -196,34 +203,34 @@ public class MotionEstimator {
             sof += 6;
         }
 
-        
+
         int m0 = Math.min(scores[1], scores[2]);
         int m1 = Math.min(scores[3], scores[4]);
         int m2 = Math.min(scores[5], scores[6]);
-        
+
         int m3 = Math.min(scores[7], scores[8]);
         int m4 = Math.min(scores[9], scores[10]);
         int m5 = Math.min(scores[11], scores[12]);
-        
+
         int m6 = Math.min(scores[13], scores[14]);
         int m7 = Math.min(scores[15], scores[16]);
         int m8 = Math.min(scores[17], scores[18]);
-        
+
         int m9 = Math.min(scores[19], scores[20]);
         int m10 = Math.min(scores[21], scores[22]);
         int m11 = Math.min(scores[23], scores[24]);
-        
+
         m0 = Math.min(m0, m1);
         m2 = Math.min(m2, m3);
         m4 = Math.min(m4, m5);
         m6 = Math.min(m6, m7);
         m8 = Math.min(m8, m9);
         m10 = Math.min(m10, m11);
-        
+
         m0 = Math.min(m0, m2);
         m4 = Math.min(m4, m6);
         m8 = Math.min(m8, m10);
-        
+
         int mf0 = Math.min(scores[0], m0);
         int mf1 = Math.min(m4, m8);
         int mf2 = Math.min(mf0, mf1);
@@ -254,48 +261,71 @@ public class MotionEstimator {
     private int[] estimateFullPix(Picture ref, byte[] patch, int mbX, int mbY, int mvpx, int mvpy) {
         byte[] searchPatch = new byte[(maxSearchRange * 2 + 16) * (maxSearchRange * 2 + 16)];
 
-        int startX = (mbX << 4) /* + (mvpx >> 2) */;
-        int startY = (mbY << 4) /* + (mvpy >> 2) */;
+        int mvX0 = 0;
+        int mvX1 = 0;
+        int mvY0 = 0;
+        int mvY1 = 0;
+        int mvS0 = Integer.MAX_VALUE;
+        int mvS1 = Integer.MAX_VALUE;
+        // Search area 0: mb position
+        int startX = (mbX << 4);
+        int startY = (mbY << 4);
+        for (int area = 0; area < 2; area++) {
+            int patchTlX = Math.max(startX - maxSearchRange, 0);
+            int patchTlY = Math.max(startY - maxSearchRange, 0);
+            int patchBrX = Math.min(startX + maxSearchRange + 16, ref.getPlaneWidth(0));
+            int patchBrY = Math.min(startY + maxSearchRange + 16, ref.getPlaneHeight(0));
 
-        int patchTlX = Math.max(startX - maxSearchRange, 0);
-        int patchTlY = Math.max(startY - maxSearchRange, 0);
-        int patchBrX = Math.min(startX + maxSearchRange + 16, ref.getPlaneWidth(0));
-        int patchBrY = Math.min(startY + maxSearchRange + 16, ref.getPlaneHeight(0));
+            int inPatchX = startX - patchTlX;
+            int inPatchY = startY - patchTlY;
+            if (inPatchX < 0 || inPatchY < 0)
+                continue;
+            int patchW = patchBrX - patchTlX;
+            int patchH = patchBrY - patchTlY;
+            // TODO: border fill?
+            MBEncoderHelper.takeSafe(ref.getPlaneData(0), ref.getPlaneWidth(0), ref.getPlaneHeight(0), patchTlX, patchTlY,
+                    searchPatch, patchW, patchH);
 
-        int centerX = startX - patchTlX;
-        int centerY = startY - patchTlY;
-
-        int patchW = patchBrX - patchTlX;
-        int patchH = patchBrY - patchTlY;
-        MBEncoderHelper.takeSafe(ref.getPlaneData(0), ref.getPlaneWidth(0), ref.getPlaneHeight(0), patchTlX, patchTlY,
-                searchPatch, patchW, patchH);
-
-        int bestMvX = centerX, bestMvY = centerY;
-        int bestScore = sad(searchPatch, patchW, patch, bestMvX, bestMvY);
-        // Diagonal search
-        for (int i = 0; i < maxSearchRange; i++) {
-            int score1 = bestMvX > 0 ? sad(searchPatch, patchW, patch, bestMvX - 1, bestMvY) : Integer.MAX_VALUE;
-            int score2 = bestMvX < patchW - 1 ? sad(searchPatch, patchW, patch, bestMvX + 1, bestMvY)
-                    : Integer.MAX_VALUE;
-            int score3 = bestMvY > 0 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY - 1) : Integer.MAX_VALUE;
-            int score4 = bestMvY < patchH - 1 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY + 1)
-                    : Integer.MAX_VALUE;
-            int min = min(min(min(score1, score2), score3), score4);
-            if (min > bestScore)
-                break;
-            bestScore = min;
-            if (score1 == min) {
-                --bestMvX;
-            } else if (score2 == min) {
-                ++bestMvX;
-            } else if (score3 == min) {
-                --bestMvY;
+            int bestMvX = inPatchX;
+            int bestMvY = inPatchY;
+            int bestScore = sad(searchPatch, patchW, patch, bestMvX, bestMvY);
+            // Diagonal search
+            for (int i = 0; i < maxSearchRange; i++) {
+                int score1 = bestMvX > 0 ? sad(searchPatch, patchW, patch, bestMvX - 1, bestMvY) : Integer.MAX_VALUE;
+                int score2 = bestMvX < patchW - 1 ? sad(searchPatch, patchW, patch, bestMvX + 1, bestMvY)
+                        : Integer.MAX_VALUE;
+                int score3 = bestMvY > 0 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY - 1) : Integer.MAX_VALUE;
+                int score4 = bestMvY < patchH - 1 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY + 1)
+                        : Integer.MAX_VALUE;
+                int min = min(min(min(score1, score2), score3), score4);
+                if (min > bestScore)
+                    break;
+                bestScore = min;
+                if (score1 == min) {
+                    --bestMvX;
+                } else if (score2 == min) {
+                    ++bestMvX;
+                } else if (score3 == min) {
+                    --bestMvY;
+                } else {
+                    ++bestMvY;
+                }
+            }
+            if (area == 0) {
+              mvX0 = ((bestMvX - inPatchX) << 2);
+              mvY0 = ((bestMvY - inPatchY) << 2);
+              mvS0 = bestScore;
+              // Search area 1: mb predictor
+              startX = (mbX << 4) + (mvpx >> 2);
+              startY = (mbY << 4) + (mvpy >> 2);
             } else {
-                ++bestMvY;
+              mvX1 = (bestMvX - inPatchX + startX - (mbX << 4)) << 2;
+              mvY1 = (bestMvY - inPatchY + startY - (mbY << 4)) << 2;
+              mvS1 = bestScore;
             }
         }
 
-        return new int[] { ((bestMvX - centerX) << 2)/* + mvpx */, ((bestMvY - centerY) << 2)/* + mvpy */ };
+        return new int[] { mvS0 < mvS1 ? mvX0 : mvX1, mvS0 < mvS1 ? mvY0 : mvY1};
     }
 
     private int sad(byte[] big, int bigStride, byte[] small, int offX, int offY) {

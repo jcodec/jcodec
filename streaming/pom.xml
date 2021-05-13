@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.jcodec</groupId>
 	<artifactId>jcodec-streaming</artifactId>
-	<version>0.2.4-SNAPSHOT</version>
+	<version>0.2.6-SNAPSHOT</version>
 	<name>JCodec</name>
 	<url>http://jcodec.org</url>
 	<packaging>jar</packaging>
@@ -29,7 +29,7 @@
 	<repositories>
 		<repository>
 			<id>gson</id>
-			<url>http://google-gson.googlecode.com/svn/mavenrepo</url>
+			<url>https://google-gson.googlecode.com/svn/mavenrepo</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
@@ -103,12 +103,12 @@
 		<dependency>
 			<groupId>org.jcodec</groupId>
 			<artifactId>jcodec-javase</artifactId>
-			<version>0.2.4-SNAPSHOT</version>
+			<version>0.2.6-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<version>4.13.1</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

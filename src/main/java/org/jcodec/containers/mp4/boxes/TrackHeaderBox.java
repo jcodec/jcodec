@@ -96,15 +96,15 @@ public class TrackHeaderBox extends FullBox {
     public int getNo() {
         return trackId;
     }
-
+    @AtomField(idx=1)
     public long getDuration() {
         return duration;
     }
-
+    @AtomField(idx=2)
     public float getWidth() {
         return width;
     }
-
+    @AtomField(idx=3)
     public float getHeight() {
         return height;
     }
@@ -152,30 +152,37 @@ public class TrackHeaderBox extends FullBox {
         out.putShort((short) (volume * 256.));
     }
 
+    @AtomField(idx=0)
     public int getTrackId() {
         return trackId;
     }
 
+    @AtomField(idx=4)
     public long getCreated() {
         return created;
     }
 
+    @AtomField(idx=5)
     public long getModified() {
         return modified;
     }
 
+    @AtomField(idx=6)
     public float getVolume() {
         return volume;
     }
 
+    @AtomField(idx=7)
     public short getLayer() {
         return layer;
     }
 
+    @AtomField(idx=8)
     public long getAltGroup() {
         return altGroup;
     }
 
+    @AtomField(idx=9)
     public int[] getMatrix() {
         return matrix;
     }

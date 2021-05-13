@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jcodec.common.Tuple._2;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.containers.mp4.Chunk;
@@ -54,7 +55,7 @@ public class Strip {
             Platform.deleteFile(file);
             out = writableChannel(file);
             Movie movie = MP4Util.createRefFullMovie(input, "file://" + new File(args[0]).getAbsolutePath());
-            new Strip().strip(movie.getMoov());
+            new Strip().stripToChunks(movie.getMoov());
             MP4Util.writeFullMovie(out, movie);
         } finally {
             if (input != null)
@@ -65,10 +66,14 @@ public class Strip {
     }
 
     public void strip(MovieBox movie) throws IOException {
+        stripToChunks(movie);
+        stripToSamples(movie, false);
+    }
+
+    public void stripToChunks(MovieBox movie) throws IOException {
         RationalLarge maxDuration = RationalLarge.ZERO;
         TrakBox[] tracks = movie.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox track = tracks[i];
+        for (TrakBox track : tracks) {
             RationalLarge duration = stripTrack(movie, track);
             if (duration.greaterThen(maxDuration))
                 maxDuration = duration;
@@ -76,17 +81,13 @@ public class Strip {
         movie.setDuration(movie.rescale(maxDuration.getNum(), maxDuration.getDen()));
     }
 
-    public void trim(MovieBox movie, String type) throws IOException {
+    public void stripToSamples(MovieBox movie, boolean toWholeSampleMeta) throws IOException {
         RationalLarge maxDuration = RationalLarge.ZERO;
         TrakBox[] tracks = movie.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox track = tracks[i];
-            RationalLarge duration;
-            if (type == null || type.equals(track.getHandlerType())) {
-                duration = trimEdits(movie, track);
-            } else {
-                duration = RationalLarge.R(track.getDuration(), movie.getTimescale());
-            }
+        for (TrakBox track : tracks) {
+            RationalLarge duration = trimEdits(movie, track,
+                    !"meta".equals(track.getHandlerType()) || toWholeSampleMeta);
+
             if (duration.greaterThen(maxDuration))
                 maxDuration = duration;
         }
@@ -119,8 +120,9 @@ public class Strip {
                     if (oldEdits.get(i).getMediaTime() >= chunk.getStartTv() + chunk.getDuration())
                         edits.get(i).shift(-chunk.getDuration());
                 }
-            } else
+            } else {
                 result.add(chunk);
+            }
         }
         NodeBox stbl = NodeBox.findFirstPath(track, NodeBox.class, Box.path("mdia.minf.stbl"));
         stbl.replace("stts", getTimeToSamples(result));
@@ -134,37 +136,169 @@ public class Strip {
         track.setDuration(movie.rescale(duration, mdhd.getTimescale()));
         return new RationalLarge(duration, mdhd.getTimescale());
     }
-
-    public RationalLarge trimEdits(MovieBox movie, TrakBox track) throws IOException {
-        ChunkReader chunks = new ChunkReader(track, null);
-        List<Edit> edits = track.getEdits();
-        List<Chunk> result = new ArrayList<Chunk>();
-
+    
+    static List<_2<Long, Long>> findGaps(RationalLarge rescale, List<Edit> edits, _2<Long, Long> timeline) {
+        List<_2<Long, Long>> intervals = new ArrayList<_2<Long, Long>>();
+        intervals.add(timeline);
         for (Edit edit : edits) {
-            long editS = edit.getMediaTime();
-            long editE = edit.getMediaTime() + track.rescale(edit.getDuration(), movie.getTimescale());
-            
-            Chunk chunk = null;
-            while ((chunk = chunks.next()) != null) {
-                result.add(chunk);
-                long chunkS = chunk.getStartTv();
-                long chunkE = chunk.getStartTv() + chunk.getDuration();
-
-                if (editS > chunkS) {
-                    long cutDur = editS - chunkS;
-                    edit.shift(-cutDur);
-                    chunk.trimFront(cutDur);
+            if (edit.getMediaTime() == -1) {
+                // Timeline shift
+                continue;
+            }
+            List<_2<Long, Long>> newGaps = new ArrayList<_2<Long, Long>>();
+            long editEnd = edit.getMediaTime() + rescale.multiplyS(edit.getDuration());
+            for (_2<Long, Long> gap : intervals) {
+                if (gap.v0 <= edit.getMediaTime() && gap.v1 > edit.getMediaTime()) {
+                    _2<Long, Long> gap0 = new _2<Long, Long>(gap.v0, edit.getMediaTime() - 1);
+                    _2<Long, Long> gap1 = new _2<Long, Long>(edit.getMediaTime(), gap.v1);
+                    newGaps.add(gap0);
+                    gap = gap1;
                 }
-                if (editE < chunkE) {
-                    long cutDur = chunkE - editE;
-                    edit.stretch(-movie.rescale(cutDur, track.getTimescale()));
-                    chunk.trimTail(cutDur);
+                if (gap.v0 <= editEnd && gap.v1 > editEnd) {
+                    _2<Long, Long> gap0 = new _2<Long, Long>(gap.v0, editEnd - 1);
+                    _2<Long, Long> gap1 = new _2<Long, Long>(editEnd, gap.v1);
+                    newGaps.add(gap0);
+                    newGaps.add(gap1);
+                } else {
+                    newGaps.add(gap);
                 }
-                if (editE <= chunkE)
+            }
+            intervals = newGaps;
+        }
+        List<_2<Long, Long>> unclaimed = new ArrayList<_2<Long, Long>>();
+        for (_2<Long, Long> gap : intervals) {
+            boolean claimed = false;
+            for (Edit edit : edits) {
+                if (edit.getMediaTime() == -1) {
+                    // Timeline shift
+                    continue;
+                }
+                long editEnd = edit.getMediaTime() + rescale.multiplyS(edit.getDuration()) - 1;
+                if (gap.v0 == edit.getMediaTime() || gap.v1 == editEnd) {
+                    claimed = true;
                     break;
+                }
+            }
+            if (!claimed)
+                unclaimed.add(gap);
+        }
+        return unclaimed;
+    }
+
+    static List<Chunk> cutChunksToGaps(List<Chunk> chunks, List<_2<Long, Long>> gaps, List<_2<Long, Long>> newIntervals) {
+        List<_2<Long, Long>> newGaps = new ArrayList<_2<Long, Long>>();
+        List<Chunk> result = new ArrayList<Chunk>();
+        long pullBack = 0;
+        // Pass 0, splitting the chunks by gap points, dropping middle chunk for each gap
+        Iterator<Chunk> it = chunks.iterator();
+        while (it.hasNext()) {
+            Chunk chunk = it.next();
+            for (_2<Long, Long> gap : gaps) {
+                if (gap.v0 > chunk.getStartTv() && gap.v0 < chunk.getStartTv() + chunk.getDuration()) {
+                    // break it down
+                    _2<Chunk, Chunk> split = chunk.split(gap.v0 - chunk.getStartTv(), true);
+                    Chunk left = split.v0;
+                    result.add(left);
+                    long wantDur = gap.v0 - chunk.getStartTv();
+                    if (newIntervals != null) {
+                        newGaps.add(new _2<Long, Long>(gap.v0 - pullBack, left.getDuration() - wantDur));
+                    } else {
+                        left.trimLastSample(left.getDuration() - wantDur);
+                    }
+                    chunk = split.v1;
+                    while (chunk != null && gap.v1 >= chunk.getStartTv() + chunk.getDuration()) {
+                        pullBack += chunk.getDuration();
+                        chunk = it.hasNext() ? it.next() : null;
+                    }
+                    if (chunk != null && chunk.getSampleCount() == 0) {
+                        chunk = null;
+                    }
+                }
+                if (chunk == null)
+                    break;
+                if (gap.v1 >= chunk.getStartTv() && gap.v1 < chunk.getStartTv() + chunk.getDuration()) {
+                    // break it down
+                    _2<Chunk, Chunk> split = chunk.split(gap.v1 - chunk.getStartTv() + 1, false);
+                    long wantStart = gap.v1 + 1;
+                    long realStart = split.v0.getDuration() + chunk.getStartTv();
+                    pullBack += split.v0.getDuration();
+                    chunk = split.v1;
+                    if (chunk != null && chunk.getSampleCount() == 0) {
+                        chunk = null;
+                    }
+                    long trimDur = wantStart - realStart;
+                    if (trimDur != 0) {
+                        if (newIntervals != null) {
+                            newGaps.add(new _2<Long, Long>(realStart - pullBack, trimDur));
+                        } else {
+                            split.v1.trimFirstSample(trimDur);
+                        }
+                    }
+                }
+                if (chunk == null)
+                    break;
+            }
+            if (chunk != null)
+                result.add(chunk);
+        }
+        // Pass 1, translating chunk start tv to the new timeline
+        long startTv = 0;
+        for (Chunk chunk : result) {
+            chunk.setStartTv(startTv);
+            startTv += chunk.getDuration();
+        }
+        // Pass 2, inverting the gaps to make the intervals
+        if (newIntervals != null) {
+            long totalDur = startTv;
+            startTv = result.isEmpty() ? 0 : result.get(0).getStartTv();
+            for (_2<Long,Long> gap : newGaps) {
+                if (startTv < gap.v0)
+                    newIntervals.add(new _2<Long,Long>(startTv, gap.v0 - startTv));
+                startTv = gap.v1 + gap.v0;
+            }
+            if (startTv < totalDur) {
+                newIntervals.add(new _2<Long,Long>(startTv, totalDur - startTv));
             }
         }
 
+        return result;
+    }
+
+    public RationalLarge trimEdits(MovieBox movie, TrakBox track, boolean toWholeSample) throws IOException {
+        ChunkReader chunkReader = new ChunkReader(track, null);
+        List<Edit> edits = track.getEdits();
+
+        List<Chunk> chunks = chunkReader.readAll();
+        _2<Long, Long> timeline;
+        if (!chunks.isEmpty()) {
+            Chunk firstChunk = chunks.get(0);
+            Chunk lastChunk = chunks.get(chunks.size() - 1);
+            timeline = new _2<Long, Long>(firstChunk.getStartTv(), lastChunk.getStartTv() + lastChunk.getDuration());
+        } else {
+            timeline = new _2<Long, Long>(0L, 0L);
+        }
+        List<_2<Long, Long>> gaps = findGaps(RationalLarge.R(track.getTimescale(), movie.getTimescale()), edits, timeline);
+        List<_2<Long, Long>> newIntervals = new ArrayList<_2<Long, Long>>();
+        List<Chunk> result = cutChunksToGaps(chunks, gaps, toWholeSample ? newIntervals : null);
+        List<Edit> newEdits = new ArrayList<Edit>();
+        if (toWholeSample) {
+            for (_2<Long, Long> edit : newIntervals) {
+                newEdits.add(new Edit(movie.rescale(edit.v1, track.getTimescale()), edit.v0, 1f));
+            }
+        } else if (result.size() > 0) {
+            Chunk firstChunk = result.get(0);
+            Chunk lastChunk = result.get(result.size() - 1);
+            long start = firstChunk.getStartTv();
+            long duration = lastChunk.getStartTv() + lastChunk.getDuration();
+            newEdits.add(new Edit(movie.rescale(duration, track.getTimescale()), start, 1f));
+        }
+        if (!edits.isEmpty() ) {
+            Edit firstEdit = edits.get(0);
+            if (firstEdit.getMediaTime() == -1) {
+               newEdits.add(0, firstEdit);
+            }
+        }
+        track.setEdits(newEdits);
         NodeBox stbl = NodeBox.findFirstPath(track, NodeBox.class, Box.path("mdia.minf.stbl"));
         stbl.replace("stts", getTimeToSamples(result));
         stbl.replace("stsz", getSampleSizes(result));
@@ -187,9 +321,11 @@ public class Strip {
     }
 
     private List<Edit> deepCopy(List<Edit> edits) {
-        ArrayList<Edit> newList = new ArrayList<Edit>();
-        for (Edit edit : edits) {
-            newList.add(Edit.createEdit(edit));
+        List<Edit> newList = new ArrayList<Edit>();
+        if (edits != null) {
+            for (Edit edit : edits) {
+                newList.add(Edit.createEdit(edit));
+            }
         }
         return newList;
     }
@@ -238,7 +374,7 @@ public class Strip {
 
     public SampleSizesBox getSampleSizes(List<Chunk> chunks) {
         int nSamples = 0;
-        int prevSize = chunks.size() != 0 ? chunks.get(0).getSampleSize() : 0;
+        int prevSize = chunks.isEmpty() ? 0 : chunks.get(0).getSampleSize();
         for (Chunk chunk : chunks) {
             nSamples += chunk.getSampleCount();
             if (prevSize == 0 && chunk.getSampleSize() != 0)
@@ -284,7 +420,20 @@ public class Strip {
         return SampleToChunkBox.createSampleToChunkBox(result.toArray(new SampleToChunkEntry[0]));
     }
 
-    private boolean intersects(long a, long b, long c, long d) {
-        return (a >= c && a < d) || (b >= c && b < d) || (c >= a && c < b) || (d >= a && d < b);
+    /**
+     * Checks if two intervals intersect
+     * @param as Interval a start
+     * @param ae Interval a end (exclusive)
+     * @param bs Interval b start
+     * @param be Interval b end (exclusive)
+     * @return True if intersect
+     */
+    private static boolean intersects(long as, long ae, long bs, long be) {
+        be -= 1;
+        ae -= 1;
+        return (as >= bs && as <= be) || (ae >= bs && ae <= be) || (bs >= as && bs <= ae) || (be >= as && be <= ae);
+    }
+    /** Temporary for backward compatibility */
+    public void trim(MovieBox movie, String param) {
     }
 }

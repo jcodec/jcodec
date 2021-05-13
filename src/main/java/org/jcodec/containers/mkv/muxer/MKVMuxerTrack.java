@@ -7,6 +7,7 @@ import java.util.List;
 import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Rational;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 
 /**
@@ -25,6 +26,7 @@ public class MKVMuxerTrack implements MuxerTrack {
     public String codecId;
     public int trackNo;
     private int frameDuration;
+    private Rational frameRate;
     List<MkvBlock> trackBlocks;
     
     public MKVMuxerTrack() {
@@ -40,11 +42,18 @@ public class MKVMuxerTrack implements MuxerTrack {
     public int getTimescale(){
         return NANOSECONDS_IN_A_MILISECOND;
     }
+    
+    public Rational getFrameRate() {
+    	return frameRate;
+    }
 
     @Override
     public void addFrame(Packet outPacket) {
         MkvBlock frame = keyFrame(trackNo, 0, outPacket.getData());
-        frame.absoluteTimecode = outPacket.getPts() - 1;
+        if(frameRate==null||frameRate.den!=outPacket.duration) {
+        	frameRate=new Rational((int)outPacket.duration,outPacket.timescale);
+        }
+        frame.absoluteTimecode = outPacket.getPts();
         trackBlocks.add(frame);
     }
 

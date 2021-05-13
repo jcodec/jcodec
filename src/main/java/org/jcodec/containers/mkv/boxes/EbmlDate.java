@@ -14,7 +14,7 @@ public class EbmlDate extends EbmlSint {
     private static final int NANOSECONDS_IN_A_SECOND = 1000000000;
     private static final int MILISECONDS_IN_A_SECOND = 1000;
     private static final int NANOSECONDS_IN_A_MILISECOND = NANOSECONDS_IN_A_SECOND / MILISECONDS_IN_A_SECOND;
-    public static long MILISECONDS_SINCE_UNIX_EPOCH_START = 978307200; // 2001/01/01 00:00:00 UTC
+    public static long MILISECONDS_SINCE_UNIX_EPOCH_START = 978307200000l; // 2001/01/01 00:00:00 UTC
 
     public EbmlDate(byte[] id) {
         super(id);

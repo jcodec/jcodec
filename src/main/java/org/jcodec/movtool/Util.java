@@ -57,18 +57,19 @@ public class Util {
     }
 
     public static Pair<List<Edit>> splitEdits(List<Edit> edits, Rational trackByMv, long tvMv) {
-        long total = 0;
         List<Edit> l = new ArrayList<Edit>();
         List<Edit> r = new ArrayList<Edit>();
         ListIterator<Edit> lit = edits.listIterator();
+        long total = 0;
         while (lit.hasNext()) {
             Edit edit = lit.next();
             if (total + edit.getDuration() > tvMv) {
-                int leftDurMV = (int) (tvMv - total);
-                int leftDurMedia = trackByMv.multiplyS(leftDurMV);
+                long leftDurMV = tvMv - total;
+                long leftDurMedia = trackByMv.multiplyLong(leftDurMV);
 
                 Edit left = new Edit(leftDurMV, edit.getMediaTime(), 1.0f);
-                Edit right = new Edit(edit.getDuration() - leftDurMV, leftDurMedia + edit.getMediaTime(), 1.0f);
+                Edit right = new Edit(edit.getDuration() - leftDurMV,
+                        edit.getMediaTime() == -1 ? -1 : leftDurMedia + edit.getMediaTime(), 1.0f);
 
                 lit.remove();
                 if (left.getDuration() > 0) {
@@ -116,19 +117,20 @@ public class Util {
         TimeToSampleBox stts = track.getStts();
         int count = 0;
         TimeToSampleEntry[] tts = stts.getEntries();
-        for (int i = 0; i < tts.length; i++)
-            count += tts[i].getSampleCount();
+        for (TimeToSampleEntry tt : tts) {
+            count += tt.getSampleCount();
+        }
         long[] tv = new long[count + 1];
         int k = 0;
-        for (int i = 0; i < tts.length; i++) {
-            for (int j = 0; j < tts[i].getSampleCount(); j++, k++) {
-                tv[k + 1] = tv[k] + tts[i].getSampleDuration();
+        for (TimeToSampleEntry tt : tts) {
+            for (int j = 0; j < tt.getSampleCount(); j++, k++) {
+                tv[k + 1] = tv[k] + tt.getSampleDuration();
             }
         }
         return tv;
     }
 
-    private static void appendToInternal(MovieBox movie, TrakBox dest, TrakBox src) {
+    private static void appendToInternal(TrakBox dest, TrakBox src) {
         int off = appendEntries(dest, src);
 
         appendChunkOffsets(dest, src);
@@ -144,13 +146,13 @@ public class Util {
     }
 
     public static void appendTo(MovieBox movie, TrakBox dest, TrakBox src) {
-        appendToInternal(movie, dest, src);
+        appendToInternal(dest, src);
         appendEdits(dest, src, dest.getEdits().size());
         updateDuration(dest, src);
     }
 
     public static void insertTo(MovieBox movie, TrakBox dest, TrakBox src, long tvMv) {
-        appendToInternal(movie, dest, src);
+        appendToInternal(dest, src);
         insertEdits(movie, dest, src, tvMv);
         updateDuration(dest, src);
     }
@@ -203,8 +205,7 @@ public class Util {
         SampleEntry[] ent2 = trakBox2.getSampleEntries();
 
         SampleDescriptionBox stsd = SampleDescriptionBox.createSampleDescriptionBox(ent1);
-        for (int i = 0; i < ent2.length; i++) {
-            SampleEntry se = ent2[i];
+        for (SampleEntry se : ent2) {
             se.setDrefInd((short) (se.getDrefInd() + ent1.length));
             stsd.add(se);
         }
@@ -241,7 +242,7 @@ public class Util {
 
     public static void forceEditList(MovieBox movie, TrakBox trakBox) {
         List<Edit> edits = trakBox.getEdits();
-        if (edits == null || edits.size() == 0) {
+        if (edits == null || edits.isEmpty()) {
             MovieHeaderBox mvhd = NodeBox.findFirst(movie, MovieHeaderBox.class, "mvhd");
             edits = new ArrayList<Edit>();
             trakBox.setEdits(edits);
@@ -252,8 +253,7 @@ public class Util {
 
     public static void forceEditListMov(MovieBox movie) {
         TrakBox[] tracks = movie.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox trakBox = tracks[i];
+        for (TrakBox trakBox : tracks) {
             forceEditList(movie, trakBox);
         }
     }
@@ -268,14 +268,21 @@ public class Util {
      */
     public static List<Edit> editsOnEdits(Rational mvByTrack, List<Edit> lower, List<Edit> higher) {
         List<Edit> result = new ArrayList<Edit>();
-        List<Edit> next = new ArrayList<Edit>(lower);
         for (Edit edit : higher) {
             long startMv = mvByTrack.multiplyLong(edit.getMediaTime());
-            Pair<List<Edit>> split = splitEdits(next, mvByTrack.flip(), startMv);
-            Pair<List<Edit>> split2 = splitEdits(split.getB(), mvByTrack.flip(), startMv + edit.getDuration());
+            Pair<List<Edit>> split = splitEdits(lower, mvByTrack.flip(), startMv);
+            long off = totalDur(split.getA());
+            Pair<List<Edit>> split2 = splitEdits(split.getB(), mvByTrack.flip(), startMv + edit.getDuration() - off);
             result.addAll(split2.getA());
-            next = split2.getB();
         }
         return result;
+    }
+
+    private static long totalDur(List<Edit> a) {
+        long total = 0;
+        for (Edit edit : a) {
+            total += edit.getDuration();
+        }
+        return total;
     }
 }

@@ -3,6 +3,7 @@ package org.jcodec.containers.mp4.boxes;
 import static org.jcodec.common.JCodecUtil2.asciiString;
 
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.containers.mp4.boxes.Box.AtomField;
 
 import java.nio.ByteBuffer;
 
@@ -84,22 +85,27 @@ public class HandlerBox extends FullBox {
         return 32 + (componentName != null ? 4 : 0);
     }
 
+    @AtomField(idx=0)
     public String getComponentType() {
         return componentType;
     }
 
+    @AtomField(idx=1)
     public String getComponentSubType() {
         return componentSubType;
     }
 
+    @AtomField(idx=2)
     public String getComponentManufacturer() {
         return componentManufacturer;
     }
 
+    @AtomField(idx=3)
     public int getComponentFlags() {
         return componentFlags;
     }
 
+    @AtomField(idx=4)
     public int getComponentFlagsMask() {
         return componentFlagsMask;
     }

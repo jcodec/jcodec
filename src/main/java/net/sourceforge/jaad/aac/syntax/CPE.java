@@ -65,7 +65,8 @@ public class CPE extends Element {
         }
 
         if (profile.isErrorResilientProfile() && (info.isLTPrediction1Present())) {
-            if (info.ltpData2Present = _in.readBool())
+            info.ltpData2Present = _in.readBool();
+            if (info.ltpData2Present)
                 info.getLTPrediction2().decode(_in, info, profile);
         }
 

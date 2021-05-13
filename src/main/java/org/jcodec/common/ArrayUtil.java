@@ -496,4 +496,27 @@ public class ArrayUtil {
         }
         return ret;
     }
+    // 116, 114, 97, 107
+    public static int find(byte[] bytes, int off, byte[] needle) {
+        for (int i = off; i < bytes.length; i++) {
+            boolean eq = true;
+            int j = 0;
+            int min = Math.min(needle.length, bytes.length - i);
+            for (; j < min; j++) {
+                eq &= bytes[i + j] == needle[j];
+            }
+            if (eq && j == min)
+                return i;
+        }
+        return -1;
+    }
+
+    public static int instances(byte[] bytes, byte[] bs) {
+        int idx = 0;
+        int count = 0;
+        while ((idx = find(bytes, idx + bs.length, bs)) != -1) {
+            count++;
+        }
+        return count;
+    }
 }

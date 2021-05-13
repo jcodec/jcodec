@@ -626,7 +626,7 @@ public class H264Const {
 
     public static final int[][] PIX_MAP_SPLIT_4x4 = buildPixSplitMap4x4();
     public static final int[][] PIX_MAP_SPLIT_2x2 = buildPixSplitMap2x2();
-
+    
     public static final int PROFILE_CAVLC_INTRA = 44;
     public static final int PROFILE_BASELINE = 66;
     public static final int PROFILE_MAIN = 77;

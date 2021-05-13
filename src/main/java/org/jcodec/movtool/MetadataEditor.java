@@ -7,10 +7,8 @@ import java.util.Map;
 
 import org.jcodec.common.Format;
 import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Movie;
-import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MetaBox;
 import org.jcodec.containers.mp4.boxes.MetaValue;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -18,7 +16,6 @@ import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.UdtaBox;
 import org.jcodec.containers.mp4.boxes.UdtaMetaBox;
-import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -62,7 +59,9 @@ public class MetadataEditor {
                 meta1.setKeyedMeta(keyedMeta);
             }
 
-            if (itunesMeta != null && itunesMeta.size() > 0) {
+            boolean hasItunesMeta = itunesMeta != null && itunesMeta.size() > 0;
+            boolean hasUdataMeta = udata != null && udata.size() > 0;
+            if (hasItunesMeta || hasUdataMeta) {
                 UdtaBox udta = NodeBox.findFirst(movie, UdtaBox.class, "udta");
                 if (meta2 == null) {
                     meta2 = UdtaMetaBox.createUdtaMetaBox();
@@ -72,9 +71,12 @@ public class MetadataEditor {
                     }
                     udta.add(meta2);
                 }
-                meta2.setItunesMeta(itunesMeta);
-                udta.setMetadata(udata);
+                if (hasItunesMeta)
+                    meta2.setItunesMeta(itunesMeta);
+                if (hasUdataMeta)
+                    udta.setMetadata(udata);
             }
+
         }
 
         public Map<Integer, MetaValue> getItunesMeta() {

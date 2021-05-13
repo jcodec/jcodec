@@ -20,7 +20,7 @@ public class ADTSParser {
         wr.writeNBit(hdr.getSamplingIndex(), 4);
         wr.writeNBit(hdr.getChanConfig(), 4);
         wr.flush();
-        si.clear();
+        ((java.nio.Buffer)si).clear();
         return si;
     }
 
@@ -107,7 +107,7 @@ public class ADTSParser {
         int rdb = br.readNBit(2); /* number_of_raw_data_blocks_in_frame */
         br.stop();
 
-        data.position(dup.position());
+        ((java.nio.Buffer)data).position(((java.nio.Buffer)dup).position());
 
         return new Header(aot + 1, ch, crc_abs, rdb + 1, sr, size);
     }
@@ -140,7 +140,7 @@ public class ADTSParser {
         br.writeNBit(header.getNumAACFrames() - 1, 2); /* number_of_raw_data_blocks_in_frame */
         br.flush();
 
-        data.flip();
+        ((java.nio.Buffer)data).flip();
         return data;
     }
 }
