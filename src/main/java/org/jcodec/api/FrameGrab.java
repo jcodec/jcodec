@@ -6,6 +6,9 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.api.specific.ContainerAdaptor;
+import org.jcodec.api.specific.GenericAdaptor;
+import org.jcodec.codecs.vpx.VP8Decoder;
+import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
@@ -16,6 +19,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
+import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
@@ -68,10 +72,13 @@ public class FrameGrab {
 			throw new UnsupportedFormatException("Could not detect the format of the input video.");
 		}
         SeekableDemuxerTrack videoTrack_;
-
 		if (MOV == detectFormat) {
             MP4Demuxer d1 = MP4Demuxer.createMP4Demuxer(_in);
             videoTrack_ = (SeekableDemuxerTrack)d1.getVideoTrack();
+		} else if(Format.MKV==detectFormat) {
+			_in.setPosition(0);
+			MKVDemuxer d1=new MKVDemuxer(_in);
+			videoTrack_ = (SeekableDemuxerTrack)d1.getVideoTracks().get(0);
         } else if (MPEG_PS == detectFormat) {
             throw new UnsupportedFormatException("MPEG PS is temporarily unsupported.");
         } else if (MPEG_TS == detectFormat) {
@@ -225,7 +232,10 @@ public class FrameGrab {
         DemuxerTrackMeta meta = videoTrack.getMeta();
         if (H264 == meta.getCodec()) {
             return new AVCMP4Adaptor(meta);
-        } else {
+        } if(Codec.VP8==meta.getCodec()) {
+        	return new GenericAdaptor(new VP8Decoder());
+        }
+        else {
             throw new UnsupportedFormatException("Codec is not supported");
         }
     }

@@ -81,6 +81,7 @@ public class JCodecUtil {
         demuxers.put(MOV, MP4Demuxer.class);
         demuxers.put(WEBP, WebpDemuxer.class);
         demuxers.put(MPEG_AUDIO, MPEGAudioDemuxer.class);
+        demuxers.put(MKV, MKVDemuxer.class);
     };
 
     public static Format detectFormat(File f) throws IOException {

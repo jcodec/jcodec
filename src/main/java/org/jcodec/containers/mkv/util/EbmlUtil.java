@@ -1,5 +1,6 @@
 package org.jcodec.containers.mkv.util;
 import java.lang.StringBuilder;
+import java.nio.ByteBuffer;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
  * 
@@ -101,6 +102,34 @@ public class EbmlUtil {
         for (byte b : a)
             sb.append(String.format("0x%02x ", b & 0xff));
         return sb.toString();
+    }
+    
+    public static class VarIntDetail {
+    	public final int length;
+    	public final long value;
+    	public VarIntDetail(int l, long v) {
+    		length=l; value=v;
+		}
+    }
+    
+    public static VarIntDetail parseVarInt(ByteBuffer varInt) {
+    	
+        // read the first byte
+        byte firstByte = varInt.get();
+        final int length = EbmlUtil.computeLength(firstByte);
+        
+        if (length == 0)
+            throw new RuntimeException("Invalid ebml integer size.");
+    
+        // use the first byte
+        long value = firstByte & (0xFF >>> length);
+        // use the rest
+        for(int i=1;i<length;i++) {
+            value = (value << 8) | (varInt.get() & 0xff);
+        }
+    
+        return new VarIntDetail(length, value);
+
     }
 
 }
