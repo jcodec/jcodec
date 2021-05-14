@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.TrackType;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
@@ -57,6 +59,8 @@ import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlString;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
+import org.jcodec.containers.mkv.util.EbmlUtil;
+import org.jcodec.containers.mkv.util.EbmlUtil.VarIntDetail;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -727,5 +731,65 @@ public final class MKVDemuxer implements Demuxer {
     @Override
     public void close() throws IOException {
         channel.close();
+    }
+    
+    @UsedViaReflection
+    public static int probe(final ByteBuffer b) {
+    	ByteBuffer fork = b.duplicate();
+    	byte[] firstFour=new byte[4];
+    	fork.get(firstFour);
+    	boolean hasEBMLHeader=Arrays.equals(firstFour, MKVType.EBML.id);
+    	if(hasEBMLHeader) {
+    		try {
+    			VarIntDetail headerLen=EbmlUtil.parseVarInt(fork);
+    			if(headerLen.value<0 || headerLen.value>1000) {
+    				// The EBML header has unusual size
+    				return 30;
+    			}
+    			byte[] allHeader=new byte[(int)headerLen.value];
+    			fork.get(allHeader);
+    			byte[] docTypeID=MKVType.DocType.id;
+    			int currPos=0;
+    			while(currPos<headerLen.value && allHeader[currPos++]!=docTypeID[0] && allHeader[currPos++]!=docTypeID[1]){
+    				// Do nothing
+    			}
+    			if(currPos==headerLen.value) {
+    				// Could not find the doctype info
+    				return 45;
+    			}
+    			byte[] theTypeLen=new byte[8];
+    			System.arraycopy(allHeader, currPos, theTypeLen, 0, 8);
+    			try {
+    				VarIntDetail typeLen=EbmlUtil.parseVarInt(ByteBuffer.wrap(theTypeLen));
+    				if(typeLen.value<0||typeLen.value>50) {
+    					// Unusual DocType length
+    					return 75;
+    				}
+    				byte[] theType=new byte[(int)typeLen.value];
+    				System.arraycopy(allHeader, currPos+typeLen.length, theType, 0, (int)typeLen.value);
+    				String parsedType=new String(theType);
+    				final String[] acceptableDocTypes={ "matroska", "webm"};
+    				for(String acceptableType:acceptableDocTypes) {
+    					if(acceptableType.equals(parsedType)) {
+    						// Header and type looks ok, we can definitely try to load this
+    						return 100;
+    					}
+    				}
+    				// Unknown type but might be good to go
+    				return 90;
+    					
+    			} catch(RuntimeException rex) {
+    				// Could not find the length of the type
+    				return 60;
+    			}
+    			
+    		} catch(RuntimeException rex) {
+    			// Could not find the length of the EBML header
+    			return 15;
+    		}
+    	} else {
+    		// Not even the EBML header is there
+    		return 0;
+    	}
     }
 }

@@ -51,10 +51,9 @@ public class MKVParser {
             if (!isKnownType(e.id))
                 System.err.println("Unspecified header: " + EbmlUtil.toHexString(e.id) + " at " + e.offset);
 
+            openElem(e);
             while (!possibleChild(trace.peekFirst(), e))
                 closeElem(trace.removeFirst(), tree);
-
-            openElem(e);
 
             if (e instanceof EbmlMaster) {
                 trace.push((EbmlMaster) e);
@@ -96,8 +95,8 @@ public class MKVParser {
         /*
          * Whatever logging you would like to have. Here's just one example 
          */
-        // System.out.println(e.type.name() + (e instanceof EbmlMaster ? " master " : "") + " id: " + printAsHex(e.id) + " off: 0x" + toHexString(e.offset).toUpperCase() + " data off: 0x" +
-        // toHexString(e.dataOffset).toUpperCase() + " len: 0x" + toHexString(e.dataLen).toUpperCase());
+//         System.out.println(e.type.name() + (e instanceof EbmlMaster ? " master " : "") + " id: " + toHexString(e.id) + " off: 0x" + Long.toHexString(e.offset).toUpperCase() + " data off: 0x" +
+//           Long.toHexString(e.dataOffset).toUpperCase() + " len: 0x" + Long.toHexString(e.dataLen).toUpperCase());
     }
 
     private void closeElem(EbmlMaster e, List<EbmlMaster> tree) {
@@ -174,36 +173,14 @@ public class MKVParser {
     }
 
     static public long readEbmlInt(SeekableByteChannel source) throws IOException {
-    
         ByteBuffer buffer = ByteBuffer.allocate(8);
-        buffer.limit(1);
-        
+        buffer.limit(8);
+        long prePos=source.position(); 
         source.read(buffer);
         buffer.flip();
-        
-        // read the first byte
-        byte firstByte = (byte) buffer.get();
-        int length = EbmlUtil.computeLength(firstByte);
-        
-        if (length == 0)
-            throw new RuntimeException("Invalid ebml integer size.");
-    
-        // read the reset
-        buffer.limit(length);
-        source.read(buffer);
-        buffer.position(1);
-        
-        // use the first byte
-        long value = firstByte & (0xFF >>> length); 
-        length--;
-        
-        // use the reset
-        while(length > 0){
-            value = (value << 8) | (buffer.get() & 0xff);
-            length--;
-        }
-    
-        return value;
+        EbmlUtil.VarIntDetail intData=EbmlUtil.parseVarInt(buffer);
+        source.setPosition(prePos+intData.length);
+        return intData.value;
     }
 
 }
