@@ -87,6 +87,9 @@ public class MP4Util {
 
     public static Movie createRefFullMovie(SeekableByteChannel input, String url) throws IOException {
         Movie movie = parseFullMovieChannel(input);
+        if (movie == null) {
+            return null;
+        }
 
         TrakBox[] tracks = movie.moov.getTracks();
         for (int i = 0; i < tracks.length; i++) {
