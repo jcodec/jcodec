@@ -51,6 +51,10 @@ public class VP8Encoder extends VideoEncoder {
 		this.qp = qp;
 	}
 
+	public void setQp(int qp) {
+		this.qp = qp;
+	}
+
 	@Override
 	public EncodedFrame encodeFrame(Picture pic, ByteBuffer _buf) {
 		boolean isKeyFrame = false;

@@ -55,6 +55,7 @@ public interface Sink {
 
     boolean isVideo();
     boolean isAudio();
+    boolean isInitialised();
 
     void setVideoCodecPrivate(ByteBuffer videoCodecPrivate);
 

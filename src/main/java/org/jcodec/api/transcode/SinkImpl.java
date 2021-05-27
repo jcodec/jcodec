@@ -371,6 +371,11 @@ public class SinkImpl implements Sink, PacketSink {
     public boolean isAudio() {
         return outputFormat.isAudio();
     }
+    
+    @Override
+    public boolean isInitialised() {
+    	return muxer!=null;
+    }
 
     @Override
     public void setCodecOpts(Map<String, String> codecOpts) {
