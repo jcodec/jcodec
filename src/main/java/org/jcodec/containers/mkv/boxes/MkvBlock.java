@@ -63,15 +63,19 @@ public class MkvBlock extends EbmlBin {
     }
 
     public static MkvBlock keyFrame(long trackNumber, int timecode, ByteBuffer frame) {
+    	return anyFrame(trackNumber,timecode,frame,true);
+    }
+ 
+    public static MkvBlock anyFrame(long trackNumber, int timecode, ByteBuffer frame, boolean key) {
         MkvBlock be = new MkvBlock(SIMPLEBLOCK_ID);
         be.frames = new ByteBuffer[] { frame };
         be.frameSizes = new int[] { frame.limit() };
-        be._keyFrame = true;
+        be._keyFrame = key;
         be.trackNumber = trackNumber;
         be.timecode = timecode;
         return be;
     }
-
+    
     public MkvBlock(byte[] type) {
         super(type);
         if (!Platform.arrayEqualsByte(SIMPLEBLOCK_ID, type) && !Platform.arrayEqualsByte(BLOCK_ID, type))

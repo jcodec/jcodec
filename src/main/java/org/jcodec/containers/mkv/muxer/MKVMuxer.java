@@ -108,6 +108,7 @@ public class MKVMuxer implements Muxer {
         mkvTracks = muxTracks();
         mkvCues = (EbmlMaster) createByType(Cues);
         mkvSeekHead = muxSeekHead();
+        createClusters();
         muxCues();
 
         segmentElem.add(mkvSeekHead);
@@ -190,12 +191,25 @@ public class MKVMuxer implements Muxer {
         return master;
     }
 
+    private void createClusters() { // Creates one cluster per each keyframe
+    	EbmlMaster mkvCluster=null;
+        for (MkvBlock aBlock : videoTrack.trackBlocks) {
+        	if(aBlock._keyFrame) {
+        		mkvCluster=singleBlockedCluster(aBlock);
+        		clusterList.add(mkvCluster);
+        	} else if(mkvCluster==null) {
+        		throw new RuntimeException("The first frame must be a keyframe in an MKV file");
+        	} else {
+        		mkvCluster.add(aBlock); // intraframes don't get their own cluster
+        	}
+        }
+    	
+    }
+    
     private void muxCues() {
         CuesFactory cf = new CuesFactory(mkvSeekHead.size() + mkvInfo.size() + mkvTracks.size(),
                 videoTrack.trackNo);
-        for (MkvBlock aBlock : videoTrack.trackBlocks) {
-            EbmlMaster mkvCluster = singleBlockedCluster(aBlock);
-            clusterList.add(mkvCluster);
+        for(EbmlMaster mkvCluster:clusterList) {
             cf.add(CuesFactory.CuePointMock.make(mkvCluster));
         }
 

@@ -1,5 +1,5 @@
 package org.jcodec.containers.mkv.muxer;
-import static org.jcodec.containers.mkv.boxes.MkvBlock.keyFrame;
+import static org.jcodec.containers.mkv.boxes.MkvBlock.anyFrame;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +49,7 @@ public class MKVMuxerTrack implements MuxerTrack {
 
     @Override
     public void addFrame(Packet outPacket) {
-        MkvBlock frame = keyFrame(trackNo, 0, outPacket.getData());
+        MkvBlock frame = anyFrame(trackNo, 0, outPacket.getData(),outPacket.isKeyFrame());
         if(frameRate==null||frameRate.den!=outPacket.duration) {
         	frameRate=new Rational((int)outPacket.duration,outPacket.timescale);
         }
