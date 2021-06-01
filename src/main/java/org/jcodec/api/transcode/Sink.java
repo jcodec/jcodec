@@ -38,15 +38,16 @@ public interface Sink {
     void outputAudioFrame(AudioFrameWithPacket audioFrame) throws IOException;
 
     /**
-     * Finilizes encoding process, flushes the buffers and closes off the
-     * output file (or any other resources for that matter).
+     * Finilizes encoding process, flushes the buffers and closes off the output
+     * file (or any other resources for that matter).
      * 
      * @throws IOException
      */
     void finish() throws IOException;
-    
+
     /**
      * Gets the color space that the sink expects
+     * 
      * @return
      */
     ColorSpace getInputColor();
@@ -54,7 +55,9 @@ public interface Sink {
     void setOption(Options profile, Object value);
 
     boolean isVideo();
+
     boolean isAudio();
+
     boolean isInitialised();
 
     void setVideoCodecPrivate(ByteBuffer videoCodecPrivate);

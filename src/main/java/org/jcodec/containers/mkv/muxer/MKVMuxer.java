@@ -1,4 +1,5 @@
 package org.jcodec.containers.mkv.muxer;
+
 import static org.jcodec.containers.mkv.MKVType.CodecID;
 import static org.jcodec.containers.mkv.MKVType.Cues;
 import static org.jcodec.containers.mkv.MKVType.DateUTC;
@@ -73,7 +74,7 @@ public class MKVMuxer implements Muxer {
     private EbmlMaster mkvSeekHead;
     private List<EbmlMaster> clusterList;
     private SeekableByteChannel sink;
-    
+
     private static Map<Codec, String> codec2mkv = new HashMap<Codec, String>();
     static {
         codec2mkv.put(Codec.H264, "V_MPEG4/ISO/AVC");
@@ -140,8 +141,8 @@ public class MKVMuxer implements Muxer {
 
     private EbmlMaster muxInfo() {
         EbmlMaster master = (EbmlMaster) createByType(Info);
-        Rational fr=tracks.get(0).getFrameRate();
-        createLong(master, TimecodeScale, (long)(fr.toDouble()*MKVMuxerTrack.DEFAULT_TIMESCALE));
+        Rational fr = tracks.get(0).getFrameRate();
+        createLong(master, TimecodeScale, (long) (fr.toDouble() * MKVMuxerTrack.DEFAULT_TIMESCALE));
         createString(master, WritingApp, "JCodec");
         createString(master, MuxingApp, "JCodec");
 
@@ -170,8 +171,8 @@ public class MKVMuxer implements Muxer {
                 createLong(trackEntryElem, TrackType, (byte) 0x01);
                 createString(trackEntryElem, Name, "Track " + (i + 1) + " Video");
                 createString(trackEntryElem, CodecID, track.codecId);
-                //                createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
-                //                VideoCodecMeta vcm = (VideoCodecMeta) codecMeta;
+                // createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
+                // VideoCodecMeta vcm = (VideoCodecMeta) codecMeta;
 
                 EbmlMaster trackVideoElem = (EbmlMaster) createByType(Video);
                 createLong(trackVideoElem, PixelWidth, track.videoMeta.getSize().getWidth());
@@ -183,7 +184,7 @@ public class MKVMuxer implements Muxer {
                 createLong(trackEntryElem, TrackType, (byte) 0x02);
                 createString(trackEntryElem, Name, "Track " + (i + 1) + " Audio");
                 createString(trackEntryElem, CodecID, track.codecId);
-                //                createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
+                // createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
             }
 
             master.add(trackEntryElem);
@@ -192,24 +193,23 @@ public class MKVMuxer implements Muxer {
     }
 
     private void createClusters() { // Creates one cluster per each keyframe
-    	EbmlMaster mkvCluster=null;
+        EbmlMaster mkvCluster = null;
         for (MkvBlock aBlock : videoTrack.trackBlocks) {
-        	if(aBlock._keyFrame) {
-        		mkvCluster=singleBlockedCluster(aBlock);
-        		clusterList.add(mkvCluster);
-        	} else if(mkvCluster==null) {
-        		throw new RuntimeException("The first frame must be a keyframe in an MKV file");
-        	} else {
-        		mkvCluster.add(aBlock); // intraframes don't get their own cluster
-        	}
+            if (aBlock._keyFrame) {
+                mkvCluster = singleBlockedCluster(aBlock);
+                clusterList.add(mkvCluster);
+            } else if (mkvCluster == null) {
+                throw new RuntimeException("The first frame must be a keyframe in an MKV file");
+            } else {
+                mkvCluster.add(aBlock); // intraframes don't get their own cluster
+            }
         }
-    	
+
     }
-    
+
     private void muxCues() {
-        CuesFactory cf = new CuesFactory(mkvSeekHead.size() + mkvInfo.size() + mkvTracks.size(),
-                videoTrack.trackNo);
-        for(EbmlMaster mkvCluster:clusterList) {
+        CuesFactory cf = new CuesFactory(mkvSeekHead.size() + mkvInfo.size() + mkvTracks.size(), videoTrack.trackNo);
+        for (EbmlMaster mkvCluster : clusterList) {
             cf.add(CuesFactory.CuePointMock.make(mkvCluster));
         }
 

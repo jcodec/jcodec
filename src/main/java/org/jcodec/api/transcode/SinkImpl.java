@@ -210,7 +210,7 @@ public class SinkImpl implements Sink, PacketSink {
             if (opts.containsKey("qp"))
                 qp = Integer.parseInt(opts.get("qp"));
             return new H264Encoder(new CQPRateControl(qp));
-        } else 
+        } else
             return H264Encoder.createH264Encoder();
     }
 
@@ -371,10 +371,10 @@ public class SinkImpl implements Sink, PacketSink {
     public boolean isAudio() {
         return outputFormat.isAudio();
     }
-    
+
     @Override
     public boolean isInitialised() {
-    	return muxer!=null;
+        return muxer != null;
     }
 
     @Override

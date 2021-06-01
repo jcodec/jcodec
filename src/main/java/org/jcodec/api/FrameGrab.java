@@ -48,8 +48,9 @@ public class FrameGrab {
 
     private SeekableDemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
-    //ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread
-    //FIXME: potential memory leak: non-static ThreadLocal
+    // ThreadLocal instances are typically private static fields in classes that
+    // wish to associate state with a thread
+    // FIXME: potential memory leak: non-static ThreadLocal
     private final ThreadLocal<byte[][]> buffers;
 
     public static FrameGrab createForDash(String pattern) throws IOException, JCodecException {
@@ -62,23 +63,23 @@ public class FrameGrab {
         fg.decodeLeadingFrames();
         return fg;
     }
-    
+
     public static FrameGrab createFrameGrab(SeekableByteChannel _in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
         _in.read(header);
         header.flip();
         Format detectFormat = JCodecUtil.detectFormatBuffer(header);
-		if (detectFormat == null) {
-			throw new UnsupportedFormatException("Could not detect the format of the input video.");
-		}
+        if (detectFormat == null) {
+            throw new UnsupportedFormatException("Could not detect the format of the input video.");
+        }
         SeekableDemuxerTrack videoTrack_;
-		if (MOV == detectFormat) {
+        if (MOV == detectFormat) {
             MP4Demuxer d1 = MP4Demuxer.createMP4Demuxer(_in);
-            videoTrack_ = (SeekableDemuxerTrack)d1.getVideoTrack();
-		} else if(Format.MKV==detectFormat) {
-			_in.setPosition(0);
-			MKVDemuxer d1=new MKVDemuxer(_in);
-			videoTrack_ = (SeekableDemuxerTrack)d1.getVideoTracks().get(0);
+            videoTrack_ = (SeekableDemuxerTrack) d1.getVideoTrack();
+        } else if (Format.MKV == detectFormat) {
+            _in.setPosition(0);
+            MKVDemuxer d1 = new MKVDemuxer(_in);
+            videoTrack_ = (SeekableDemuxerTrack) d1.getVideoTracks().get(0);
         } else if (MPEG_PS == detectFormat) {
             throw new UnsupportedFormatException("MPEG PS is temporarily unsupported.");
         } else if (MPEG_TS == detectFormat) {
@@ -105,13 +106,13 @@ public class FrameGrab {
     }
 
     /**
-     * Position frame grabber to a specific second in a movie. As a result the
-     * next decoded frame will be precisely at the requested second.
+     * Position frame grabber to a specific second in a movie. As a result the next
+     * decoded frame will be precisely at the requested second.
      * 
      * WARNING: potentially very slow. Use only when you absolutely need precise
      * seek. Tries to seek to exactly the requested second and for this it might
-     * have to decode a sequence of frames from the closes key frame. Depending
-     * on GOP structure this may be as many as 500 frames.
+     * have to decode a sequence of frames from the closes key frame. Depending on
+     * GOP structure this may be as many as 500 frames.
      * 
      * @param second
      * @return
@@ -125,13 +126,13 @@ public class FrameGrab {
     }
 
     /**
-     * Position frame grabber to a specific frame in a movie. As a result the
-     * next decoded frame will be precisely the requested frame number.
+     * Position frame grabber to a specific frame in a movie. As a result the next
+     * decoded frame will be precisely the requested frame number.
      * 
      * WARNING: potentially very slow. Use only when you absolutely need precise
-     * seek. Tries to seek to exactly the requested frame and for this it might
-     * have to decode a sequence of frames from the closes key frame. Depending
-     * on GOP structure this may be as many as 500 frames.
+     * seek. Tries to seek to exactly the requested frame and for this it might have
+     * to decode a sequence of frames from the closes key frame. Depending on GOP
+     * structure this may be as many as 500 frames.
      * 
      * @param frameNumber
      * @return
@@ -147,11 +148,11 @@ public class FrameGrab {
     /**
      * Position frame grabber to a specific second in a movie.
      * 
-     * Performs a sloppy seek, meaning that it may actually not seek to exact
-     * second requested, instead it will seek to the closest key frame
+     * Performs a sloppy seek, meaning that it may actually not seek to exact second
+     * requested, instead it will seek to the closest key frame
      * 
-     * NOTE: fast, as it just seeks to the closest previous key frame and
-     * doesn't try to decode frames in the middle
+     * NOTE: fast, as it just seeks to the closest previous key frame and doesn't
+     * try to decode frames in the middle
      * 
      * @param second
      * @return
@@ -167,11 +168,11 @@ public class FrameGrab {
     /**
      * Position frame grabber to a specific frame in a movie
      * 
-     * Performs a sloppy seek, meaning that it may actually not seek to exact
-     * frame requested, instead it will seek to the closest key frame
+     * Performs a sloppy seek, meaning that it may actually not seek to exact frame
+     * requested, instead it will seek to the closest key frame
      * 
-     * NOTE: fast, as it just seeks to the closest previous key frame and
-     * doesn't try to decode frames in the middle
+     * NOTE: fast, as it just seeks to the closest previous key frame and doesn't
+     * try to decode frames in the middle
      * 
      * @param frameNumber
      * @return
@@ -232,10 +233,10 @@ public class FrameGrab {
         DemuxerTrackMeta meta = videoTrack.getMeta();
         if (H264 == meta.getCodec()) {
             return new AVCMP4Adaptor(meta);
-        } if(Codec.VP8==meta.getCodec()) {
-        	return new GenericAdaptor(new VP8Decoder());
         }
-        else {
+        if (Codec.VP8 == meta.getCodec()) {
+            return new GenericAdaptor(new VP8Decoder());
+        } else {
             throw new UnsupportedFormatException("Codec is not supported");
         }
     }
@@ -252,7 +253,8 @@ public class FrameGrab {
             return null;
 
         Picture picture = decoder.decodeFrame(frame, getBuffer());
-        return new PictureWithMetadata(picture, frame.getPtsD(), frame.getDurationD(), videoTrack.getMeta().getOrientation());
+        return new PictureWithMetadata(picture, frame.getPtsD(), frame.getDurationD(),
+                videoTrack.getMeta().getOrientation());
     }
 
     /**
@@ -366,8 +368,8 @@ public class FrameGrab {
     }
 
     /**
-     * Get a specified frame by number from an already open demuxer track (
-     * sloppy mode, i.e. nearest keyframe )
+     * Get a specified frame by number from an already open demuxer track ( sloppy
+     * mode, i.e. nearest keyframe )
      * 
      * @param vt
      * @param decoder
@@ -382,8 +384,8 @@ public class FrameGrab {
     }
 
     /**
-     * Get a specified frame by second from an already open demuxer track (
-     * sloppy mode, i.e. nearest keyframe )
+     * Get a specified frame by second from an already open demuxer track ( sloppy
+     * mode, i.e. nearest keyframe )
      * 
      * @param vt
      * @param decoder

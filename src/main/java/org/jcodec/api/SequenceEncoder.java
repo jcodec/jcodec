@@ -75,18 +75,20 @@ public class SequenceEncoder {
         pixelStore = new PixelStoreImpl();
     }
 
-    /** 
-     * Allows passing configuration to the codec. Must be called before the first frame is encoded. 
+    /**
+     * Allows passing configuration to the codec. Must be called before the first
+     * frame is encoded.
      * 
      * @param opts
      */
-    public void configureCodec(Map<String,String> opts) {
-    	if(sink.isInitialised()) {
-    		throw new RuntimeException("Sink was already used to encode frames, we cannot allow any codec configuration changes");
-    	}
-    	sink.setCodecOpts(opts);
+    public void configureCodec(Map<String, String> opts) {
+        if (sink.isInitialised()) {
+            throw new RuntimeException(
+                    "Sink was already used to encode frames, we cannot allow any codec configuration changes");
+        }
+        sink.setCodecOpts(opts);
     }
-    
+
     /**
      * Encodes a frame into a movie.
      * 
@@ -96,8 +98,8 @@ public class SequenceEncoder {
     public void encodeNativeFrame(Picture pic) throws IOException {
         if (pic.getColor() != ColorSpace.RGB)
             throw new IllegalArgumentException("The input images is expected in RGB color.");
-        if(!sink.isInitialised()) {
-        	sink.init(false, false);
+        if (!sink.isInitialised()) {
+            sink.init(false, false);
             if (sink.getInputColor() != null)
                 transform = ColorUtil.getTransform(ColorSpace.RGB, sink.getInputColor());
         }

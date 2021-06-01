@@ -1,4 +1,5 @@
 package org.jcodec.containers.mkv.demuxer;
+
 import static org.jcodec.common.model.TapeTimecode.ZERO_TAPE_TIMECODE;
 import static org.jcodec.containers.mkv.MKVType.Audio;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
@@ -195,7 +196,7 @@ public final class MKVDemuxer implements Demuxer {
                 if (codec == null) {
                     System.out.println("Unknown video codec: '" + codecId.getString() + "'");
                 }
-                
+
                 EbmlBin videoCodecState = (EbmlBin) findFirst(elemTrack, path3);
                 ByteBuffer state = null;
                 if (videoCodecState != null)
@@ -343,7 +344,7 @@ public final class MKVDemuxer implements Demuxer {
                 this.state = state;
             }
         }
-        
+
         @Override
         public Packet nextFrame() throws IOException {
             if (frameIdx >= blocks.size())
@@ -354,9 +355,8 @@ public final class MKVDemuxer implements Demuxer {
                 throw new RuntimeException("Something somewhere went wrong.");
             frameIdx++;
             /**
-             * This part could be moved withing yet-another inner class, say
-             * MKVPacket to that channel is actually read only when
-             * Packet.getData() is executed.
+             * This part could be moved withing yet-another inner class, say MKVPacket to
+             * that channel is actually read only when Packet.getData() is executed.
              */
             demuxer.channel.setPosition(b.dataOffset);
             ByteBuffer data = ByteBuffer.allocate(b.dataLen);
@@ -370,8 +370,8 @@ public final class MKVDemuxer implements Demuxer {
             if (codec == Codec.H264) {
                 result = H264Utils.decodeMOVPacket(result, avcC);
             }
-            return Packet.createPacket(result, b.absoluteTimecode, demuxer.timescale, duration,
-                    frameIdx - 1, b._keyFrame ? FrameType.KEY : FrameType.INTER, ZERO_TAPE_TIMECODE);
+            return Packet.createPacket(result, b.absoluteTimecode, demuxer.timescale, duration, frameIdx - 1,
+                    b._keyFrame ? FrameType.KEY : FrameType.INTER, ZERO_TAPE_TIMECODE);
         }
 
         @Override
@@ -407,7 +407,9 @@ public final class MKVDemuxer implements Demuxer {
         @Override
         public DemuxerTrackMeta getMeta() {
             return new DemuxerTrackMeta(org.jcodec.common.TrackType.VIDEO, codec, 0, null, 0, state,
-                    org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(demuxer.pictureWidth, demuxer.pictureHeight), ColorSpace.YUV420), null);
+                    org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(
+                            new Size(demuxer.pictureWidth, demuxer.pictureHeight), ColorSpace.YUV420),
+                    null);
         }
 
         @Override
@@ -431,6 +433,7 @@ public final class MKVDemuxer implements Demuxer {
     public static class SubtitlesTrack extends MkvTrack {
         private Codec codec = null;
         private String language = "eng";
+
         SubtitlesTrack(MKVDemuxer demuxer, int trackNo, Codec codec, String language) {
             super(trackNo, demuxer);
             this.codec = codec;
@@ -438,10 +441,12 @@ public final class MKVDemuxer implements Demuxer {
                 this.language = language;
             }
         }
+
         @Override
         public DemuxerTrackMeta getMeta() {
             return new DemuxerTrackMeta(org.jcodec.common.TrackType.TEXT, this.codec, 0, null, 0, null, null, null);
         }
+
         public String getLanguage() {
             return language;
         }
@@ -478,9 +483,10 @@ public final class MKVDemuxer implements Demuxer {
         @Override
         public Packet nextFrame() throws IOException {
             MkvBlockData bd = nextBlock();
-            if (bd == null) return null;
-            return Packet.createPacket(bd.data, bd.block.absoluteTimecode, demuxer.timescale, 1, frameIdx - 1, FrameType.KEY,
-                    ZERO_TAPE_TIMECODE);
+            if (bd == null)
+                return null;
+            return Packet.createPacket(bd.data, bd.block.absoluteTimecode, demuxer.timescale, 1, frameIdx - 1,
+                    FrameType.KEY, ZERO_TAPE_TIMECODE);
         }
 
         protected MkvBlockData nextBlock() throws IOException {
@@ -493,9 +499,8 @@ public final class MKVDemuxer implements Demuxer {
 
             if (b.frames == null || b.frames.length == 0) {
                 /**
-                 * This part could be moved withing yet-another inner class, say
-                 * MKVPacket to that channel is actually rean only when
-                 * Packet.getData() is executed.
+                 * This part could be moved withing yet-another inner class, say MKVPacket to
+                 * that channel is actually rean only when Packet.getData() is executed.
                  */
                 demuxer.channel.setPosition(b.dataOffset);
                 ByteBuffer data = ByteBuffer.allocate(b.dataLen);
@@ -562,8 +567,8 @@ public final class MKVDemuxer implements Demuxer {
         public Packet getFrames(int count) {
 
             MkvBlockData frameBlock = getFrameBlock(count);
-            if (frameBlock == null) return null;
-
+            if (frameBlock == null)
+                return null;
 
             return Packet.createPacket(frameBlock.data, frameBlock.block.absoluteTimecode, demuxer.timescale,
                     frameBlock.count, 0, FrameType.KEY, ZERO_TAPE_TIMECODE);
@@ -578,9 +583,8 @@ public final class MKVDemuxer implements Demuxer {
                 MkvBlock b = blocks.get(blockIdx).block;
                 if (b.frames == null || b.frames.length == 0) {
                     /**
-                     * This part could be moved withing yet-another inner class,
-                     * say MKVPacket to that channel is actually rean only when
-                     * Packet.getData() is executed.
+                     * This part could be moved withing yet-another inner class, say MKVPacket to
+                     * that channel is actually rean only when Packet.getData() is executed.
                      */
                     try {
                         demuxer.channel.setPosition(b.dataOffset);
@@ -631,7 +635,8 @@ public final class MKVDemuxer implements Demuxer {
         private long channelCount = 1;
         private Codec codec = null;
 
-        public AudioTrack(MKVDemuxer demuxer, int trackNo, Codec codec, double sampleRate, long channelCount, String language) {
+        public AudioTrack(MKVDemuxer demuxer, int trackNo, Codec codec, double sampleRate, long channelCount,
+                String language) {
             super(trackNo, demuxer);
             this.codec = codec;
             if (language != null) {
@@ -648,10 +653,11 @@ public final class MKVDemuxer implements Demuxer {
         @Override
         public Packet nextFrame() throws IOException {
             MkvBlockData b = nextBlock();
-            if (b == null) return null;
+            if (b == null)
+                return null;
 
-            return Packet.createPacket(b.data, b.block.absoluteTimecode, (int) Math.round(sampleRate), 1, 0, FrameType.KEY,
-                    ZERO_TAPE_TIMECODE);
+            return Packet.createPacket(b.data, b.block.absoluteTimecode, (int) Math.round(sampleRate), 1, 0,
+                    FrameType.KEY, ZERO_TAPE_TIMECODE);
         }
 
         /**
@@ -662,7 +668,8 @@ public final class MKVDemuxer implements Demuxer {
          */
         public Packet getFrames(int count) {
             MkvBlockData frameBlock = getFrameBlock(count);
-            if (frameBlock == null) return null;
+            if (frameBlock == null)
+                return null;
 
             return Packet.createPacket(frameBlock.data, frameBlock.block.absoluteTimecode, (int) Math.round(sampleRate),
                     frameBlock.count, 0, FrameType.KEY, ZERO_TAPE_TIMECODE);
@@ -674,8 +681,9 @@ public final class MKVDemuxer implements Demuxer {
             if (this.codec != null) {
                 isPcm = this.codec.isPcm();
             }
-            return new DemuxerTrackMeta(org.jcodec.common.TrackType.AUDIO, this.codec, 0, null, 0, null, null, AudioCodecMeta.createAudioCodecMeta("", 0, (int)this.channelCount, (int)this.sampleRate,
-                    ByteOrder.LITTLE_ENDIAN, isPcm, null, null));
+            return new DemuxerTrackMeta(org.jcodec.common.TrackType.AUDIO, this.codec, 0, null, 0, null, null,
+                    AudioCodecMeta.createAudioCodecMeta("", 0, (int) this.channelCount, (int) this.sampleRate,
+                            ByteOrder.LITTLE_ENDIAN, isPcm, null, null));
         }
 
         @Override
@@ -732,64 +740,65 @@ public final class MKVDemuxer implements Demuxer {
     public void close() throws IOException {
         channel.close();
     }
-    
+
     @UsedViaReflection
     public static int probe(final ByteBuffer b) {
-    	ByteBuffer fork = b.duplicate();
-    	byte[] firstFour=new byte[4];
-    	fork.get(firstFour);
-    	boolean hasEBMLHeader=Arrays.equals(firstFour, MKVType.EBML.id);
-    	if(hasEBMLHeader) {
-    		try {
-    			VarIntDetail headerLen=EbmlUtil.parseVarInt(fork);
-    			if(headerLen.value<0 || headerLen.value>1000) {
-    				// The EBML header has unusual size
-    				return 30;
-    			}
-    			byte[] allHeader=new byte[(int)headerLen.value];
-    			fork.get(allHeader);
-    			byte[] docTypeID=MKVType.DocType.id;
-    			int currPos=0;
-    			while(currPos<headerLen.value && allHeader[currPos++]!=docTypeID[0] && allHeader[currPos++]!=docTypeID[1]){
-    				// Do nothing
-    			}
-    			if(currPos==headerLen.value) {
-    				// Could not find the doctype info
-    				return 45;
-    			}
-    			byte[] theTypeLen=new byte[8];
-    			System.arraycopy(allHeader, currPos, theTypeLen, 0, 8);
-    			try {
-    				VarIntDetail typeLen=EbmlUtil.parseVarInt(ByteBuffer.wrap(theTypeLen));
-    				if(typeLen.value<0||typeLen.value>50) {
-    					// Unusual DocType length
-    					return 75;
-    				}
-    				byte[] theType=new byte[(int)typeLen.value];
-    				System.arraycopy(allHeader, currPos+typeLen.length, theType, 0, (int)typeLen.value);
-    				String parsedType=new String(theType);
-    				final String[] acceptableDocTypes={ "matroska", "webm"};
-    				for(String acceptableType:acceptableDocTypes) {
-    					if(acceptableType.equals(parsedType)) {
-    						// Header and type looks ok, we can definitely try to load this
-    						return 100;
-    					}
-    				}
-    				// Unknown type but might be good to go
-    				return 90;
-    					
-    			} catch(RuntimeException rex) {
-    				// Could not find the length of the type
-    				return 60;
-    			}
-    			
-    		} catch(RuntimeException rex) {
-    			// Could not find the length of the EBML header
-    			return 15;
-    		}
-    	} else {
-    		// Not even the EBML header is there
-    		return 0;
-    	}
+        ByteBuffer fork = b.duplicate();
+        byte[] firstFour = new byte[4];
+        fork.get(firstFour);
+        boolean hasEBMLHeader = Arrays.equals(firstFour, MKVType.EBML.id);
+        if (hasEBMLHeader) {
+            try {
+                VarIntDetail headerLen = EbmlUtil.parseVarInt(fork);
+                if (headerLen.value < 0 || headerLen.value > 1000) {
+                    // The EBML header has unusual size
+                    return 30;
+                }
+                byte[] allHeader = new byte[(int) headerLen.value];
+                fork.get(allHeader);
+                byte[] docTypeID = MKVType.DocType.id;
+                int currPos = 0;
+                while (currPos < headerLen.value && allHeader[currPos++] != docTypeID[0]
+                        && allHeader[currPos++] != docTypeID[1]) {
+                    // Do nothing
+                }
+                if (currPos == headerLen.value) {
+                    // Could not find the doctype info
+                    return 45;
+                }
+                byte[] theTypeLen = new byte[8];
+                System.arraycopy(allHeader, currPos, theTypeLen, 0, 8);
+                try {
+                    VarIntDetail typeLen = EbmlUtil.parseVarInt(ByteBuffer.wrap(theTypeLen));
+                    if (typeLen.value < 0 || typeLen.value > 50) {
+                        // Unusual DocType length
+                        return 75;
+                    }
+                    byte[] theType = new byte[(int) typeLen.value];
+                    System.arraycopy(allHeader, currPos + typeLen.length, theType, 0, (int) typeLen.value);
+                    String parsedType = new String(theType);
+                    final String[] acceptableDocTypes = { "matroska", "webm" };
+                    for (String acceptableType : acceptableDocTypes) {
+                        if (acceptableType.equals(parsedType)) {
+                            // Header and type looks ok, we can definitely try to load this
+                            return 100;
+                        }
+                    }
+                    // Unknown type but might be good to go
+                    return 90;
+
+                } catch (RuntimeException rex) {
+                    // Could not find the length of the type
+                    return 60;
+                }
+
+            } catch (RuntimeException rex) {
+                // Could not find the length of the EBML header
+                return 15;
+            }
+        } else {
+            // Not even the EBML header is there
+            return 0;
+        }
     }
 }

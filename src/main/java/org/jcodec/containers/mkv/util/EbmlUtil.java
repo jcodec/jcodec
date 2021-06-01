@@ -1,8 +1,11 @@
 package org.jcodec.containers.mkv.util;
+
 import java.lang.StringBuilder;
 import java.nio.ByteBuffer;
+
 /**
- * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
  * 
  * EBML IO implementation
  * 
@@ -14,10 +17,8 @@ public class EbmlUtil {
     /**
      * Encodes unsigned integer with given length
      * 
-     * @param value
-     *            unsigned integer to be encoded
-     * @param length
-     *            ebml sequence length
+     * @param value  unsigned integer to be encoded
+     * @param length ebml sequence length
      * @return
      */
     public static byte[] ebmlEncodeLen(long value, int length) {
@@ -34,8 +35,7 @@ public class EbmlUtil {
     /**
      * Encodes unsigned integer value according to ebml convention
      * 
-     * @param value
-     *            unsigned integer to be encoded
+     * @param value unsigned integer to be encoded
      * @return
      */
     public static byte[] ebmlEncode(long value) {
@@ -45,7 +45,9 @@ public class EbmlUtil {
     public static final byte[] lengthOptions = { 0, (byte) 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
     /**
-     * This method is used mostly during reading EBML bitstream. It asnwers the question "What is the length of an integer (signed/unsigned) encountered in the bitstream"
+     * This method is used mostly during reading EBML bitstream. It asnwers the
+     * question "What is the length of an integer (signed/unsigned) encountered in
+     * the bitstream"
      * 
      * @param b
      * @return
@@ -79,10 +81,11 @@ public class EbmlUtil {
     public static final long[] ebmlLengthMasks = new long[] { 0, one, two, three, four, five, six, seven, eight };
 
     /**
-     * This method is used mostly during writing EBML bitstream. It answers the following question "How many bytes should be used to encode unsigned integer value"
+     * This method is used mostly during writing EBML bitstream. It answers the
+     * following question "How many bytes should be used to encode unsigned integer
+     * value"
      * 
-     * @param v
-     *            unsigned integer to be encoded
+     * @param v unsigned integer to be encoded
      * @return
      */
     public static int ebmlLength(long v) {
@@ -103,31 +106,33 @@ public class EbmlUtil {
             sb.append(String.format("0x%02x ", b & 0xff));
         return sb.toString();
     }
-    
+
     public static class VarIntDetail {
-    	public final int length;
-    	public final long value;
-    	public VarIntDetail(int l, long v) {
-    		length=l; value=v;
-		}
+        public final int length;
+        public final long value;
+
+        public VarIntDetail(int l, long v) {
+            length = l;
+            value = v;
+        }
     }
-    
+
     public static VarIntDetail parseVarInt(ByteBuffer varInt) {
-    	
+
         // read the first byte
         byte firstByte = varInt.get();
         final int length = EbmlUtil.computeLength(firstByte);
-        
+
         if (length == 0)
             throw new RuntimeException("Invalid ebml integer size.");
-    
+
         // use the first byte
         long value = firstByte & (0xFF >>> length);
         // use the rest
-        for(int i=1;i<length;i++) {
+        for (int i = 1; i < length; i++) {
             value = (value << 8) | (varInt.get() & 0xff);
         }
-    
+
         return new VarIntDetail(length, value);
 
     }
