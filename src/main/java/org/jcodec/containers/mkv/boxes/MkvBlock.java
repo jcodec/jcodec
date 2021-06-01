@@ -1,4 +1,5 @@
 package org.jcodec.containers.mkv.boxes;
+
 import static java.lang.System.arraycopy;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.convertToBytes;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.signedComplement;
@@ -39,8 +40,8 @@ public class MkvBlock extends EbmlBin {
     public boolean discardable;
     public boolean lacingPresent;
     public ByteBuffer[] frames;
-    public static final byte[] BLOCK_ID = new byte[]{(byte)0xA1};
-    public static final byte[] SIMPLEBLOCK_ID = new byte[]{(byte)0xA3};
+    public static final byte[] BLOCK_ID = new byte[] { (byte) 0xA1 };
+    public static final byte[] SIMPLEBLOCK_ID = new byte[] { (byte) 0xA3 };
 
     public static MkvBlock copy(MkvBlock old) {
         MkvBlock be = new MkvBlock(old.id);
@@ -63,9 +64,9 @@ public class MkvBlock extends EbmlBin {
     }
 
     public static MkvBlock keyFrame(long trackNumber, int timecode, ByteBuffer frame) {
-    	return anyFrame(trackNumber,timecode,frame,true);
+        return anyFrame(trackNumber, timecode, frame, true);
     }
- 
+
     public static MkvBlock anyFrame(long trackNumber, int timecode, ByteBuffer frame, boolean key) {
         MkvBlock be = new MkvBlock(SIMPLEBLOCK_ID);
         be.frames = new ByteBuffer[] { frame };
@@ -75,20 +76,20 @@ public class MkvBlock extends EbmlBin {
         be.timecode = timecode;
         return be;
     }
-    
+
     public MkvBlock(byte[] type) {
         super(type);
         if (!Platform.arrayEqualsByte(SIMPLEBLOCK_ID, type) && !Platform.arrayEqualsByte(BLOCK_ID, type))
             throw new IllegalArgumentException("Block initiated with invalid id: " + EbmlUtil.toHexString(type));
     }
-    
+
     @Override
     public void readChannel(SeekableByteChannel is) throws IOException {
         ByteBuffer bb = ByteBuffer.allocate((int) 100);
         is.read(bb);
         bb.flip();
         this.read(bb);
-        is.setPosition(this.dataOffset+this.dataLen);
+        is.setPosition(this.dataOffset + this.dataLen);
     }
 
     @Override
@@ -125,7 +126,7 @@ public class MkvBlock extends EbmlBin {
                 this.headerSize = bb.position();
                 int aLaceSize = (int) ((this.dataLen - this.headerSize) / (lacesCount + 1));
                 Arrays.fill(frameSizes, aLaceSize);
-                
+
             } else {
                 throw new RuntimeException("Unsupported lacing type flag.");
             }
@@ -210,7 +211,8 @@ public class MkvBlock extends EbmlBin {
         sb.append(", headerSize: ").append(headerSize);
         sb.append(", lacing: ").append(lacing);
         for (int i = 0; i < frameSizes.length; i++)
-            sb.append(", frame[").append(i).append("]  offset ").append(frameOffsets[i]).append(" size ").append(frameSizes[i]);
+            sb.append(", frame[").append(i).append("]  offset ").append(frameOffsets[i]).append(" size ")
+                    .append(frameSizes[i]);
 
         sb.append(" }");
 
@@ -295,7 +297,8 @@ public class MkvBlock extends EbmlBin {
 
     public int getDataSize() {
         int size = 0;
-        // TODO: one can do same calculation with for(byte[] aFrame : this.frames) size += aFrame.length;
+        // TODO: one can do same calculation with for(byte[] aFrame : this.frames) size
+        // += aFrame.length;
         for (long fsize : frameSizes)
             size += fsize;
 
@@ -327,32 +330,32 @@ public class MkvBlock extends EbmlBin {
         int length = EbmlUtil.computeLength(firstByte);
         if (length == 0)
             throw new RuntimeException("Invalid ebml integer size.");
-    
+
         long value = firstByte & (0xFF >>> length);
-    
+
         length--;
         while (length > 0) {
             value = (value << 8) | (bb.get() & 0xff);
             length--;
         }
-    
+
         return value;
     }
 
     static public long ebmlDecodeSigned(ByteBuffer source) {
         byte firstByte = source.get();
         int size = EbmlUtil.computeLength(firstByte);
-    
+
         if (size == 0)
             throw new RuntimeException("Invalid ebml integer size.");
-    
+
         long value = firstByte & (0xFF >>> size);
-        int remaining = size-1;
-        while (remaining > 0){
+        int remaining = size - 1;
+        while (remaining > 0) {
             value = (value << 8) | (source.get() & 0xff);
             remaining--;
         }
-    
+
         return value - signedComplement[size];
     }
 

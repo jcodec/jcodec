@@ -75,7 +75,7 @@ public class JCodecUtil {
         decoders.put(Codec.H264, H264Decoder.class);
         decoders.put(AAC, AACDecoder.class);
         decoders.put(Codec.MPEG4, MPEG4Decoder.class);
-        
+
         demuxers.put(Format.MPEG_TS, MTSDemuxer.class);
         demuxers.put(MPEG_PS, MPSDemuxer.class);
         demuxers.put(MOV, MP4Demuxer.class);
@@ -120,7 +120,7 @@ public class JCodecUtil {
 
     private static int probe(ByteBuffer b, Class<?> vd) {
         try {
-            return Platform.invokeStaticMethod(vd, "probe", new Object[]{b});
+            return Platform.invokeStaticMethod(vd, "probe", new Object[] { b });
         } catch (Exception e) {
         }
         return 0;

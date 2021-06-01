@@ -1,4 +1,5 @@
 package org.jcodec.containers.mkv;
+
 import static org.jcodec.containers.mkv.MKVType.Attachments;
 import static org.jcodec.containers.mkv.MKVType.Chapters;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
@@ -25,7 +26,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
  * 
  * EBML IO implementation
  * 
@@ -42,7 +44,7 @@ public class MKVParser {
         this.trace = new LinkedList<EbmlMaster>();
 
     }
-    
+
     public List<EbmlMaster> parse() throws IOException {
         List<EbmlMaster> tree = new ArrayList<EbmlMaster>();
         EbmlBase e = null;
@@ -66,26 +68,30 @@ public class MKVParser {
                     try {
                         bin.readChannel(channel);
                     } catch (OutOfMemoryError oome) {
-                        throw new RuntimeException(e.type + " 0x" + toHexString(bin.id) + " size: " + Long.toHexString(bin.dataLen) + " offset: 0x" + Long.toHexString(e.offset), oome);
+                        throw new RuntimeException(e.type + " 0x" + toHexString(bin.id) + " size: "
+                                + Long.toHexString(bin.dataLen) + " offset: 0x" + Long.toHexString(e.offset), oome);
                     }
                 trace.peekFirst().add(e);
             } else if (e instanceof EbmlVoid) {
                 ((EbmlVoid) e).skip(channel);
             } else {
-                throw new RuntimeException("Currently there are no elements that are neither Master nor Binary, should never actually get here");
+                throw new RuntimeException(
+                        "Currently there are no elements that are neither Master nor Binary, should never actually get here");
             }
 
         }
 
         while (trace.peekFirst() != null)
             closeElem(trace.removeFirst(), tree);
-        
+
         return tree;
     }
 
     private boolean possibleChild(EbmlMaster parent, EbmlBase child) {
-        if (parent != null && Cluster.equals(parent.type) && child != null && !Cluster.equals(child.type) && !Info.equals(child.type) && !SeekHead.equals(child.type) && !Tracks.equals(child.type)
-                && !Cues.equals(child.type) && !Attachments.equals(child.type) && !Tags.equals(child.type) && !Chapters.equals(child.type))
+        if (parent != null && Cluster.equals(parent.type) && child != null && !Cluster.equals(child.type)
+                && !Info.equals(child.type) && !SeekHead.equals(child.type) && !Tracks.equals(child.type)
+                && !Cues.equals(child.type) && !Attachments.equals(child.type) && !Tags.equals(child.type)
+                && !Chapters.equals(child.type))
             return true;
 
         return MKVType.possibleChild(parent, child);
@@ -93,7 +99,7 @@ public class MKVParser {
 
     private void openElem(EbmlBase e) {
         /*
-         * Whatever logging you would like to have. Here's just one example 
+         * Whatever logging you would like to have. Here's just one example
          */
 //         System.out.println(e.type.name() + (e instanceof EbmlMaster ? " master " : "") + " id: " + toHexString(e.id) + " off: 0x" + Long.toHexString(e.offset).toUpperCase() + " data off: 0x" +
 //           Long.toHexString(e.dataOffset).toUpperCase() + " len: 0x" + Long.toHexString(e.dataLen).toUpperCase());
@@ -140,8 +146,10 @@ public class MKVParser {
     }
 
     /**
-     * Reads an EBML id from the channel. EBML ids have length encoded inside of them For instance, all one-byte ids have first byte set to '1', like 0xA3 or 0xE7, whereas the two-byte ids have first
-     * byte set to '0' and second byte set to '1', thus: 0x42 0x86  or 0x42 0xF7
+     * Reads an EBML id from the channel. EBML ids have length encoded inside of
+     * them For instance, all one-byte ids have first byte set to '1', like 0xA3 or
+     * 0xE7, whereas the two-byte ids have first byte set to '0' and second byte set
+     * to '1', thus: 0x42 0x86 or 0x42 0xF7
      * 
      * @return byte array filled with the ebml id
      * @throws IOException
@@ -149,23 +157,23 @@ public class MKVParser {
     static public byte[] readEbmlId(SeekableByteChannel source) throws IOException {
         if (source.position() == source.size())
             return null;
-    
+
         ByteBuffer buffer = ByteBuffer.allocate(8);
         buffer.limit(1);
         source.read(buffer);
         buffer.flip();
-    
+
         byte firstByte = buffer.get();
         int numBytes = EbmlUtil.computeLength(firstByte);
-    
+
         if (numBytes == 0)
             return null;
-    
+
         if (numBytes > 1) {
             buffer.limit(numBytes);
             source.read(buffer);
         }
-        
+
         buffer.flip();
         ByteBuffer val = ByteBuffer.allocate(buffer.remaining());
         val.put(buffer);
@@ -175,11 +183,11 @@ public class MKVParser {
     static public long readEbmlInt(SeekableByteChannel source) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(8);
         buffer.limit(8);
-        long prePos=source.position(); 
+        long prePos = source.position();
         source.read(buffer);
         buffer.flip();
-        EbmlUtil.VarIntDetail intData=EbmlUtil.parseVarInt(buffer);
-        source.setPosition(prePos+intData.length);
+        EbmlUtil.VarIntDetail intData = EbmlUtil.parseVarInt(buffer);
+        source.setPosition(prePos + intData.length);
         return intData.value;
     }
 
