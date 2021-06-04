@@ -135,4 +135,10 @@ public class ChunkWriter {
         sampleSizes.fill(0, sampleCount, sampleSize);
         sampleCount = 0;
     }
+
+    public void close() throws IOException {
+        for (SeekableByteChannel input : inputs) {
+            input.close();
+        }
+    }
 }

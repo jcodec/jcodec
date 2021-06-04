@@ -215,6 +215,7 @@ public class Flatten {
                 ChunkWriter.cleanDrefs(tracks[i]);
             } else {
                 writers[i].apply();
+                writers[i].close();
             }
         }
     }
