@@ -405,7 +405,8 @@ public class PNGDecoder extends VideoDecoder {
             if ((length % 3) != 0 || length > 256 * 3)
                 throw new RuntimeException("Invalid data");
             int n = length / 3;
-            palette = new int[n];
+            int paletteSize = Math.max(n, 256);
+            palette = new int[paletteSize];
             int i;
             for (i = 0; i < n; i++) {
                 palette[i] = (0xff << 24) | ((data.get() & 0xff) << 16) | ((data.get() & 0xff) << 8)
