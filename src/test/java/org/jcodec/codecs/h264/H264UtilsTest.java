@@ -1,15 +1,17 @@
 package org.jcodec.codecs.h264;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+
 import org.jcodec.codecs.h264.H264Utils.Mv;
 import org.jcodec.codecs.h264.H264Utils.MvList;
+import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.Size;
+import org.jcodec.common.tools.Debug;
 import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 public class H264UtilsTest {
 
@@ -55,6 +57,9 @@ public class H264UtilsTest {
                 0, 0, 1, 0x68, 'm', 'a', 'n', 0, 0, 0, 1, 0x68, 'c', 'o', 'o', 'l' }, res);
         
     }
+    
+    
+    
     
     @Test
     public void testMv() {
@@ -194,4 +199,26 @@ public class H264UtilsTest {
         Assert.assertArrayEquals(res2, res2A);
         Assert.assertArrayEquals(res3, res3A);
     }
+    
+    
+    @Test
+    public void testCanGetSizeCorrectlyFromValidSps()
+    {
+    	byte[] data = { (byte)0x4D, (byte)0x40, (byte)0x1F, 
+    			        (byte)0x9A, (byte)0x64, (byte)0x02, (byte)0x00, (byte)0x24, (byte)0xFF, (byte)0xFF, (byte)0x80, 
+    			        (byte)0x5E, (byte)0x80, (byte)0x5F, (byte)0x37, (byte)0x01, (byte)0x01, (byte)0x01, (byte)0x40, 
+    			        (byte)0x00, (byte)0x00, (byte)0xFA, (byte)0x00, (byte)0x00, (byte)0x1D, (byte)0x4C, (byte)0x25, 
+    			         };
+
+    	Debug.debug = true;
+    	
+    	final SeqParameterSet sps = H264Utils.readSPS(ByteBuffer.wrap(data));
+
+    	final Size size = H264Utils.getPicSize(sps);
+    	Assert.assertEquals(1024, size.getWidth());
+    	Assert.assertEquals(576, size.getHeight());
+    }
+    
+    // test with nal stream bytes
+    
 }
