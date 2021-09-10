@@ -11,25 +11,25 @@ public class DCTTest {
 
     @Test
     public void testDCT() {
-        int[] input = new int[]{
+        short[] input = new short[]{
                 -36, -37, -39, -42,
                 -37, -38, -40, -42,
                 -39, -39, -39, -40,
                 -39, -41, -40, -35};
-        int[] out = VP8DCT.encodeDCT(input);
+        short[] out = VP8DCT.encodeDCT(input);
         
         System.out.println("dct encoded: ");
         System.out.println(formatAsSquare(out));
         
-        out = LinearAlgebraUtil.divideByScalar(out, 4);
+        out = LinearAlgebraUtil.divideByScalar(out, (short)4);
         System.out.println("quantized: ");
         System.out.println(formatAsSquare(out));
         
-        out = LinearAlgebraUtil.multiplyByScalar(out, 4);
+        out = LinearAlgebraUtil.multiplyByScalar(out, (short) 4);
         System.out.println("dequantized: ");
         System.out.println(formatAsSquare(out));
         
-        int[] restored = VP8DCT.decodeDCT(out);
+        short[] restored = VP8DCT.decodeDCT(out);
         System.out.println("restored: ");
         System.out.println(formatAsSquare(restored));
         
@@ -39,25 +39,25 @@ public class DCTTest {
     
     @Test
     public void testWHT(){
-        int[] input = new int[]{
+        short[] input = new short[]{
             -312, -333, -269, -242,
             -289, -287, -322, -239,
             -330, -334, -332, -329,
             -347, -339, -273, -312
         };
-        int[] out = VP8DCT.encodeWHT(input);
+        short[] out = VP8DCT.encodeWHT(input);
         System.out.println("wht encoded: ");
         System.out.println(formatAsSquare(out));
         
-        out = LinearAlgebraUtil.divideByScalar(out, 4);
+        out = LinearAlgebraUtil.divideByScalar(out, (short) 4);
         System.out.println("quantized: ");
         System.out.println(formatAsSquare(out));
         
-        out = LinearAlgebraUtil.multiplyByScalar(out, 4);
+        out = LinearAlgebraUtil.multiplyByScalar(out, (short) 4);
         System.out.println("dequantized: ");
         System.out.println(formatAsSquare(out));
         
-        int[] restored = VP8DCT.decodeWHT(out);
+        short[] restored = VP8DCT.decodeWHT(out);
         System.out.println("restored: ");
         System.out.println(formatAsSquare(restored));
         
@@ -65,7 +65,7 @@ public class DCTTest {
         System.out.println(formatAsSquare(substractVector(input, restored)));
     }
     
-    public static String formatAsSquare(int[] a){
+    public static String formatAsSquare(short[] a){
         int size = (a.length == 4) ? 2 : (a.length == 16) ? 4 : (a.length==64) ? 8 : 0;
         String str = "";
         for(int i=0;i<a.length;i++){

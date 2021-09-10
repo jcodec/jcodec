@@ -624,7 +624,7 @@ public class InterModeInfo extends ModeInfo {
         else
             ctx = SWITCHABLE;
 
-        int[][] probs = c.getInterpFilterProbs();
+        short[][] probs = c.getInterpFilterProbs();
 
         int ret = decoder.readTree(TREE_INTERP_FILTER, probs[ctx]);
 
@@ -679,7 +679,7 @@ public class InterModeInfo extends ModeInfo {
             ctx = mode1 >= NEARESTMV ? INTRA_PLUS_NON_INTRA : BOTH_INTRA;
         }
         System.out.println(String.format("inter_mode_ctx: %d\n", ctx));
-        int[][] probs = c.getInterModeProbs();
+        short[][] probs = c.getInterModeProbs();
 
         int ret = NEARESTMV + decoder.readTree(TREE_INTER_MODE, probs[ctx]);
 
@@ -876,7 +876,7 @@ public class InterModeInfo extends ModeInfo {
             ctx = 2;
         }
 
-        int[] probs = c.getCompRefProbs();
+        short[] probs = c.getCompRefProbs();
 
         return decoder.readBit(probs[ctx]);
     }
@@ -1023,7 +1023,7 @@ public class InterModeInfo extends ModeInfo {
         } else {
             ctx = 2;
         }
-        int[][] probs = c.getSingleRefProbs();
+        short[][] probs = c.getSingleRefProbs();
 
         return decoder.readBit(probs[ctx][bin]) == 1;
     }
@@ -1064,7 +1064,7 @@ public class InterModeInfo extends ModeInfo {
         } else {
             ctx = 1;
         }
-        int[] probs = c.getCompModeProb();
+        short[] probs = c.getCompModeProb();
 
         return decoder.readBit(probs[ctx]) == 1;
     }
@@ -1086,12 +1086,12 @@ public class InterModeInfo extends ModeInfo {
     }
 
     protected int readInterIntraMode(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c) {
-        int[][] probs = c.getYModeProbs();
+        short[][] probs = c.getYModeProbs();
         return decoder.readTree(TREE_INTRA_MODE, probs[size_group_lookup[blSz]]);
     }
 
     protected int readInterIntraModeSub(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c) {
-        int[][] probs = c.getYModeProbs();
+        short[][] probs = c.getYModeProbs();
         int mode0 = decoder.readTree(TREE_INTRA_MODE, probs[0]);
         int mode1 = decoder.readTree(TREE_INTRA_MODE, probs[0]);
         int mode2 = decoder.readTree(TREE_INTRA_MODE, probs[0]);
@@ -1101,7 +1101,7 @@ public class InterModeInfo extends ModeInfo {
     }
 
     public int readKfUvMode(int yMode, VPXBooleanDecoder decoder, DecodingContext c) {
-        int[][] probs = c.getUvModeProbs();
+        short[][] probs = c.getUvModeProbs();
         return decoder.readTree(TREE_INTRA_MODE, probs[yMode]);
     }
 
@@ -1120,7 +1120,7 @@ public class InterModeInfo extends ModeInfo {
         else if (availAbove || availLeft)
             ctx = 2 * (availAbove ? (aboveIntra ? 1 : 0) : (leftIntra ? 1 : 0));
 
-        int[] probs = c.getIsInterProbs();
+        short[] probs = c.getIsInterProbs();
         return decoder.readBit(probs[ctx]) == 1;
     }
 

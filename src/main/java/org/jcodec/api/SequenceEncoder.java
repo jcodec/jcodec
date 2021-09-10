@@ -96,17 +96,18 @@ public class SequenceEncoder {
      * @throws IOException
      */
     public void encodeNativeFrame(Picture pic) throws IOException {
-        if (pic.getColor() != ColorSpace.RGB)
-            throw new IllegalArgumentException("The input images is expected in RGB color.");
         if (!sink.isInitialised()) {
             sink.init(false, false);
             if (sink.getInputColor() != null)
                 transform = ColorUtil.getTransform(ColorSpace.RGB, sink.getInputColor());
         }
-
         ColorSpace sinkColor = sink.getInputColor();
+        ColorSpace picColor = pic.getColor();
+        if (picColor != ColorSpace.RGB && picColor != sinkColor)
+            throw new IllegalArgumentException("The input images is expected in RGB color.");
+
         LoanerPicture toEncode;
-        if (sinkColor != null) {
+        if (sinkColor != null && picColor != sinkColor) {
             toEncode = pixelStore.getPicture(pic.getWidth(), pic.getHeight(), sinkColor);
             transform.transform(pic, toEncode.getPicture());
         } else {

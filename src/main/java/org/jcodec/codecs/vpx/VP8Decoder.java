@@ -13,6 +13,8 @@ import static org.jcodec.common.Preconditions.checkState;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.vpx.VPXMacroblock.Subblock;
+import org.jcodec.codecs.vpx.vp8.data.EntropyMode;
+import org.jcodec.codecs.vpx.vp8.enums.BPredictionMode;
 import org.jcodec.codecs.vpx.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vpx.VP8Util.SubblockConstants;
 import org.jcodec.common.UsedViaReflection;
@@ -47,16 +49,20 @@ public class VP8Decoder extends VideoDecoder {
         frame.get(firstThree);
 
         boolean keyFrame = getBitInBytes(firstThree, 0) == 0;
-        if(!keyFrame)
-            return null;
+//        if(!keyFrame)
+//            return null;
         int version = getBitsInBytes(firstThree, 1, 3);
         boolean showFrame = getBitInBytes(firstThree, 4) > 0;
         int partitionSize = getBitsInBytes(firstThree, 5, 19);
-        String threeByteToken = printHexByte(frame.get()) + " " + printHexByte(frame.get()) + " "
-                + printHexByte(frame.get());
+        int twoBytesWidth = 1024;
+        int twoBytesHeight = 768;
+        if (keyFrame) {
+            String threeByteToken = printHexByte(frame.get()) + " " + printHexByte(frame.get()) + " "
+                    + printHexByte(frame.get());
 
-        int twoBytesWidth = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
-        int twoBytesHeight = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
+            twoBytesWidth = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
+            twoBytesHeight = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
+        }
         int width = (twoBytesWidth & 0x3fff);
         int height = (twoBytesHeight & 0x3fff);
         int numberOfMBRows = getMacroblockCount(height);
@@ -74,9 +80,11 @@ public class VP8Decoder extends VideoDecoder {
 
         int headerOffset = frame.position();
         VPXBooleanDecoder headerDecoder = new VPXBooleanDecoder(frame, 0);
-        boolean isYUVColorSpace = (headerDecoder.readBitEq() == 0);
+        if (keyFrame) {
+            boolean isYUVColorSpace = (headerDecoder.readBitEq() == 0);
 
-        boolean clampingRequired = headerDecoder.readBitEq() == 0;
+            boolean clampingRequired = headerDecoder.readBitEq() == 0;
+        }
         int segmentation = headerDecoder.readBitEq();
         SegmentBasedAdjustments segmentBased = null;
         if(segmentation != 0) {
@@ -125,24 +133,24 @@ public class VP8Decoder extends VideoDecoder {
         tokenBuffer.position(partitionSize + headerOffset);
         VPXBooleanDecoder decoder = new VPXBooleanDecoder(tokenBuffer, 0);
 
-        int yacIndex = headerDecoder.decodeInt(7);
-        int ydcDelta = ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
-        int y2dcDelta = ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
-        int y2acDelta = ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
-        int chromaDCDelta = ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
-        int chromaACDelta = ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
+        short yacIndex = (short) headerDecoder.decodeInt(7);
+        short ydcDelta = (short) ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
+        short y2dcDelta = (short) ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
+        short y2acDelta = (short) ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
+        short chromaDCDelta = (short) ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
+        short chromaACDelta = (short) ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
         boolean refreshProbs = headerDecoder.readBitEq() == 0;
         QuantizationParams quants = new QuantizationParams(yacIndex, ydcDelta, y2dcDelta, y2acDelta, chromaDCDelta,
                 chromaACDelta);
 
-        int[][][][] coefProbs = getDefaultCoefProbs();
+        short[][][][] coefProbs = getDefaultCoefProbs();
         for (int i = 0; i < VP8Util.BLOCK_TYPES; i++)
             for (int j = 0; j < VP8Util.COEF_BANDS; j++)
                 for (int k = 0; k < VP8Util.PREV_COEF_CONTEXTS; k++)
                     for (int l = 0; l < VP8Util.MAX_ENTROPY_TOKENS - 1; l++) {
 
                         if (headerDecoder.readBit(vp8CoefUpdateProbs[i][j][k][l]) > 0) {
-                            int newp = headerDecoder.decodeInt(8);
+                            short newp = (short)headerDecoder.decodeInt(8);
                             coefProbs[i][j][k][l] = newp;
                         }
                     }
@@ -159,7 +167,7 @@ public class VP8Decoder extends VideoDecoder {
                     segmentationMap[mbRow][mbCol] = (byte) mb.segment;
                 }
                 if (segmentation != 0 && segmentBased != null && segmentBased.qp != null) {
-                    int qIndex = yacIndex;
+                    short qIndex = yacIndex;
                     if (segmentBased.abs != 0)
                         qIndex = segmentBased.qp[mb.segment];
                     else
@@ -203,31 +211,32 @@ public class VP8Decoder extends VideoDecoder {
                             Subblock A = sb.getAbove(VP8Util.PLANE.Y1, mbs);
 
                             Subblock L = sb.getLeft(VP8Util.PLANE.Y1, mbs);
-
-                            sb.mode = headerDecoder.readTree(SubblockConstants.subblockModeTree,
-                                    SubblockConstants.keyFrameSubblockModeProb[A.mode][L.mode]);
-
+                            short[] bmt = new short[EntropyMode.vp8_bmode_tree.size()];
+                            EntropyMode.vp8_bmode_tree.memcopyout(0, bmt, 0, bmt.length);
+                            short mode= headerDecoder.readTree(bmt,
+                                    SubblockConstants.keyFrameSubblockModeProb[A.mode.ordinal()][L.mode.ordinal()]);
+                            sb.mode = BPredictionMode.values()[mode];
                         }
                     }
 
                 } else {
-                    int fixedMode;
+                    BPredictionMode fixedMode;
 
                     switch (mb.lumaMode) {
                     case SubblockConstants.DC_PRED:
-                        fixedMode = SubblockConstants.B_DC_PRED;
+                        fixedMode = BPredictionMode.B_DC_PRED;
                         break;
                     case SubblockConstants.V_PRED:
-                        fixedMode = SubblockConstants.B_VE_PRED;
+                        fixedMode = BPredictionMode.B_VE_PRED;
                         break;
                     case SubblockConstants.H_PRED:
-                        fixedMode = SubblockConstants.B_HE_PRED;
+                        fixedMode = BPredictionMode.B_HE_PRED;
                         break;
                     case SubblockConstants.TM_PRED:
-                        fixedMode = SubblockConstants.B_TM_PRED;
+                        fixedMode = BPredictionMode.B_TM_PRED;
                         break;
                     default:
-                        fixedMode = SubblockConstants.B_DC_PRED;
+                        fixedMode = BPredictionMode.B_DC_PRED;
                         break;
                     }
                     mb.lumaMode = edgeEmu(mb.lumaMode, mbCol, mbRow);
@@ -291,12 +300,12 @@ public class VP8Decoder extends VideoDecoder {
     }
 
     private static class SegmentBasedAdjustments {
-        private int[] segmentProbs;
-        private int[] qp;
+        private short[] segmentProbs;
+        private short[] qp;
         private int[] lf;
         private int abs;
 
-        public SegmentBasedAdjustments(int[] segmentProbs, int[] qp, int[] lf, int abs) {
+        public SegmentBasedAdjustments(short[] segmentProbs, short[] qp, int[] lf, int abs) {
             this.segmentProbs = segmentProbs;
             this.qp = qp;
             this.lf = lf;
@@ -308,18 +317,18 @@ public class VP8Decoder extends VideoDecoder {
         int updateMBSegmentationMap = headerDecoder.readBitEq();
         int updateSegmentFeatureData = headerDecoder.readBitEq();
 
-        int[] qp = null;
+        short[] qp = null;
         int[] lf = null;
         int abs = 0;
         if (updateSegmentFeatureData != 0) {
-            qp = new int[4];
+            qp = new short[4];
             lf = new int[4];
             abs = headerDecoder.readBitEq();
             for (int i = 0; i < 4; i++) {
                 int quantizerUpdate = headerDecoder.readBitEq();
                 if (quantizerUpdate != 0) {
-                    qp[i] = headerDecoder.decodeInt(7);
-                    qp[i] = headerDecoder.readBitEq() != 0 ? -qp[i] : qp[i];
+                    qp[i] = (short) headerDecoder.decodeInt(7);
+                    qp[i] = (short) (headerDecoder.readBitEq() != 0 ? -qp[i] : qp[i]);
                 }
             }
             for (int i = 0; i < 4; i++) {
@@ -330,12 +339,12 @@ public class VP8Decoder extends VideoDecoder {
                 }
             }
         }
-        int[] segmentProbs = new int[3];
+        short[] segmentProbs = new short[3];
         if (updateMBSegmentationMap != 0) {
             for (int i = 0; i < 3; i++) {
                 int segmentProbUpdate = headerDecoder.readBitEq();
                 if (segmentProbUpdate != 0)
-                    segmentProbs[i] = headerDecoder.decodeInt(8);
+                    segmentProbs[i] = (short) headerDecoder.decodeInt(8);
                 else
                     segmentProbs[i] = 255;
             }

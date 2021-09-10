@@ -482,6 +482,49 @@ public class ArrayUtil {
         return index;
     }
 
+    public static int fill6D(short[][][][][][] to, short[] from, int index) {
+        for (int i = 0; i < to.length; i++) {
+            index = fill5D(to[i], from, index);
+        }
+        return index;
+    }
+
+    public static int fill5D(short[][][][][] to, short[] from, int index) {
+        for (int i = 0; i < to.length; i++) {
+            index = fill4D(to[i], from, index);
+        }
+        return index;
+    }
+
+    public static int fill4D(short[][][][] to, short[] from, int index) {
+        for (int i = 0; i < to.length; i++) {
+            index = fill3D(to[i], from, index);
+        }
+        return index;
+    }
+
+    public static int fill3D(short[][][] to, short[] from, int index) {
+        for (int i = 0; i < to.length; i++) {
+            index = fill2D(to[i], from, index);
+        }
+        return index;
+    }
+
+    public static int fill2D(short[][] to, short[] from, int index) {
+        for (int i = 0; i < to.length; i++) {
+            index = fill1D(to[i], from, index);
+        }
+        return index;
+    }
+
+    public static int fill1D(short[] to, short[] from, int index) {
+        for (int i = 0; i < to.length; i++) {
+            to[i] = from[index++];
+        }
+        return index;
+    }
+
+    
     public static int[] flatten2DL(List<int[]> sampleSizes) {
         int size = 0;
         for (int[] is : sampleSizes) {

@@ -129,7 +129,7 @@ public class CodedSuperBlock {
 //		System.out.print(String.format("PARTITION [%d,%d,%d]", miCol, miRow, blkSize));
         int ctx = calcPartitionContext(miCol, miRow, blkSize, c);
 //		System.out.printf(String.format(", ctx=%d\n", ctx));
-        int[] probs = c.getPartitionProbs()[ctx];
+        short[] probs = c.getPartitionProbs()[ctx];
         int halfBlk = (1 << blkSize) >> 1;
         boolean rightEdge = miCol + halfBlk >= c.getMiTileWidth();
         boolean bottomEdge = miRow + halfBlk >= c.getMiTileHeight();

@@ -103,7 +103,7 @@ public class SeekHeadFactoryTest {
     }
 
     private void muxSeeks(EbmlMaster segmentElem) {
-        SeekHeadFactory shi = new SeekHeadFactory();
+        SeekHeadFactory shi = new SeekHeadFactory(-1);
         for (int i = 0; i < segmentElem.children.size() && i < 4; i++) {
             EbmlBase e = segmentElem.children.get(i);
             if (!e.type.equals(Tracks) && !e.type.equals(Info) && !e.type.equals(Tags) && !e.type.equals(Cues)) {
@@ -186,7 +186,7 @@ public class SeekHeadFactoryTest {
     
     @Test
     public void testEdgeCasesWithFakeZ() throws Exception {
-        SeekHeadFactory a = new SeekHeadFactory();
+        SeekHeadFactory a = new SeekHeadFactory(-1);
         a.a.add(createFakeZ(Info.id,   0xFF));
         a.a.add(createFakeZ(Tracks.id, 0xFF05));
         a.a.add(createFakeZ(Tags.id,   0xFEFFC0));
@@ -205,7 +205,7 @@ public class SeekHeadFactoryTest {
     
     @Test
     public void testSeekHeadSize() throws Exception {
-        SeekHeadFactory a = new SeekHeadFactory();
+        SeekHeadFactory a = new SeekHeadFactory(-1);
         a.add(createFakeElement(Info.id,   0xFF-4-2));
         a.add(createFakeElement(Tracks.id, 0xFF05-4-2));
         a.add(createFakeElement(Cues.id,   0xFEFFFF-4-3));
@@ -217,7 +217,7 @@ public class SeekHeadFactoryTest {
     
     @Test
     public void testSeekHeadMuxing() throws Exception {
-        SeekHeadFactory a = new SeekHeadFactory();
+        SeekHeadFactory a = new SeekHeadFactory(-1);
         a.add(createFakeElement(Info.id,   0xFF-4-2));
         a.add(createFakeElement(Tracks.id, 0xFF00-4-3));
         a.add(createFakeElement(Cues.id,   0xFF0000-4-4));
