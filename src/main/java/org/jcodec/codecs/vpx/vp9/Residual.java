@@ -125,7 +125,7 @@ public class Residual {
         for (int cf = 0; cf < maxCoeff; cf++) {
             int band = (txSz == TX_4X4) ? coefband_4x4[cf] : coefband_8x8plus[cf];
             int pos = scan[cf];
-            int[] probs = c.getCoefProbs()[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx];
+            short[] probs = c.getCoefProbs()[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx];
 
             if (!expectMoreCoefs) {
                 boolean moreCoefs = decoder.readBit(probs[0]) == 1;

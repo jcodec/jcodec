@@ -59,7 +59,7 @@ public class SequenceEncoderTest {
         File temp = File.createTempFile("temp-file-name", ".tmp");
         SequenceEncoder sequenceEncoder = new SequenceEncoder(NIOUtils.writableChannel(temp), Rational.ONE, Format.MOV,
                 Codec.H264, null);
-        Picture picture = Picture.create(32, 32, ColorSpace.YUV420J);
+        Picture picture = Picture.create(32, 32, ColorSpace.YUV420);
         sequenceEncoder.encodeNativeFrame(picture);
         fail("IllegalArgumentException expected");
         } catch (IllegalArgumentException e) {

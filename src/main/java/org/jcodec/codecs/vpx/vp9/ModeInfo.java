@@ -105,7 +105,7 @@ public class ModeInfo {
         aboveMode = availAbove ? aboveIntraModes[miCol] : DC_PRED;
         leftMode = availLeft ? leftIntraModes[miRow % 8] : DC_PRED;
 
-        int[][][] probs = c.getKfYModeProbs();
+        short[][][] probs = c.getKfYModeProbs();
 
         int intraMode = decoder.readTree(TREE_INTRA_MODE, probs[aboveMode][leftMode]);
 
@@ -121,7 +121,7 @@ public class ModeInfo {
         int[] leftIntraModes = c.getLeftModes();
         int aboveMode;
         int leftMode;
-        int[][][] probs = c.getKfYModeProbs();
+        short[][][] probs = c.getKfYModeProbs();
         aboveMode = availAbove ? aboveIntraModes[miCol] : DC_PRED;
         leftMode = availLeft ? leftIntraModes[miRow & 0x7] : DC_PRED;
         int mode0 = decoder.readTree(TREE_INTRA_MODE, probs[aboveMode][leftMode]);
@@ -179,7 +179,7 @@ public class ModeInfo {
                 above = left;
             int ctx = (above + left) > maxTxSize ? 1 : 0;
 
-            int[][] probs = null;
+            short[][] probs = null;
             switch (maxTxSize) {
             case 3:
                 probs = c.getTx32x32Probs();
@@ -209,7 +209,7 @@ public class ModeInfo {
     }
 
     public static int readSegmentId(VPXBooleanDecoder decoder, DecodingContext c) {
-        int[] probs = c.getSegmentationTreeProbs();
+        short[] probs = c.getSegmentationTreeProbs();
         return decoder.readTree(TREE_SEGMENT_ID, probs);
     }
 
@@ -228,7 +228,7 @@ public class ModeInfo {
 
         System.out.println("SKIP CTX: " + ctx);
 
-        int[] probs = c.getSkipProbs();
+        short[] probs = c.getSkipProbs();
 
         boolean ret = decoder.readBit(probs[ctx]) == 1;
 
@@ -248,7 +248,7 @@ public class ModeInfo {
     }
 
     public int readInterIntraUvMode(int yMode, VPXBooleanDecoder decoder, DecodingContext c) {
-        int[][] probs = c.getKfUVModeProbs();
+        short[][] probs = c.getKfUVModeProbs();
         return decoder.readTree(TREE_INTRA_MODE, probs[yMode]);
     }
 }

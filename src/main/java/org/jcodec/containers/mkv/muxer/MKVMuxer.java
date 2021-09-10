@@ -32,7 +32,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +54,7 @@ import org.jcodec.containers.mkv.boxes.EbmlString;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.jcodec.containers.mkv.muxer.MKVMuxerTrack.MKVMuxerTrackType;
+import org.jcodec.containers.mkv.util.EbmlUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -72,8 +72,9 @@ public class MKVMuxer implements Muxer {
     private EbmlMaster mkvTracks;
     private EbmlMaster mkvCues;
     private EbmlMaster mkvSeekHead;
-    private List<EbmlMaster> clusterList;
     private SeekableByteChannel sink;
+    private CuesFactory cf;
+    private long afterebmlHeader, beforeClusters, beforeCues, afterSegment, eof;
 
     private static Map<Codec, String> codec2mkv = new HashMap<Codec, String>();
     static {
@@ -85,43 +86,66 @@ public class MKVMuxer implements Muxer {
     public MKVMuxer(SeekableByteChannel s) {
         this.sink = s;
         this.tracks = new ArrayList<MKVMuxerTrack>();
-        this.clusterList = new LinkedList<EbmlMaster>();
+        try {
+            defaultEbmlHeader().mux(sink);
+            afterebmlHeader = sink.position();
+            mkvTracks = createByType(Tracks);
+            // We leave a gap to make sure we have space for the headers that we can only do
+            // once we finalise the file
+            sink.setPosition(
+                    afterebmlHeader + 12 /* segment basics */ + 68 /* seekhead */ + 50 /* info */ + 106/* tracks */);
+            beforeClusters = sink.position();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public MKVMuxerTrack createVideoTrack(VideoCodecMeta meta, String codecId) {
         if (videoTrack == null) {
-            videoTrack = new MKVMuxerTrack();
+            cf = new CuesFactory(beforeClusters, tracks.size() + 1);
+            videoTrack = new MKVMuxerTrack(sink, cf);
             tracks.add(videoTrack);
             videoTrack.codecId = codecId;
             videoTrack.videoMeta = meta;
             videoTrack.trackNo = tracks.size();
+            muxTrack(videoTrack);
         }
         return videoTrack;
     }
 
     public void finish() throws IOException {
-        List<EbmlMaster> mkvFile = new ArrayList<EbmlMaster>();
-        EbmlMaster ebmlHeader = defaultEbmlHeader();
-        mkvFile.add(ebmlHeader);
-
-        EbmlMaster segmentElem = (EbmlMaster) createByType(Segment);
-        mkvInfo = muxInfo();
-        mkvTracks = muxTracks();
+        for (MKVMuxerTrack track : tracks) {
+            track.finish();
+        }
+        beforeCues = sink.position();
         mkvCues = (EbmlMaster) createByType(Cues);
-        mkvSeekHead = muxSeekHead();
-        createClusters();
         muxCues();
+        mkvCues.mux(sink);
+        eof = sink.position();
 
-        segmentElem.add(mkvSeekHead);
-        segmentElem.add(mkvInfo);
-        segmentElem.add(mkvTracks);
-        segmentElem.add(mkvCues);
-        for (EbmlMaster aCluster : clusterList)
-            segmentElem.add(aCluster);
-        mkvFile.add(segmentElem);
+        sink.setPosition(afterebmlHeader);
 
-        for (EbmlMaster el : mkvFile)
-            el.mux(sink);
+        // Segment basic details
+        ByteBuffer segmentHeader = ByteBuffer.allocate(12);
+        segmentHeader.put(Segment.id);
+        segmentHeader.put(EbmlUtil.ebmlEncodeLen(eof - afterebmlHeader - 12, 8));
+        segmentHeader.flip();
+        sink.write(segmentHeader);
+        afterSegment = sink.position();
+
+        mkvInfo = muxInfo();
+        mkvSeekHead = muxSeekHead();
+
+        mkvSeekHead.mux(sink);
+        mkvInfo.mux(sink);
+        mkvTracks.mux(sink);
+        long endOfHeaders = sink.position();
+        long needsVoid = beforeClusters - endOfHeaders;
+        ByteBuffer voidFiller = ByteBuffer.allocate((int) needsVoid);
+        voidFiller.put(MKVType.Void.id);
+        voidFiller.put(EbmlUtil.ebmlEncodeLen(needsVoid - 1 - 8, 8));
+        voidFiller.flip();
+        sink.write(voidFiller);
     }
 
     private EbmlMaster defaultEbmlHeader() {
@@ -149,7 +173,7 @@ public class MKVMuxer implements Muxer {
         List<MKVMuxerTrack> tracks2 = tracks;
         long max = 0;
         for (MKVMuxerTrack track : tracks2) {
-            MkvBlock lastBlock = track.trackBlocks.get(track.trackBlocks.size() - 1);
+            MkvBlock lastBlock = track.lastFrame;
             if (lastBlock.absoluteTimecode > max)
                 max = lastBlock.absoluteTimecode;
         }
@@ -158,10 +182,9 @@ public class MKVMuxer implements Muxer {
         return master;
     }
 
-    private EbmlMaster muxTracks() {
-        EbmlMaster master = (EbmlMaster) createByType(Tracks);
-        for (int i = 0; i < tracks.size(); i++) {
-            MKVMuxerTrack track = tracks.get(i);
+    private void muxTrack(MKVMuxerTrack track) {
+        try {
+            track.trackStart = sink.position();
             EbmlMaster trackEntryElem = (EbmlMaster) createByType(TrackEntry);
 
             createLong(trackEntryElem, TrackNumber, track.trackNo);
@@ -169,7 +192,7 @@ public class MKVMuxer implements Muxer {
             createLong(trackEntryElem, TrackUID, track.trackNo);
             if (MKVMuxerTrackType.VIDEO.equals(track.type)) {
                 createLong(trackEntryElem, TrackType, (byte) 0x01);
-                createString(trackEntryElem, Name, "Track " + (i + 1) + " Video");
+                createString(trackEntryElem, Name, "Track " + track.trackNo + " Video");
                 createString(trackEntryElem, CodecID, track.codecId);
                 // createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
                 // VideoCodecMeta vcm = (VideoCodecMeta) codecMeta;
@@ -182,52 +205,25 @@ public class MKVMuxer implements Muxer {
 
             } else {
                 createLong(trackEntryElem, TrackType, (byte) 0x02);
-                createString(trackEntryElem, Name, "Track " + (i + 1) + " Audio");
+                createString(trackEntryElem, Name, "Track " + track.trackNo + " Audio");
                 createString(trackEntryElem, CodecID, track.codecId);
                 // createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
             }
-
-            master.add(trackEntryElem);
+            mkvTracks.add(trackEntryElem);
+        } catch (IOException ioex) {
+            throw new RuntimeException(ioex);
         }
-        return master;
-    }
-
-    private void createClusters() { // Creates one cluster per each keyframe
-        EbmlMaster mkvCluster = null;
-        for (MkvBlock aBlock : videoTrack.trackBlocks) {
-            if (aBlock._keyFrame) {
-                mkvCluster = singleBlockedCluster(aBlock);
-                clusterList.add(mkvCluster);
-            } else if (mkvCluster == null) {
-                throw new RuntimeException("The first frame must be a keyframe in an MKV file");
-            } else {
-                mkvCluster.add(aBlock); // intraframes don't get their own cluster
-            }
-        }
-
     }
 
     private void muxCues() {
-        CuesFactory cf = new CuesFactory(mkvSeekHead.size() + mkvInfo.size() + mkvTracks.size(), videoTrack.trackNo);
-        for (EbmlMaster mkvCluster : clusterList) {
-            cf.add(CuesFactory.CuePointMock.make(mkvCluster));
-        }
-
         EbmlMaster indexedCues = cf.createCues();
 
         for (EbmlBase aCuePoint : indexedCues.children)
             mkvCues.add(aCuePoint);
     }
 
-    private EbmlMaster singleBlockedCluster(MkvBlock aBlock) {
-        EbmlMaster mkvCluster = createByType(MKVType.Cluster);
-        createLong(mkvCluster, MKVType.Timecode, aBlock.absoluteTimecode - aBlock.timecode);
-        mkvCluster.add(aBlock);
-        return mkvCluster;
-    }
-
     private EbmlMaster muxSeekHead() {
-        SeekHeadFactory shi = new SeekHeadFactory();
+        SeekHeadFactory shi = new SeekHeadFactory(beforeCues - afterSegment);
         shi.add(mkvInfo);
         shi.add(mkvTracks);
         shi.add(mkvCues);
@@ -275,10 +271,12 @@ public class MKVMuxer implements Muxer {
 
     @Override
     public MuxerTrack addAudioTrack(Codec codec, AudioCodecMeta meta) {
-        audioTrack = new MKVMuxerTrack();
+        audioTrack = new MKVMuxerTrack(sink, cf);
+        audioTrack.type = MKVMuxerTrackType.AUDIO;
         tracks.add(audioTrack);
         audioTrack.codecId = codec2mkv.get(codec);
         audioTrack.trackNo = tracks.size();
+        muxTrack(audioTrack);
         return audioTrack;
     }
 }

@@ -95,22 +95,22 @@ public class Consts {
     public static final int DCT_VAL_CAT5 = 9;
     public static final int DCT_VAL_CAT6 = 10;
 
-    public static final int[] TREE_SEGMENT_ID = new int[] { 2, 4, 6, 8, 10, 12, 0, -1, -2, -3, -4, -5, -6, -7 };
-    public static final int[][] TREE_TX_SIZE = new int[][] { null, { -TX_4X4, -TX_8X8 },
+    public static final short[] TREE_SEGMENT_ID = new short[] { 2, 4, 6, 8, 10, 12, 0, -1, -2, -3, -4, -5, -6, -7 };
+    public static final short[][] TREE_TX_SIZE = new short[][] { null, { -TX_4X4, -TX_8X8 },
             { -TX_4X4, 2, -TX_8X8, -TX_16X16 }, { -TX_4X4, 2, -TX_8X8, 4, -TX_16X16, -TX_32X32 } };
 
     public static final int[] maxTxLookup = new int[] { 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3 };
     public static final int[] blW = new int[] { 1, 1, 1, 1, 1, 2, 2, 2, 4, 4, 4, 8, 8 };
     public static final int[] blH = new int[] { 1, 1, 1, 1, 2, 1, 2, 4, 2, 4, 8, 4, 8 };
 
-    public static final int[] TREE_INTRA_MODE = new int[] { -DC_PRED, 2, -TM_PRED, 4, -V_PRED, 6, 8, 12, -H_PRED, 10,
+    public static final short[] TREE_INTRA_MODE = new short[] { -DC_PRED, 2, -TM_PRED, 4, -V_PRED, 6, 8, 12, -H_PRED, 10,
             -D135_PRED, -D117_PRED, -D45_PRED, 14, -D63_PRED, 16, -D153_PRED, -D207_PRED };
 
     public static final int[] size_group_lookup = new int[] { 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3 };
 
-    public static final int[] TREE_INTERP_FILTER = new int[] { -NORMAL, 2, -SMOOTH, -SHARP };
+    public static final short[] TREE_INTERP_FILTER = new short[] { -NORMAL, 2, -SMOOTH, -SHARP };
 
-    public static final int[] TREE_INTER_MODE = new int[] { -(ZEROMV - NEARESTMV), 2, -(NEARESTMV - NEARESTMV), 4,
+    public static final short[] TREE_INTER_MODE = new short[] { -(ZEROMV - NEARESTMV), 2, -(NEARESTMV - NEARESTMV), 4,
             -(NEARMV - NEARESTMV), -(NEWMV - NEARESTMV) };
 
     // 0 -> (-1,0); 1 -> (0,-1); 2 -> (-1,1); 3 -> (1,-1), 4 -> (-1, 3), 5 ->
@@ -128,17 +128,17 @@ public class Consts {
             { 1, 0, 7, 11, 2, 15, 14, 19 }, { 0, 1, 6, 11, 3, 14, 15, 19 }, { 2, 3, 6, 7, 11, 14, 15, 19 },
             { 1, 0, 9, 6, 11, 15, 14, 7 }, { 0, 1, 8, 7, 11, 14, 15, 6 }, { 4, 5, 8, 9, 11, 0, 1, 10 } };
 
-    public static final int[] TREE_MV_JOINT = new int[] { -MV_JOINT_ZERO, 2, -MV_JOINT_HNZVZ, 4, -MV_JOINT_HZVNZ,
+    public static final short[] TREE_MV_JOINT = new short[] { -MV_JOINT_ZERO, 2, -MV_JOINT_HNZVZ, 4, -MV_JOINT_HZVNZ,
             -MV_JOINT_HNZVNZ };
 
-    public static final int[] MV_CLASS_TREE = new int[] { -0, 2, -1, 4, 6, 8, -2, -3, 10, 12, -4, -5, -6, 14, 16, 18,
+    public static final short[] MV_CLASS_TREE = new short[] { -0, 2, -1, 4, 6, 8, -2, -3, 10, 12, -4, -5, -6, 14, 16, 18,
             -7, -8, -9, -10, };
 
-    public static final int[] MV_FR_TREE = new int[] { -0, 2, -1, 4, -2, -3 };
+    public static final short[] MV_FR_TREE = new short[] { -0, 2, -1, 4, -2, -3 };
 
     public static final int[] LITERAL_TO_FILTER_TYPE = new int[] { SMOOTH, NORMAL, SHARP, SWITCHABLE };
 
-    public static final int[][] PARETO_TABLE = new int[][] {
+    public static final short[][] PARETO_TABLE = {
         { 3, 86, 128, 6, 86, 23, 88, 29 },
         { 6, 86, 128, 11, 87, 42, 91, 52 },
         { 9, 86, 129, 17, 88, 61, 94, 76 },
@@ -403,7 +403,7 @@ public class Consts {
             { 176, 155, 140, 135 }, { 180, 157, 141, 134, 130 },
             { 254, 254, 254, 252, 249, 243, 230, 196, 177, 153, 140, 133, 130, 129 } };
 
-    public static final int[] TOKEN_TREE = new int[] { 2, 6, -TWO_TOKEN, 4,
+    public static final short[] TOKEN_TREE = new short[] { 2, 6, -TWO_TOKEN, 4,
             -THREE_TOKEN, -FOUR_TOKEN, 8, 10, -DCT_VAL_CAT1, -DCT_VAL_CAT2, 12, 14, -DCT_VAL_CAT3, -DCT_VAL_CAT4,
             -DCT_VAL_CAT5, -DCT_VAL_CAT6 };
 
@@ -460,7 +460,7 @@ public class Consts {
                 };
     public static final int[] sub8x8PartitiontoBlockType = new int[] {BLOCK_8X8, BLOCK_8X4, BLOCK_4X8, BLOCK_4X4};
 
-    public static final int[] TREE_PARTITION = new int[] { -PARTITION_NONE, 2, -PARTITION_HORZ, 4, -PARTITION_VERT,
+    public static final short[] TREE_PARTITION = new short[] { -PARTITION_NONE, 2, -PARTITION_HORZ, 4, -PARTITION_VERT,
             -PARTITION_SPLIT };
     public static final int[] TREE_PARTITION_RIGHT_E = new int[] { -PARTITION_NONE, -PARTITION_VERT };
     public static final int[] TREE_PARTITION_BOTTOM_E = new int[] { -PARTITION_NONE, -PARTITION_HORZ };

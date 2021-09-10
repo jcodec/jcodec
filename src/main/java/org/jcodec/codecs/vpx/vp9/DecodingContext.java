@@ -5,6 +5,7 @@ import static org.jcodec.codecs.vpx.vp9.Consts.*;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.vpx.VPXBooleanDecoder;
+import org.jcodec.codecs.vpx.vp8.CommonUtils;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.NIOUtils;
@@ -53,7 +54,7 @@ public class DecodingContext {
     private int deltaQUvAc;
     private boolean lossless;
     private boolean segmentationEnabled;
-    private int[] segmentationTreeProbs = new int[7];
+    private short[] segmentationTreeProbs = new short[7];
     private int[] segmentationPredProbs = new int[3];
     private int[][] featureEnabled = new int[MAX_SEGMENTS][SEG_LVL_MAX];
     private int[][] featureData = new int[MAX_SEGMENTS][SEG_LVL_MAX];
@@ -66,33 +67,33 @@ public class DecodingContext {
 
     int refMode;
 
-    int[][] tx8x8Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 3];
-    int[][] tx16x16Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 2];
-    int[][] tx32x32Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 1];
-    int[][][][][][] coefProbs;
-    private int[] skipProbs = new int[SKIP_CONTEXTS];
-    int[][] interModeProbs = new int[INTER_MODE_CONTEXTS][INTER_MODES - 1];
-    int[][] interpFilterProbs = new int[INTERP_FILTER_CONTEXTS][SWITCHABLE_FILTERS - 1];
-    private int[] isInterProbs = new int[IS_INTER_CONTEXTS];
+    short[][] tx8x8Probs = new short[TX_SIZE_CONTEXTS][TX_SIZES - 3];
+    short[][] tx16x16Probs = new short[TX_SIZE_CONTEXTS][TX_SIZES - 2];
+    short[][] tx32x32Probs = new short[TX_SIZE_CONTEXTS][TX_SIZES - 1];
+    short[][][][][][] coefProbs;
+    private short[] skipProbs = new short[SKIP_CONTEXTS];
+    short[][] interModeProbs = new short[INTER_MODE_CONTEXTS][INTER_MODES - 1];
+    short[][] interpFilterProbs = new short[INTERP_FILTER_CONTEXTS][SWITCHABLE_FILTERS - 1];
+    private short[] isInterProbs = new short[IS_INTER_CONTEXTS];
 
-    private int[] compModeProbs = new int[COMP_MODE_CONTEXTS];
-    private int[][] singleRefProbs = new int[REF_CONTEXTS][2];
-    private int[] compRefProbs = new int[REF_CONTEXTS];
+    private short[] compModeProbs = new short[COMP_MODE_CONTEXTS];
+    private short[][] singleRefProbs = new short[REF_CONTEXTS][2];
+    private short[] compRefProbs = new short[REF_CONTEXTS];
 
-    int[][] yModeProbs = new int[BLOCK_SIZE_GROUPS][INTRA_MODES - 1];
-    int[][] partitionProbs = new int[PARTITION_CONTEXTS][PARTITION_TYPES - 1];
+    short[][] yModeProbs = new short[BLOCK_SIZE_GROUPS][INTRA_MODES - 1];
+    short[][] partitionProbs = new short[PARTITION_CONTEXTS][PARTITION_TYPES - 1];
 
-    public int[][] uvModeProbs = new int[INTRA_MODES][INTRA_MODES - 1];
+    public short[][] uvModeProbs = new short[INTRA_MODES][INTRA_MODES - 1];
 
-    private int[] mvJointProbs = new int[MV_JOINTS - 1];
-    private int[] mvSignProbs = new int[2];
-    private int[][] mvClassProbs = new int[2][MV_CLASSES - 1];
-    private int[] mvClass0BitProbs = new int[2];
-    private int[][] mvBitsProbs = new int[2][MV_OFFSET_BITS];
-    private int[][][] mvClass0FrProbs = new int[2][CLASS0_SIZE][MV_FR_SIZE - 1];
-    private int[][] mvFrProbs = new int[2][MV_FR_SIZE - 1];
-    private int[] mvClass0HpProb = new int[2];
-    private int[] mvHpProbs = new int[2];
+    private short[] mvJointProbs = new short[MV_JOINTS - 1];
+    private short[] mvSignProbs = new short[2];
+    private short[][] mvClassProbs = new short[2][MV_CLASSES - 1];
+    private short[] mvClass0BitProbs = new short[2];
+    private short[][] mvBitsProbs = new short[2][MV_OFFSET_BITS];
+    private short[][][] mvClass0FrProbs = new short[2][CLASS0_SIZE][MV_FR_SIZE - 1];
+    private short[][] mvFrProbs = new short[2][MV_FR_SIZE - 1];
+    private short[] mvClass0HpProb = new short[2];
+    private short[] mvHpProbs = new short[2];
     private int filterLevel;
     private int sharpnessLevel;
     int[] leftPartitionSizes;
@@ -116,12 +117,12 @@ public class DecodingContext {
     boolean[] leftCompound;
     boolean[] aboveCompound;
 
-    private static final int[] defaultSkipProb = { 192, 128, 64 };
+    private static final short[] defaultSkipProb = { 192, 128, 64 };
 
-    private static final int[][] defaultTxProbs8x8 = { { 100 }, { 66 } };
-    private static final int[][] defaultTxProbs16x16 = { { 20, 152 }, { 15, 101 } };
-    private static final int[][] defaultTxProbs32x32 = { { 3, 136, 37 }, { 5, 52, 13 } };
-    public static final int[][][][][][] defaultCoefProbs = { { { /* block Type 0 */
+    private static final short[][] defaultTxProbs8x8 = { { 100 }, { 66 } };
+    private static final short[][] defaultTxProbs16x16 = { { 20, 152 }, { 15, 101 } };
+    private static final short[][] defaultTxProbs32x32 = { { 3, 136, 37 }, { 5, 52, 13 } };
+    public static final short[][][][][][] defaultCoefProbs = { { { /* block Type 0 */
             { /* Intra */
                     { /* Coeff Band 0 */
                             { 195, 29, 183 }, { 84, 49, 136 }, { 8, 42, 71 }, { 0, 0, 0 }, // unused
@@ -452,33 +453,33 @@ public class DecodingContext {
 
     };
 
-    public static final int[] defaultMvJointProbs = { 32, 64, 96 };
+    public static final short[] defaultMvJointProbs = { 32, 64, 96 };
 
-    public static final int[][] defaultMvBitsProb = { { 136, 140, 148, 160, 176, 192, 224, 234, 234, 240 },
+    public static final short[][] defaultMvBitsProb = { { 136, 140, 148, 160, 176, 192, 224, 234, 234, 240 },
             { 136, 140, 148, 160, 176, 192, 224, 234, 234, 240 } };
 
-    public static final int[] defaultMvClass0BitProb = { 216, 208 };
+    public static final short[] defaultMvClass0BitProb = { 216, 208 };
 
-    public static final int[] defaultMvClass0HpProb = { 160, 160 };
+    public static final short[] defaultMvClass0HpProb = { 160, 160 };
 
-    public static final int[] defaultMvSignProb = { 128, 128 };
+    public static final short[] defaultMvSignProb = { 128, 128 };
 
-    public static final int[][] defaultMvClassProbs = { { 224, 144, 192, 168, 192, 176, 192, 198, 198, 245 },
+    public static final short[][] defaultMvClassProbs = { { 224, 144, 192, 168, 192, 176, 192, 198, 198, 245 },
             { 216, 128, 176, 160, 176, 176, 192, 198, 198, 208 } };
 
-    public static final int[][][] defaultMvClass0FrProbs = { { { 128, 128, 64 }, { 96, 112, 64 } },
+    public static final short[][][] defaultMvClass0FrProbs = { { { 128, 128, 64 }, { 96, 112, 64 } },
             { { 128, 128, 64 }, { 96, 112, 64 } } };
-    public static final int[][] defaultMvFrProbs = { { 64, 96, 64 }, { 64, 96, 64 } };
-    public static final int[] defaultMvHpProb = { 128, 128 };
+    public static final short[][] defaultMvFrProbs = { { 64, 96, 64 }, { 64, 96, 64 } };
+    public static final short[] defaultMvHpProb = { 128, 128 };
 
-    public static final int[][] defaultInterModeProbs = { { 2, 173, 34 }, { 7, 145, 85 }, { 7, 166, 63 }, { 7, 94, 66 },
-            { 8, 64, 46 }, { 17, 81, 31 }, { 25, 29, 30 }, };
+    public static final short[][] defaultInterModeProbs = { { 2, 173, 34 }, { 7, 145, 85 }, { 7, 166, 63 },
+            { 7, 94, 66 }, { 8, 64, 46 }, { 17, 81, 31 }, { 25, 29, 30 }, };
 
-    public static final int[][] defaultInterpFilterProbs = { { 235, 162 }, { 36, 255 }, { 34, 3 }, { 149, 144 } };
+    public static final short[][] defaultInterpFilterProbs = { { 235, 162 }, { 36, 255 }, { 34, 3 }, { 149, 144 } };
 
-    public static final int[] defaultIsInterProbs = { 9, 102, 187, 225 };
+    public static final short[] defaultIsInterProbs = { 9, 102, 187, 225 };
 
-    private static final int[][] defaultPartitionProbs = {
+    private static final short[][] defaultPartitionProbs = {
             // 8x8 -> 4x4
             { 199, 122, 141 }, // a/l both not split
             { 147, 63, 159 }, // a split, l not split
@@ -501,7 +502,7 @@ public class DecodingContext {
             { 10, 7, 6 } // a/l both split
     };
 
-    public static final int[][][] kfYmodeProbs = { { // above = dc
+    public static final short[][][] kfYmodeProbs = { { // above = dc
             { 137, 30, 42, 148, 151, 207, 70, 52, 91 }, // left = dc
             { 92, 45, 102, 136, 116, 180, 74, 90, 100 }, // left = v
             { 73, 32, 19, 187, 222, 215, 46, 34, 100 }, // left = h
@@ -613,7 +614,7 @@ public class DecodingContext {
                     { 43, 81, 53, 140, 169, 204, 68, 84, 72 } // left = tm
             } };
 
-    public static final int[][] kfUvModeProbs = { { 144, 11, 54, 157, 195, 130, 46, 58, 108 }, // y = dc
+    public static final short[][] kfUvModeProbs = { { 144, 11, 54, 157, 195, 130, 46, 58, 108 }, // y = dc
             { 118, 15, 123, 148, 131, 101, 44, 93, 131 }, // y = v
             { 113, 12, 23, 188, 226, 142, 26, 32, 125 }, // y = h
             { 120, 11, 50, 123, 163, 135, 64, 77, 103 }, // y = d45
@@ -624,13 +625,13 @@ public class DecodingContext {
             { 116, 12, 64, 120, 140, 125, 49, 115, 121 }, // y = d63
             { 102, 19, 66, 162, 182, 122, 35, 59, 128 } // y = tm
     };
-    public static final int[][] defaultYModeProbs = { { 65, 32, 18, 144, 162, 194, 41, 51, 98 }, // block_size < 8x8
+    public static final short[][] defaultYModeProbs = { { 65, 32, 18, 144, 162, 194, 41, 51, 98 }, // block_size < 8x8
             { 132, 68, 18, 165, 217, 196, 45, 40, 78 }, // block_size < 16x16
             { 173, 80, 19, 176, 240, 193, 64, 35, 46 }, // block_size < 32x32
             { 221, 135, 38, 194, 248, 121, 96, 85, 29 } // block_size >= 32x32
     };
 
-    public static final int[][] defaultUvModeProbs = { { 120, 7, 76, 176, 208, 126, 28, 54, 103 }, // y = dc
+    public static final short[][] defaultUvModeProbs = { { 120, 7, 76, 176, 208, 126, 28, 54, 103 }, // y = dc
             { 48, 12, 154, 155, 139, 90, 34, 117, 119 }, // y = v
             { 67, 6, 25, 204, 243, 158, 13, 21, 96 }, // y = h
             { 97, 5, 44, 131, 176, 139, 48, 68, 97 }, // y = d45
@@ -642,10 +643,10 @@ public class DecodingContext {
             { 101, 21, 107, 181, 192, 103, 19, 67, 125 } // y = tm
     };
 
-    public static final int[][] defaultSingleRefProb = { { 33, 16 }, { 77, 74 }, { 142, 142 }, { 172, 170 },
+    public static final short[][] defaultSingleRefProb = { { 33, 16 }, { 77, 74 }, { 142, 142 }, { 172, 170 },
             { 238, 247 } };
 
-    public static final int[] defaultCompRefProb = { 50, 126, 123, 221, 226 };
+    public static final short[] defaultCompRefProb = { 50, 126, 123, 221, 226 };
 
     /**
      * Reads VP9 frame headers and creates the decoding context
@@ -665,48 +666,48 @@ public class DecodingContext {
     }
 
     protected DecodingContext() {
-        ArrayUtil.copy1D(skipProbs, defaultSkipProb);
-        ArrayUtil.copy2D(tx8x8Probs, defaultTxProbs8x8);
-        ArrayUtil.copy2D(tx16x16Probs, defaultTxProbs16x16);
-        ArrayUtil.copy2D(tx32x32Probs, defaultTxProbs32x32);
+        CommonUtils.vp8_copy(skipProbs, defaultSkipProb);
+        CommonUtils.vp8_copy(tx8x8Probs, defaultTxProbs8x8);
+        CommonUtils.vp8_copy(tx16x16Probs, defaultTxProbs16x16);
+        CommonUtils.vp8_copy(tx32x32Probs, defaultTxProbs32x32);
 
-        coefProbs = new int[4][2][2][6][][];
+        coefProbs = new short[4][2][2][6][][];
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 2; j++) {
                 for (int k = 0; k < 2; k++) {
-                    coefProbs[i][j][k][0] = new int[3][3];
+                    coefProbs[i][j][k][0] = new short[3][3];
                     for (int l = 1; l < 6; l++) {
-                        coefProbs[i][j][k][l] = new int[6][3];
+                        coefProbs[i][j][k][l] = new short[6][3];
                     }
                 }
             }
         }
 
-        ArrayUtil.copy6D(coefProbs, defaultCoefProbs);
+        CommonUtils.vp8_copy(coefProbs, defaultCoefProbs);
 
-        ArrayUtil.copy1D(mvJointProbs, defaultMvJointProbs);
-        ArrayUtil.copy1D(mvSignProbs, defaultMvSignProb);
-        ArrayUtil.copy2D(mvClassProbs, defaultMvClassProbs);
-        ArrayUtil.copy1D(mvClass0BitProbs, defaultMvClass0BitProb);
-        ArrayUtil.copy2D(mvBitsProbs, defaultMvBitsProb);
-        ArrayUtil.copy3D(mvClass0FrProbs, defaultMvClass0FrProbs);
-        ArrayUtil.copy2D(mvFrProbs, defaultMvFrProbs);
-        ArrayUtil.copy1D(mvClass0HpProb, defaultMvClass0HpProb);
-        ArrayUtil.copy1D(mvHpProbs, defaultMvHpProb);
+        CommonUtils.vp8_copy(mvJointProbs, defaultMvJointProbs);
+        CommonUtils.vp8_copy(mvSignProbs, defaultMvSignProb);
+        CommonUtils.vp8_copy(mvClassProbs, defaultMvClassProbs);
+        CommonUtils.vp8_copy(mvClass0BitProbs, defaultMvClass0BitProb);
+        CommonUtils.vp8_copy(mvBitsProbs, defaultMvBitsProb);
+        CommonUtils.vp8_copy(mvClass0FrProbs, defaultMvClass0FrProbs);
+        CommonUtils.vp8_copy(mvFrProbs, defaultMvFrProbs);
+        CommonUtils.vp8_copy(mvClass0HpProb, defaultMvClass0HpProb);
+        CommonUtils.vp8_copy(mvHpProbs, defaultMvHpProb);
 
-        ArrayUtil.copy2D(interModeProbs, defaultInterModeProbs);
-        ArrayUtil.copy2D(interpFilterProbs, defaultInterpFilterProbs);
+        CommonUtils.vp8_copy(interModeProbs, defaultInterModeProbs);
+        CommonUtils.vp8_copy(interpFilterProbs, defaultInterpFilterProbs);
 
-        ArrayUtil.copy1D(isInterProbs, defaultIsInterProbs);
+        CommonUtils.vp8_copy(isInterProbs, defaultIsInterProbs);
 
-        ArrayUtil.copy2D(singleRefProbs, defaultSingleRefProb);
+        CommonUtils.vp8_copy(singleRefProbs, defaultSingleRefProb);
 
-        ArrayUtil.copy2D(yModeProbs, defaultYModeProbs);
-        ArrayUtil.copy2D(uvModeProbs, defaultUvModeProbs);
+        CommonUtils.vp8_copy(yModeProbs, defaultYModeProbs);
+        CommonUtils.vp8_copy(uvModeProbs, defaultUvModeProbs);
 
-        ArrayUtil.copy2D(partitionProbs, defaultPartitionProbs);
+        CommonUtils.vp8_copy(partitionProbs, defaultPartitionProbs);
 
-        ArrayUtil.copy1D(compRefProbs, defaultCompRefProb);
+        CommonUtils.vp8_copy(compRefProbs, defaultCompRefProb);
     }
 
     public boolean isKeyIntraFrame() {
@@ -992,9 +993,9 @@ public class DecodingContext {
         }
     }
 
-    private static int readProb(BitReader br) {
+    private static short readProb(BitReader br) {
         if (br.read1Bit() == 1) {
-            return br.readNBit(8);
+            return (short) br.readNBit(8);
         } else {
             return 255;
         }
@@ -1194,10 +1195,10 @@ public class DecodingContext {
             }
     }
 
-    private int diffUpdateProb(VPXBooleanDecoder boolDec, int prob) {
-        int update_prob = boolDec.readBit(252);
+    private short diffUpdateProb(VPXBooleanDecoder boolDec, short prob) {
+        short update_prob = (short) boolDec.readBit(252);
         if (update_prob == 1) {
-            int deltaProb = decodeTermSubexp(boolDec);
+            short deltaProb = (short)decodeTermSubexp(boolDec);
             prob = invRemapProb(deltaProb, prob);
         }
         return prob;
@@ -1223,15 +1224,15 @@ public class DecodingContext {
         return (v << 1) - 1 + bit;
     }
 
-    private int invRemapProb(int deltaProb, int prob) {
-        int m = prob;
+    private short invRemapProb(short deltaProb, short prob) {
+        short m = prob;
         int v = deltaProb;
         v = INV_REMAP_TABLE[v];
         m--;
         if ((m << 1) <= 255)
-            m = 1 + invRecenterNonneg(v, m);
+            m = (short) (1 + invRecenterNonneg(v, m));
         else
-            m = 255 - invRecenterNonneg(v, 255 - 1 - m);
+            m = (short) (255 - invRecenterNonneg(v, 255 - 1 - m));
         return m;
     }
 
@@ -1365,11 +1366,11 @@ public class DecodingContext {
         }
     }
 
-    private int updateMvProb(VPXBooleanDecoder boolDec, int prob) {
-        int update_mv_prob = boolDec.readBit(252);
+    private short updateMvProb(VPXBooleanDecoder boolDec, short prob) {
+        short update_mv_prob = (short) boolDec.readBit(252);
         if (update_mv_prob == 1) {
-            int mv_prob = boolDec.decodeInt(7);
-            prob = (mv_prob << 1) | 1;
+            short mv_prob = (short) boolDec.decodeInt(7);
+            prob = (short) ((mv_prob << 1) | 1);
         }
         return prob;
     }
@@ -1434,103 +1435,103 @@ public class DecodingContext {
         return sharpnessLevel;
     }
 
-    public int[] getSkipProbs() {
+    public short[] getSkipProbs() {
         return skipProbs;
     }
 
-    public int[][] getTx8x8Probs() {
+    public short[][] getTx8x8Probs() {
         return tx8x8Probs;
     }
 
-    public int[][] getTx16x16Probs() {
+    public short[][] getTx16x16Probs() {
         return tx16x16Probs;
     }
 
-    public int[][] getTx32x32Probs() {
+    public short[][] getTx32x32Probs() {
         return tx32x32Probs;
     }
 
-    public int[][][][][][] getCoefProbs() {
+    public short[][][][][][] getCoefProbs() {
         return coefProbs;
     }
 
-    public int[] getMvJointProbs() {
+    public short[] getMvJointProbs() {
         return mvJointProbs;
     }
 
-    public int[] getMvSignProb() {
+    public short[] getMvSignProb() {
         return mvSignProbs;
     }
 
-    public int[][] getMvClassProbs() {
+    public short[][] getMvClassProbs() {
         return mvClassProbs;
     }
 
-    public int[] getMvClass0BitProbs() {
+    public short[] getMvClass0BitProbs() {
         return mvClass0BitProbs;
     }
 
-    public int[][] getMvBitsProb() {
+    public short[][] getMvBitsProb() {
         return mvBitsProbs;
     }
 
-    public int[][][] getMvClass0FrProbs() {
+    public short[][][] getMvClass0FrProbs() {
         return mvClass0FrProbs;
     }
 
-    public int[][] getMvFrProbs() {
+    public short[][] getMvFrProbs() {
         return mvFrProbs;
     }
 
-    public int[] getMvClass0HpProbs() {
+    public short[] getMvClass0HpProbs() {
         return mvClass0HpProb;
     }
 
-    public int[] getMvHpProbs() {
+    public short[] getMvHpProbs() {
         return mvHpProbs;
     }
 
-    public int[][] getInterModeProbs() {
+    public short[][] getInterModeProbs() {
         return interModeProbs;
     }
 
-    public int[][] getInterpFilterProbs() {
+    public short[][] getInterpFilterProbs() {
         return interpFilterProbs;
     }
 
-    public int[] getIsInterProbs() {
+    public short[] getIsInterProbs() {
         return isInterProbs;
     }
 
-    public int[][] getSingleRefProbs() {
+    public short[][] getSingleRefProbs() {
         return singleRefProbs;
     }
 
-    public int[][] getYModeProbs() {
+    public short[][] getYModeProbs() {
         return yModeProbs;
     }
 
-    public int[][] getPartitionProbs() {
+    public short[][] getPartitionProbs() {
         return partitionProbs;
     }
 
-    public int[][] getUvModeProbs() {
+    public short[][] getUvModeProbs() {
         return uvModeProbs;
     }
 
-    public int[] getCompRefProbs() {
+    public short[] getCompRefProbs() {
         return compRefProbs;
     }
 
-    public int[][][] getKfYModeProbs() {
+    public short[][][] getKfYModeProbs() {
         return kfYmodeProbs;
     }
 
-    public int[][] getKfUVModeProbs() {
+    public short[][] getKfUVModeProbs() {
         return kfUvModeProbs;
     }
 
-    public int[] getSegmentationTreeProbs() {
+    public short[] getSegmentationTreeProbs() {
         return segmentationTreeProbs;
     }
 
@@ -1538,7 +1539,7 @@ public class DecodingContext {
         return segmentationPredProbs;
     }
 
-    public int[] getCompModeProb() {
+    public short[] getCompModeProb() {
         return compModeProbs;
     }
 

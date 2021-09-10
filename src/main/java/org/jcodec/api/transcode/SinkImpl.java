@@ -191,7 +191,7 @@ public class SinkImpl implements Sink, PacketSink {
             } else if (Codec.H264 == outputVideoCodec) {
                 videoEncoder = createH264Encoder();
             } else if (VP8 == outputVideoCodec) {
-                videoEncoder = VP8Encoder.createVP8Encoder(10);
+                videoEncoder = VP8Encoder.createVP8Encoder((short)10);
             } else if (PNG == outputVideoCodec) {
                 videoEncoder = new PNGEncoder();
             } else if (Codec.RAW == outputVideoCodec) {
