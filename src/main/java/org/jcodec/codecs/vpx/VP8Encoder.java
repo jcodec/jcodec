@@ -1,18 +1,14 @@
 package org.jcodec.codecs.vpx;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 import java.util.Iterator;
 
 import org.jcodec.codecs.vpx.vp8.CXInterface;
 import org.jcodec.codecs.vpx.vp8.data.CodecAlgPRiv;
 import org.jcodec.codecs.vpx.vp8.data.CodecEncCfg;
-import org.jcodec.codecs.vpx.vp8.data.ExtraCFG;
 import org.jcodec.codecs.vpx.vp8.data.CodecPkt;
+import org.jcodec.codecs.vpx.vp8.data.ExtraCFG;
 import org.jcodec.codecs.vpx.vp8.enums.AlgoFlags;
 import org.jcodec.codecs.vpx.vp8.enums.GeneralFrameFlags;
 import org.jcodec.common.VideoEncoder;
@@ -80,19 +76,6 @@ public class VP8Encoder extends VideoEncoder {
         CXInterface.vp8e_encode(ctx, pic, pts++, 1, EnumSet.noneOf(AlgoFlags.class), deadline);
         CodecPkt ret = ctx.vpx_codec_get_cx_data(ctx.base, new Iterator[1]);
         CodecPkt.FramePacket fp = (CodecPkt.FramePacket) ret.packet;
-//        try {
-//            FileChannel bc = FileChannel.open(Paths.get("/home/gabor/LoopFilterOutsJava/" + (pts - 1) + ".vp8"),
-//                    StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
-//            ByteBuffer bb = ByteBuffer.allocate(fp.sz);
-//            for (int i = 0; i < fp.sz; i++) {
-//                bb.put((byte) fp.buf.getRel(i));
-//            }
-//            bb.flip();
-//            bc.write(bb);
-//            bc.close();
-//        } catch (IOException ioex) {
-//            throw new RuntimeException(ioex);
-//        }
 
         ByteBuffer out = _buf.duplicate();
         for (int i = 0; i < fp.sz; i++) {
