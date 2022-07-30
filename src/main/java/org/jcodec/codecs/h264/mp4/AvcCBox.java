@@ -92,7 +92,7 @@ public class AvcCBox extends Box {
         out.put((byte) profile);
         out.put((byte) profileCompat);
         out.put((byte) level);
-        out.put((byte) 0xff);
+        out.put((byte) ((nalLengthSize - 1) | 0xf8));
 
         out.put((byte) (spsList.size() | 0xe0));
         for (ByteBuffer sps : spsList) {
