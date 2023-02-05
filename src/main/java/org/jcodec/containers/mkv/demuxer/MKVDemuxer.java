@@ -302,7 +302,7 @@ public final class MKVDemuxer implements Demuxer {
     }
 
     private void putIntoRightBasket(MkvBlock b) {
-        if (b.trackNumber == vTrack.trackNo) {
+        if (vTrack != null && b.trackNumber == vTrack.trackNo) {
             vTrack.blocks.add(b);
 
         } else {
