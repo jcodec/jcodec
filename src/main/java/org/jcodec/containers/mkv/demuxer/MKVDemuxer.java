@@ -231,7 +231,7 @@ public final class MKVDemuxer implements Demuxer {
                 String language = "eng";
                 MKVType[] path10 = { TrackEntry, MKVType.CodecID };
                 EbmlString codecId = (EbmlString) findFirst(elemTrack, path10);
-                Codec codec = codecAudioMapping.get(codecId.getString());
+                Codec codec = codecAudioMapping.get(codecId.getString().replace("\0", ""));
                 if (codec == null) {
                     System.out.println("Unknown audio codec: '" + codecId.getString() + "'");
                 }
