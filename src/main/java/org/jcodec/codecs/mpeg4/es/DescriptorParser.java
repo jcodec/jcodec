@@ -59,7 +59,8 @@ public class DescriptorParser {
     }
 
     private static SL parseSL(ByteBuffer input) {
-        checkState(0x2 == (input.get() & 0xff));
+        int state = input.get() & 0xff;
+        checkState(0 == state || 0x2 == state);
         return new SL();
     }
 
