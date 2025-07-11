@@ -43,8 +43,8 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
 
     public int estimateSize() {
         int sizeEstimate = (tokens.size() << 3) + streams.estimateSize() + 128;
-        for (Integer stream : analyzers.keySet()) {
-            sizeEstimate += analyzers.get(stream).estimateSize();
+        for (BaseAnalyser analyzer : analyzers.values()) {
+            sizeEstimate += analyzer.estimateSize();
         }
         return sizeEstimate;
     }
