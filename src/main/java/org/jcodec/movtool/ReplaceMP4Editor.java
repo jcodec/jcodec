@@ -28,6 +28,7 @@ public class ReplaceMP4Editor {
     public void replace(File src, MP4Edit edit) throws IOException {
         File tmp = new File(src.getParentFile(), "." + src.getName());
         copy(src, tmp, edit);
+        src.delete();
         tmp.renameTo(src);
     }
 
