@@ -20,9 +20,12 @@ import org.jcodec.platform.Platform;
  * @author The JCodec project
  * 
  */
-public class IOUtils {
+public final class IOUtils {
 
     public static final int DEFAULT_BUFFER_SIZE = 4096;
+
+    private IOUtils() {
+    }
 
     public static void closeQuietly(Closeable c) {
         if (c == null)
